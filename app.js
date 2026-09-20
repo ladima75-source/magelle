@@ -39,7 +39,7 @@
         item.hidden = !ok;
         if (ok) shown++;
       });
-      if (count) count.textContent = shown + (shown === 1 ? ' демо-позиція' : ' демо-позиції');
+      if (count) count.textContent = shown + (shown === 1 ? ' позиція' : ' позиції');
     };
     [size,tone,collection,search].forEach(el => el && el.addEventListener('input', apply));
     document.getElementById('reset-filters')?.addEventListener('click', () => {
