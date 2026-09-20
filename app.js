@@ -20,9 +20,8 @@
   if (closeButton) closeButton.addEventListener('click', () => setCart(false));
   if (backdrop) backdrop.addEventListener('click', () => setCart(false));
 
-  const grid = document.getElementById('catalog-grid');
-  if (grid) {
-    const items = [...grid.querySelectorAll('.filter-item')];
+  const catalogItems = [...document.querySelectorAll('.filter-item')];
+  if (catalogItems.length) {
     const size = document.getElementById('filter-size');
     const tone = document.getElementById('filter-tone');
     const collection = document.getElementById('filter-collection');
@@ -31,7 +30,7 @@
     const apply = () => {
       let shown = 0;
       const q = (search?.value || '').trim().toLowerCase();
-      items.forEach(item => {
+      catalogItems.forEach(item => {
         const ok = (!size?.value || item.dataset.size === size.value)
           && (!tone?.value || item.dataset.tone === tone.value)
           && (!collection?.value || item.dataset.collection === collection.value)
@@ -39,7 +38,10 @@
         item.hidden = !ok;
         if (ok) shown++;
       });
-      if (count) count.textContent = shown + (shown === 1 ? ' позиція' : ' позиції');
+      document.querySelectorAll('.family-block').forEach(section => {
+        section.hidden = ![...section.querySelectorAll('.filter-item')].some(x => !x.hidden);
+      });
+      if (count) count.textContent = shown + (shown === 1 ? ' позиція' : ' позицій');
     };
     [size,tone,collection,search].forEach(el => el && el.addEventListener('input', apply));
     document.getElementById('reset-filters')?.addEventListener('click', () => {
