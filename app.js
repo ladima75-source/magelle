@@ -50,3 +50,33 @@
     apply();
   }
 })();
+
+document.querySelectorAll('[data-gallery]').forEach(gallery => {
+  const main = gallery.querySelector('#product-main-image') || document.getElementById('product-main-image');
+  gallery.querySelectorAll('[data-gallery-src]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      gallery.querySelectorAll('[data-gallery-src]').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      if (main) main.src = btn.dataset.gallerySrc;
+    });
+  });
+});
+
+document.querySelectorAll('.product-info[data-sku-prefix]').forEach(product => {
+  const skuEl = product.querySelector('#selected-sku');
+  const sizeGroup = product.querySelector('[data-variant="size"]');
+  const colorGroup = product.querySelector('[data-variant="color"]');
+  const read = group => group?.querySelector('.active')?.dataset.value || '';
+  const refresh = () => {
+    if (skuEl) skuEl.textContent = [product.dataset.skuPrefix, read(sizeGroup), read(colorGroup)].filter(Boolean).join('-');
+  };
+  product.querySelectorAll('.variant-group button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.closest('.variant-group');
+      group.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      refresh();
+    });
+  });
+  refresh();
+});
