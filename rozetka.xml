@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<yml_catalog date="2026-09-21 13:22">
+  <shop>
+    <name>MaGelle</name>
+    <company>MaGelle</company>
+    <url>https://magelle.com.ua</url>
+    <currencies>
+      <currency id="UAH" rate="1"/>
+    </currencies>
+    <categories>
+      <category id="4629866">Квіти</category>
+    </categories>
+    <offers>
+      <offer id="MG-OF-DEL-CHO" available="false">
+        <price>2600</price>
+        <currencyId>UAH</currencyId>
+        <categoryId>4629866</categoryId>
+        <vendor>MaGelle</vendor>
+        <article>MG-OF-DEL-CHO</article>
+        <name>Интерьерная композиция из сухоцветов MaGelle Organic Flare Делікатний, шоколад, 45×45×30 см</name>
+        <name_ua>Інтер'єрна композиція із сухоцвітів MaGelle Organic Flare Делікатний, шоколад, 45×45×30 см</name_ua>
+        <description><![CDATA[Интерьерная композиция MaGelle Organic Flare в шоколадной дизайнерской вазе. Размер композиции: примерно 45×45×30 см, высота вазы — 17 см. Ключевые материалы: гортензия, мискантус, просо, сафлор, мордовник, нигелла, гипсофила и коробочки лотоса. Композиция не требует полива. Каждая работа собирается вручную из натуральных сухоцветов, поэтому возможны небольшие естественные отличия в форме, расположении и оттенках при сохранении общего образа, палитры и наполненности.]]></description>
+        <description_ua><![CDATA[Інтер'єрна композиція MaGelle Organic Flare у шоколадній дизайнерській вазі. Розмір композиції: приблизно 45×45×30 см, висота вази — 17 см. Ключові матеріали: гортензія, міскантус, просо, сафлор, головатень, нігелла, гіпсофіла та коробочки лотоса. Композиція не потребує поливу. Кожна робота збирається вручну з натуральних сухоцвітів, тому можливі невеликі природні відмінності у формі, розташуванні та відтінках при збереженні загального образу, палітри й наповненості.]]></description_ua>
+        <stock_quantity>1</stock_quantity>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1yualdTQFowIzxZPf0LIGpK2NNsN8I72b</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1i1gCu-qTn2OFeL3zI4C6kUnuMjggmLDC</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1eTyS8wu9NPlvtPP4Zm9OSu6IwPcE8JhR</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1w1ABjtRFfr1DtEieO2WDII98rdujELJw</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1BcmBoxSNYrFzyOmFaV1uZBklYwqMhJsI</picture>
+        <param name="Країна-виробник товару">Україна</param>
+        <param name="Тип">Квіткові композиції</param>
+        <param name="Квіти в складі">Гортензія / Міскантус / Просо / Сафлор / Головатень / Нігелла / Гіпсофіла / Лотос</param>
+      </offer>
+
+      <offer id="MG-OF-VYR-MLK" available="false">
+        <price>4200</price>
+        <currencyId>UAH</currencyId>
+        <categoryId>4629866</categoryId>
+        <vendor>MaGelle</vendor>
+        <article>MG-OF-VYR-MLK</article>
+        <name>Интерьерная композиция из сухоцветов MaGelle Organic Flare Виразний, молочный, 48×33×33 см</name>
+        <name_ua>Інтер'єрна композиція із сухоцвітів MaGelle Organic Flare Виразний, молочний, 48×33×33 см</name_ua>
+        <description><![CDATA[Интерьерная композиция MaGelle Organic Flare в молочной дизайнерской вазе. Размер композиции: примерно 48×33×33 см, высота вазы — 21 см. Ключевые материалы: гортензия, мискантус и лен. Мягкая светлая палитра и объемный силуэт создают выразительный интерьерный акцент. Композиция не требует полива. Каждая работа собирается вручную из натуральных сухоцветов, поэтому возможны небольшие естественные отличия в форме, расположении и оттенках при сохранении общего образа, палитры и наполненности.]]></description>
+        <description_ua><![CDATA[Інтер'єрна композиція MaGelle Organic Flare у молочній дизайнерській вазі. Розмір композиції: приблизно 48×33×33 см, висота вази — 21 см. Ключові матеріали: гортензія, міскантус і льон. М'яка світла палітра та об'ємний силует створюють виразний інтер'єрний акцент. Композиція не потребує поливу. Кожна робота збирається вручну з натуральних сухоцвітів, тому можливі невеликі природні відмінності у формі, розташуванні та відтінках при збереженні загального образу, палітри й наповненості.]]></description_ua>
+        <stock_quantity>1</stock_quantity>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1iMPVYqOeReP-vWnoS7AEaV1-owVuB5ZZ</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1HwMCGswjFWWTFJMbkYLAFCexzyNbyUC3</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1QbigZF5Y-Oayh7xbaU3arDNlc1vP5quH</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1VQGiQKUWvbdRI7Q99WBmeqKsuAyCrIvi</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1DEtwO9JK4dNdT-v-o6-ErKzqytJGI-OS</picture>
+        <param name="Країна-виробник товару">Україна</param>
+        <param name="Тип">Квіткові композиції</param>
+        <param name="Квіти в складі">Гортензія / Міскантус / Льон</param>
+      </offer>
+
+      <offer id="MG-AS-DEL-CHO" available="false">
+        <price>1700</price>
+        <currencyId>UAH</currencyId>
+        <categoryId>4629866</categoryId>
+        <vendor>MaGelle</vendor>
+        <article>MG-AS-DEL-CHO</article>
+        <name>Интерьерная композиция из сухоцветов MaGelle Architectural Step Делікатний, шоколад, 45×24×20 см</name>
+        <name_ua>Інтер'єрна композиція із сухоцвітів MaGelle Architectural Step Делікатний, шоколад, 45×24×20 см</name_ua>
+        <description><![CDATA[Интерьерная композиция MaGelle Architectural Step в шоколадной дизайнерской вазе. Размер композиции: примерно 45×24×20 см, высота вазы — 12 см. Ключевые материалы: протея, мордовник, нигелла, эвкалипт и корилус. Вертикальный архитектурный силуэт создает графичный акцент в современном интерьере. Композиция не требует полива. Каждая работа собирается вручную из натуральных сухоцветов, поэтому возможны небольшие естественные отличия в форме, расположении и оттенках при сохранении общего образа, палитры и наполненности.]]></description>
+        <description_ua><![CDATA[Інтер'єрна композиція MaGelle Architectural Step у шоколадній дизайнерській вазі. Розмір композиції: приблизно 45×24×20 см, висота вази — 12 см. Ключові матеріали: протея, головатень, нігелла, евкаліпт і корілус. Вертикальний архітектурний силует створює графічний акцент у сучасному інтер'єрі. Композиція не потребує поливу. Кожна робота збирається вручну з натуральних сухоцвітів, тому можливі невеликі природні відмінності у формі, розташуванні та відтінках при збереженні загального образу, палітри й наповненості.]]></description_ua>
+        <stock_quantity>1</stock_quantity>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1P6t08BOG5VqOeI9hhcQ0RrJzs06STsX8</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1397shGretAq52JS6a6YsmFhFwG3xUnuG</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=11yTr9Do8aKPwIT8Zsezw2UqNAh-zIjw1</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1QONfi1kTdczx2yZhIICObkhhuKoJcV5N</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1twE6oMtfo2BgXaqZboXHBTXeb2IN33DY</picture>
+        <picture>https://drive.google.com/uc?export=download&amp;id=1Q2sVrPaiEWhMmY_DT_lOamrZeiJE20Ba</picture>
+        <param name="Країна-виробник товару">Україна</param>
+        <param name="Тип">Квіткові композиції</param>
+        <param name="Квіти в складі">Протея / Головатень / Нігелла / Евкаліпт / Корілус</param>
+      </offer>
+    </offers>
+  </shop>
+</yml_catalog>
