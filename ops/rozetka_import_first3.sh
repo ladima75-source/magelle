@@ -8,7 +8,7 @@ EXPECTED=("MG-OF-DEL-CHO" "MG-OF-VYR-MLK" "MG-AS-DEL-CHO")
 cd "$ROOT"
 
 python3 - <<'PY'
-import os, re, sys, json, time, urllib.request, urllib.error
+import json, time, urllib.request, urllib.error
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -32,14 +32,13 @@ token = env.get("ROZETKA_CONTENT_TOKEN", "")
 if not token:
     raise SystemExit("ERROR: ROZETKA_CONTENT_TOKEN not found in .env")
 
-# Persistent connector write switches must stay OFF for this one-shot import.
 for key in ("ALLOW_WRITES", "AUTO_IMPORT"):
     val = env.get(key, "").lower()
     if val not in ("false", "0", "off", "no", ""):
         raise SystemExit(f"ERROR: safety check failed: {key}={env.get(key)} (expected false)")
 
 print("=== PRECHECK FEED ===")
-req = urllib.request.Request(feed_url, headers={"User-Agent":"MaGelle-ROZETKA-one-shot/1.0"})
+req = urllib.request.Request(feed_url, headers={"User-Agent":"MaGelle-ROZETKA-one-shot/1.1"})
 with urllib.request.urlopen(req, timeout=30) as r:
     xml_bytes = r.read()
 
@@ -59,12 +58,13 @@ for offer in offers:
 
 print("safety      = PASS (3 exact SKUs, all available=false, persistent writes remain OFF)")
 
-base = "https://api.seller.rozetka.com.ua"
+# Current reachable ROZETKA Seller API host.
+base = "https://api-seller.rozetka.com.ua"
 headers = {
     "Authorization": "Bearer " + token,
     "Accept": "application/json",
     "Content-Type": "application/json",
-    "User-Agent": "MaGelle-ROZETKA-one-shot/1.0",
+    "User-Agent": "MaGelle-ROZETKA-one-shot/1.1",
 }
 
 payload = json.dumps({
@@ -72,6 +72,25 @@ payload = json.dumps({
     "place": "url",
     "place_address": feed_url,
 }).encode("utf-8")
+
+print()
+print("=== API HOST CHECK ===")
+try:
+    ping = urllib.request.Request(
+        base + "/items/search?page=1",
+        headers={
+            "Authorization": "Bearer " + token,
+            "Accept": "application/json",
+            "User-Agent": "MaGelle-ROZETKA-one-shot/1.1",
+        },
+        method="GET",
+    )
+    with urllib.request.urlopen(ping, timeout=30) as r:
+        ping_data = json.loads(r.read().decode("utf-8"))
+    print("api_host =", base)
+    print("api_read = OK" if ping_data.get("success") is not False else "api_read = RESPONSE_WITH_ERROR")
+except Exception as e:
+    raise SystemExit(f"ERROR: API host/read check failed: {e}")
 
 print()
 print("=== CREATE IMPORT ===")
@@ -87,6 +106,8 @@ try:
 except urllib.error.HTTPError as e:
     body = e.read().decode("utf-8", errors="replace")
     raise SystemExit(f"HTTP ERROR {e.code}: {body}")
+except urllib.error.URLError as e:
+    raise SystemExit(f"URL ERROR: {e}")
 
 print(json.dumps(create_data, ensure_ascii=False, indent=2))
 
@@ -110,12 +131,18 @@ for attempt in range(1, 13):
         headers={
             "Authorization": "Bearer " + token,
             "Accept": "application/json",
-            "User-Agent": "MaGelle-ROZETKA-one-shot/1.0",
+            "User-Agent": "MaGelle-ROZETKA-one-shot/1.1",
         },
         method="GET",
     )
-    with urllib.request.urlopen(search_req, timeout=30) as r:
-        data = json.loads(r.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(search_req, timeout=30) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"attempt {attempt}: status read error: {e}")
+        if attempt < 12:
+            time.sleep(5)
+        continue
 
     content = data.get("content") or {}
     rows = content.get("uploaderLogXmls") if isinstance(content, dict) else content
@@ -145,9 +172,7 @@ for attempt in range(1, 13):
         if compact != last:
             print(json.dumps(compact, ensure_ascii=False, indent=2))
             last = compact
-        # We deliberately do not guess undocumented status meanings.
-        report = hit.get("report")
-        if report:
+        if hit.get("report"):
             break
     else:
         print(f"attempt {attempt}: import {import_id} not visible in first page yet")
