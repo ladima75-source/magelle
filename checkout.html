@@ -1,0 +1,53 @@
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Оформлення замовлення — MaGelle</title><meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="/styles.css?v=1.4"><script src="/app.js?v=1.4" defer></script></head><body>
+<header class="site-header"><div class="shell header-inner"><a class="brand" href="/"><strong>MaGelle</strong><small>краса в деталях</small></a><button class="menu-button" type="button" aria-controls="nav" aria-expanded="false">Меню</button><nav class="site-nav" id="nav"><a href="/catalog.html">Каталог</a><a href="/#about">Про бренд</a><a href="/#delivery">Доставка</a><a href="/#contact">Контакти</a></nav><div class="header-actions"><button class="icon-btn cart-button">▢<span id="cart-count">0</span></button></div></div></header>
+<main class="checkout-page"><div class="shell"><div class="breadcrumbs"><a href="/">Головна</a><span>›</span><a href="/catalog.html">Каталог</a><span>›</span><b>Оформлення</b></div>
+<div class="checkout-layout">
+<section><p class="eyebrow">Замовлення</p><h1>Оформлення замовлення</h1><div id="checkout-items" class="checkout-items"><p>Завантаження кошика…</p></div></section>
+<section class="checkout-form-card"><form id="checkout-form">
+<label>Ім’я<input name="customer_name" required autocomplete="name"></label>
+<label>Телефон<input name="phone" required autocomplete="tel" placeholder="+380…"></label>
+<label>Email<input name="email" type="email" autocomplete="email"></label>
+<label>Доставка<textarea name="delivery" rows="3" placeholder="Місто, відділення / адреса"></textarea></label>
+<label>Коментар<textarea name="comment" rows="3"></textarea></label>
+<button class="btn dark wide" id="submit-order" type="submit">Підтвердити замовлення</button>
+<p class="checkout-note">Після оформлення ми зв’яжемося для підтвердження деталей, оплати та доставки.</p>
+<p id="checkout-message" class="checkout-message"></p>
+</form></section>
+</div></div></main>
+<footer class="footer"><div class="shell footer-grid"><div class="brand footer-brand"><strong>MaGelle</strong><small>краса в деталях</small></div><div><a href="/">Головна</a><a href="/catalog.html">Каталог</a></div><div><a href="/#contact">Контакти</a></div><div><small>© 2026 MaGelle</small></div></div></footer>
+<div class="cart-drawer" id="cart-drawer" aria-hidden="true"><div class="cart-head"><b>Кошик</b><button type="button" class="close-cart">×</button></div><div class="cart-empty"></div></div><div class="drawer-backdrop" id="drawer-backdrop"></div>
+<script>
+window.addEventListener('DOMContentLoaded', async () => {
+  const waitStore = async () => { for(let i=0;i<40;i++){ if(window.MaGelleStore) return window.MaGelleStore; await new Promise(r=>setTimeout(r,100)); } return null; };
+  const store = await waitStore();
+  if(!store) return;
+  const itemsHost=document.getElementById('checkout-items'), form=document.getElementById('checkout-form'), msg=document.getElementById('checkout-message'), submit=document.getElementById('submit-order');
+  const cart=store.getCart();
+  const render=()=>{
+    const products=store.getProducts();
+    if(!cart.length){ itemsHost.innerHTML='<p>Кошик порожній.</p><a class="text-link" href="/catalog.html">До каталогу →</a>'; submit.disabled=true; return; }
+    let total=0, unavailable=false;
+    itemsHost.innerHTML=cart.map(x=>{ const p=products.get(x.sku); if(!p){unavailable=true; return '<div class="checkout-line"><div><b>'+x.sku+'</b><small>Недоступно для замовлення</small></div></div>'; } total+=Number(p.price_uah||0)*x.qty; return '<div class="checkout-line"><div><b>'+p.title_ua+'</b><small>'+x.sku+' · '+x.qty+' шт.</small></div><b>'+store.money(Number(p.price_uah||0)*x.qty)+'</b></div>'; }).join('')+'<div class="checkout-total"><span>Разом</span><b>'+store.money(total)+'</b></div>';
+    submit.disabled=unavailable;
+    if(unavailable) msg.textContent='У кошику є позиція, яка зараз недоступна. Видаліть її з кошика.';
+  };
+  setTimeout(render,400);
+  setTimeout(render,1200);
+  form.addEventListener('submit',async e=>{
+    e.preventDefault(); msg.textContent=''; submit.disabled=true; submit.textContent='Оформлюємо…';
+    const fd=new FormData(form);
+    const payload=Object.fromEntries(fd.entries()); payload.items=store.getCart().map(x=>({sku:x.sku,qty:x.qty}));
+    try{
+      const r=await fetch(store.API_BASE+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const j=await r.json();
+      if(!r.ok) throw new Error(j.error||'order_failed');
+      store.saveCart([]);
+      itemsHost.innerHTML='<div class="order-success"><p class="eyebrow">Готово</p><h2>Замовлення №'+j.order_id+' прийнято</h2><p>Ми зв’яжемося з вами для підтвердження.</p></div>';
+      form.reset(); form.querySelectorAll('input,textarea,button').forEach(el=>el.disabled=true);
+    }catch(e){
+      msg.textContent='Не вдалося оформити замовлення. Спробуйте ще раз або зв’яжіться з нами.';
+      submit.disabled=false; submit.textContent='Підтвердити замовлення';
+    }
+  });
+});
+</script></body></html>
