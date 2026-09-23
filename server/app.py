@@ -1,4 +1,4 @@
-import os, json, sqlite3, hmac, hashlib, time, urllib.request
+import os, json, sqlite3, hmac, hashlib, time, urllib.request, urllib.parse
 from pathlib import Path
 from urllib.parse import parse_qs
 
