@@ -1,0 +1,22 @@
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MaGelle Admin</title><link rel="stylesheet" href="/admin.css"></head><body>
+<div id="login" class="login-screen"><form id="login-form" class="login-card"><div class="brand">MaGelle <span>ADMIN</span></div><h1>Вхід</h1><input id="password" type="password" placeholder="Пароль" autocomplete="current-password" required><button>Увійти</button><p id="login-error"></p></form></div>
+<div id="app" class="app hidden">
+<aside><div class="brand">MaGelle <span>ADMIN</span></div><nav><button class="nav-btn active" data-tab="products">Товари</button><button class="nav-btn" data-tab="orders">Замовлення</button></nav><button id="logout" class="logout">Вийти</button></aside>
+<main>
+<header><div><small>MaGelle</small><h1 id="page-title">Товари</h1></div><div id="stats" class="stats"></div></header>
+<section id="products-tab" class="tab"><div class="toolbar"><input id="product-search" type="search" placeholder="Пошук SKU / назва / колір"><select id="status-filter"><option value="">Усі статуси</option><option value="hidden">Приховано</option><option value="stock">В наявності</option><option value="preorder">Під замовлення</option></select></div><div id="products" class="products"></div></section>
+<section id="orders-tab" class="tab hidden"><div id="orders" class="orders"></div></section>
+</main></div>
+<dialog id="editor"><form method="dialog" id="editor-form"><div class="dialog-head"><div><small id="edit-sku"></small><h2>Редагування товару</h2></div><button value="cancel" class="x">×</button></div>
+<div class="form-grid">
+<label class="span2">Назва<input id="edit-title"></label>
+<label>Ціна, грн<input id="edit-price" type="number" min="0"></label>
+<label>Стара ціна<input id="edit-old-price" type="number" min="0"></label>
+<label>Статус<select id="edit-status"><option value="hidden">Приховано</option><option value="stock">В наявності</option><option value="preorder">Під замовлення</option></select></label>
+<label>Строк, днів<input id="edit-lead" type="number" min="0"></label>
+<label class="span2">Габарити<input id="edit-dimensions"></label>
+<label class="span2">Склад<textarea id="edit-composition" rows="3"></textarea></label>
+<label class="span2">Опис<textarea id="edit-description" rows="5"></textarea></label>
+<label class="span2">Фото URL — по одному в рядку<textarea id="edit-photos" rows="6"></textarea></label>
+</div><div class="dialog-actions"><button value="cancel" class="secondary">Скасувати</button><button id="save-product" value="default">Зберегти</button></div></form></dialog>
+<script src="/admin.js"></script></body></html>
