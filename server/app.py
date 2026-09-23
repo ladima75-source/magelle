@@ -48,6 +48,11 @@ def init_db():
               p.get("price_uah"),p.get("old_price_uah"),p.get("status","hidden"),p.get("lead_time_days"),
               json.dumps(p.get("photo_urls",[]),ensure_ascii=False),p.get("sort_order",0)))
         con.commit()
+    # Initial commercial set confirmed for website launch.
+    initial_commercial=("MG-OF-VYR-MLK","MG-OF-DEL-CHO","MG-AS-DEL-CHO")
+    q="UPDATE products SET status='stock', updated_at=CURRENT_TIMESTAMP WHERE sku IN (?,?,?) AND price_uah IS NOT NULL AND status='hidden'"
+    con.execute(q, initial_commercial)
+    con.commit()
     con.close()
 
 init_db()
