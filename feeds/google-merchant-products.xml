@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>MaGelle — Google Merchant Center</title>
+    <link>https://magelle.com.ua/</link>
+    <description>MaGelle product feed for Google Merchant Center and AI shopping surfaces.</description>
+    <item>
+      <g:id>MG-AS-DEL-CHO</g:id>
+      <title>MaGelle Architectural Step — Делікатний S, Шоколад</title>
+      <description>Інтер'єрна композиція із сухоцвітів і стабілізованих рослин у дизайнерській вазі MaGelle. Приблизний розмір 45×24×20 см, висота вази 12 см. Ключові матеріали: протея, головатень, нігелла, евкаліпт і корілус. Не потребує поливу.</description>
+      <link>https://magelle.com.ua/architectural-step-delikatnyi-shokolad.html?utm_source=google&amp;utm_medium=free_listings&amp;utm_campaign=magelle_ai_commerce</link>
+      <g:image_link>https://drive.google.com/thumbnail?id=1P6t08BOG5VqOeI9hhcQ0RrJzs06STsX8&amp;sz=w1600</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>1700 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:product_type>Інтер'єрний декор &gt; Композиції із сухоцвітів</g:product_type>
+      <g:color>Шоколад</g:color>
+      <g:size>S</g:size>
+    </item>
+    <item>
+      <g:id>MG-OF-DEL-CHO</g:id>
+      <title>MaGelle Organic Flare — Делікатний S, Шоколад</title>
+      <description>Інтер'єрна композиція із сухоцвітів і стабілізованих рослин у дизайнерській вазі MaGelle. Приблизний розмір 45×45×30 см, висота вази 17 см. Ключові матеріали: гортензія, міскантус, просо, сафлор, головатень, нігелла, гіпсофіла та коробочки лотоса. Не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-delikatnyi-shokolad.html?utm_source=google&amp;utm_medium=free_listings&amp;utm_campaign=magelle_ai_commerce</link>
+      <g:image_link>https://drive.google.com/thumbnail?id=1yualdTQFowIzxZPf0LIGpK2NNsN8I72b&amp;sz=w1600</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:product_type>Інтер'єрний декор &gt; Композиції із сухоцвітів</g:product_type>
+      <g:color>Шоколад</g:color>
+      <g:size>S</g:size>
+    </item>
+    <item>
+      <g:id>MG-OF-VYR-MLK</g:id>
+      <title>MaGelle Organic Flare — Виразний M, Молочний</title>
+      <description>Інтер'єрна композиція із сухоцвітів і стабілізованих рослин у дизайнерській вазі MaGelle. Приблизний розмір 48×33×33 см, висота вази 21 см. Ключові матеріали: гортензія, міскантус і льон. Не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-vyraznyi-molochnyi.html?utm_source=google&amp;utm_medium=free_listings&amp;utm_campaign=magelle_ai_commerce</link>
+      <g:image_link>https://drive.google.com/thumbnail?id=1iMPVYqOeReP-vWnoS7AEaV1-owVuB5ZZ&amp;sz=w1600</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>4200 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:product_type>Інтер'єрний декор &gt; Композиції із сухоцвітів</g:product_type>
+      <g:color>Молочний</g:color>
+      <g:size>M</g:size>
+    </item>
+  </channel>
+</rss>
