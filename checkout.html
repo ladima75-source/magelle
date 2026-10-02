@@ -1,4 +1,4 @@
-<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Оформлення замовлення — MaGelle</title><meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="/styles.css?v=1.4"><script src="/app.js?v=1.4" defer></script></head><body>
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Оформлення замовлення — MaGelle</title><meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="/styles.css?v=1.5"><script src="/app.js?v=1.5" defer></script></head><body>
 <header class="site-header"><div class="shell header-inner"><a class="brand" href="/"><strong>MaGelle</strong><small>краса в деталях</small></a><button class="menu-button" type="button" aria-controls="nav" aria-expanded="false">Меню</button><nav class="site-nav" id="nav"><a href="/catalog.html">Каталог</a><a href="/#about">Про бренд</a><a href="/#delivery">Доставка</a><a href="/#contact">Контакти</a></nav><div class="header-actions"><button class="icon-btn cart-button">▢<span id="cart-count">0</span></button></div></div></header>
 <main class="checkout-page"><div class="shell"><div class="breadcrumbs"><a href="/">Головна</a><span>›</span><a href="/catalog.html">Каталог</a><span>›</span><b>Оформлення</b></div>
 <div class="checkout-layout">
@@ -9,6 +9,7 @@
 <label>Email<input name="email" type="email" autocomplete="email"></label>
 <label>Доставка<textarea name="delivery" rows="3" placeholder="Місто, відділення / адреса"></textarea></label>
 <label>Коментар<textarea name="comment" rows="3"></textarea></label>
+<label class="consent-line"><input type="checkbox" required><span>Погоджуюсь з <a href="/privacy.html" target="_blank" rel="noopener">політикою конфіденційності</a> та обробкою даних для оформлення замовлення.</span></label>
 <button class="btn dark wide" id="submit-order" type="submit">Підтвердити замовлення</button>
 <p class="checkout-note">Після оформлення ми зв’яжемося для підтвердження деталей, оплати та доставки.</p>
 <p id="checkout-message" class="checkout-message"></p>
@@ -22,8 +23,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const store = await waitStore();
   if(!store) return;
   const itemsHost=document.getElementById('checkout-items'), form=document.getElementById('checkout-form'), msg=document.getElementById('checkout-message'), submit=document.getElementById('submit-order');
-  const cart=store.getCart();
-  const render=()=>{
+  const render=()=>{ const cart=store.getCart();
     const products=store.getProducts();
     if(!cart.length){ itemsHost.innerHTML='<p>Кошик порожній.</p><a class="text-link" href="/catalog.html">До каталогу →</a>'; submit.disabled=true; return; }
     let total=0, unavailable=false;
@@ -31,8 +31,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     submit.disabled=unavailable;
     if(unavailable) msg.textContent='У кошику є позиція, яка зараз недоступна. Видаліть її з кошика.';
   };
-  setTimeout(render,400);
-  setTimeout(render,1200);
+  setTimeout(render,250);
+  setTimeout(render,900);
+  document.addEventListener('magelle:cart-change',render);
   form.addEventListener('submit',async e=>{
     e.preventDefault(); msg.textContent=''; submit.disabled=true; submit.textContent='Оформлюємо…';
     const fd=new FormData(form);
@@ -45,7 +46,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       itemsHost.innerHTML='<div class="order-success"><p class="eyebrow">Готово</p><h2>Замовлення №'+j.order_id+' прийнято</h2><p>Ми зв’яжемося з вами для підтвердження.</p></div>';
       form.reset(); form.querySelectorAll('input,textarea,button').forEach(el=>el.disabled=true);
     }catch(e){
-      msg.textContent='Не вдалося оформити замовлення. Спробуйте ще раз або зв’яжіться з нами.';
+      const messages={
+        customer_name_required:'Вкажіть ім’я.',
+        phone_required:'Вкажіть номер телефону.',
+        empty_order:'Кошик порожній.',
+        unavailable_product:'Одна з позицій уже недоступна. Оновіть кошик.',
+        invalid_quantity:'Некоректна кількість товару.'
+      };
+      msg.textContent=messages[e.message]||'Не вдалося оформити замовлення. Спробуйте ще раз або зв’яжіться з нами.';
       submit.disabled=false; submit.textContent='Підтвердити замовлення';
     }
   });
