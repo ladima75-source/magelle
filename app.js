@@ -149,8 +149,8 @@
   }
 
   function skuFromPdp() {
-    const skuLabel = [...document.querySelectorAll('.sku-identity>div')].find(x => x.querySelector('span')?.textContent.trim().toUpperCase() === 'SKU');
-    return skuLabel?.querySelector('strong')?.textContent.trim() || '';
+    const values = [...document.querySelectorAll('.sku-identity strong')];
+    return values.map(x => x.textContent.trim()).find(x => /^MG-[A-Z0-9-]+$/.test(x)) || '';
   }
 
   function applyProductData(products) {
