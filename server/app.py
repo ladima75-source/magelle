@@ -48,11 +48,6 @@ def init_db():
               p.get("price_uah"),p.get("old_price_uah"),p.get("status","hidden"),p.get("lead_time_days"),
               json.dumps(p.get("photo_urls",[]),ensure_ascii=False),p.get("sort_order",0)))
         con.commit()
-    # Initial commercial set confirmed for website launch.
-    initial_commercial=("MG-OF-VYR-MLK","MG-OF-DEL-CHO","MG-AS-DEL-CHO")
-    q="UPDATE products SET status='stock', updated_at=CURRENT_TIMESTAMP WHERE sku IN (?,?,?) AND price_uah IS NOT NULL AND status='hidden'"
-    con.execute(q, initial_commercial)
-    con.commit()
     con.close()
 
 init_db()
@@ -131,14 +126,21 @@ def application(environ,start_response):
         start_response("200 OK",headers(cors(environ))); return [jdump([product_dict(x) for x in rows])]
       if path=="/api/orders" and method=="POST":
         data=body_json(environ); items=data.get("items") or []
+        customer_name=str(data.get("customer_name") or "").strip()
+        phone=str(data.get("phone") or "").strip()
+        if not customer_name: raise ValueError("customer_name_required")
+        if not phone: raise ValueError("phone_required")
         if not items: raise ValueError("empty_order")
+        if len(items)>20: raise ValueError("too_many_items")
         con=db(); total=0; clean=[]
         for it in items:
             p=con.execute("SELECT sku,price_uah,status FROM products WHERE sku=?",(it.get("sku"),)).fetchone()
-            if not p or p["status"]=="hidden" or p["price_uah"] is None: raise ValueError("unavailable_product")
-            qty=max(1,int(it.get("qty",1))); price=int(p["price_uah"]); total+=qty*price; clean.append((p["sku"],qty,price))
+            if not p or p["status"] not in ("stock","preorder") or p["price_uah"] is None: raise ValueError("unavailable_product")
+            qty=int(it.get("qty",1))
+            if qty<1 or qty>20: raise ValueError("invalid_quantity")
+            price=int(p["price_uah"]); total+=qty*price; clean.append((p["sku"],qty,price))
         cur=con.execute("""INSERT INTO orders(customer_name,phone,email,delivery,comment,total_uah)
-          VALUES(?,?,?,?,?,?)""",(data.get("customer_name",""),data.get("phone",""),data.get("email",""),data.get("delivery",""),data.get("comment",""),total))
+          VALUES(?,?,?,?,?,?)""",(customer_name,phone,str(data.get("email") or "").strip(),str(data.get("delivery") or "").strip(),str(data.get("comment") or "").strip(),total))
         oid=cur.lastrowid
         con.executemany("INSERT INTO order_items(order_id,sku,qty,price_uah) VALUES(?,?,?,?)",[(oid,*x) for x in clean])
         con.commit(); con.close(); notify_telegram(oid)
