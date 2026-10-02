@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
+
+User-agent: Claude-User
+Allow: /
+
 Sitemap: https://magelle.com.ua/sitemap.xml
