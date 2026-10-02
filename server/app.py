@@ -8,6 +8,11 @@ SECRET=os.getenv("MAGELLE_SESSION_SECRET","change-me")
 ADMIN_PASSWORD=os.getenv("MAGELLE_ADMIN_PASSWORD","")
 ALLOWED_ORIGIN=os.getenv("MAGELLE_ORIGIN","https://magelle.com.ua")
 STATIC=BASE/"static"
+MAIN_IMAGE_IDS={
+  "MG-AS-DEL-CHO":"1P6t08BOG5VqOeI9hhcQ0RrJzs06STsX8",
+  "MG-OF-DEL-CHO":"1yualdTQFowIzxZPf0LIGpK2NNsN8I72b",
+  "MG-OF-VYR-MLK":"1iMPVYqOeReP-vWnoS7AEaV1-owVuB5ZZ"
+}
 
 def db():
     DB.parent.mkdir(parents=True,exist_ok=True)
@@ -112,6 +117,17 @@ def application(environ,start_response):
         start_response("200 OK",headers(ctype="application/javascript; charset=utf-8")); return [(STATIC/"admin.js").read_bytes()]
       if path=="/api/health":
         start_response("200 OK",headers(cors(environ))); return [jdump({"ok":True,"service":"magelle-admin","version":"0.1.0"})]
+      if path.startswith("/media/") and path.endswith(".jpg") and method=="GET":
+        sku=path.rsplit("/",1)[-1][:-4]
+        fid=MAIN_IMAGE_IDS.get(sku)
+        if not fid:
+            start_response("404 Not Found",headers()); return [jdump({"ok":False,"error":"not_found"})]
+        req=urllib.request.Request(f"https://drive.google.com/thumbnail?id={fid}&sz=w1600",headers={"User-Agent":"Mozilla/5.0"})
+        with urllib.request.urlopen(req,timeout=10) as resp:
+            data=resp.read()
+            ctype=resp.headers.get("Content-Type","image/jpeg")
+        start_response("200 OK",[("Content-Type",ctype),("Cache-Control","public, max-age=86400, stale-while-revalidate=604800"),("X-Content-Type-Options","nosniff")])
+        return [data]
       if path=="/api/admin/login" and method=="POST":
         data=body_json(environ)
         if not ADMIN_PASSWORD or not hmac.compare_digest(str(data.get("password","")),ADMIN_PASSWORD):
