@@ -97,6 +97,15 @@
     const n = getCart().reduce((s,x) => s + Number(x.qty || 0), 0);
     document.querySelectorAll('#cart-count').forEach(el => el.textContent = String(n));
   };
+  const setQty = (sku, qty) => {
+    const cart = getCart();
+    const item = cart.find(x => x.sku === sku);
+    if (!item) return;
+    if (qty <= 0) saveCart(cart.filter(x => x.sku !== sku));
+    else { item.qty = Math.min(20, Math.max(1, Number(qty) || 1)); saveCart(cart); }
+    renderCart();
+    document.dispatchEvent(new CustomEvent('magelle:cart-change'));
+  };
   const money = v => new Intl.NumberFormat('uk-UA').format(Number(v || 0)) + ' грн';
 
   let activeProducts = new Map();
@@ -127,12 +136,15 @@
       const p = activeProducts.get(item.sku);
       if (!p) return '<div class="cart-line"><div><b>'+item.sku+'</b><small>Тимчасово недоступно</small></div><button type="button" data-cart-remove="'+item.sku+'">×</button></div>';
       total += Number(p.price_uah || 0) * item.qty;
-      return '<div class="cart-line"><div><b>'+p.title_ua+'</b><small>'+item.sku+' · '+item.qty+' × '+money(p.price_uah)+'</small></div><button type="button" data-cart-remove="'+item.sku+'">×</button></div>';
+      return '<div class="cart-line"><div class="cart-line-main"><b>'+p.title_ua+'</b><small>'+item.sku+' · '+money(p.price_uah)+'</small><div class="cart-qty"><button type="button" data-cart-dec="'+item.sku+'" aria-label="Зменшити кількість">−</button><span>'+item.qty+'</span><button type="button" data-cart-inc="'+item.sku+'" aria-label="Збільшити кількість">+</button></div></div><div class="cart-line-side"><b>'+money(Number(p.price_uah||0)*item.qty)+'</b><button type="button" data-cart-remove="'+item.sku+'" aria-label="Видалити">×</button></div></div>';
     }).join('');
     host.innerHTML = rows + '<div class="cart-total"><span>Разом</span><b>'+money(total)+'</b></div><a class="btn dark wide cart-checkout" href="/checkout.html">Оформити замовлення</a>';
-    host.querySelectorAll('[data-cart-remove]').forEach(btn => btn.onclick = () => {
-      saveCart(getCart().filter(x => x.sku !== btn.dataset.cartRemove));
-      renderCart();
+    host.querySelectorAll('[data-cart-remove]').forEach(btn => btn.onclick = () => setQty(btn.dataset.cartRemove, 0));
+    host.querySelectorAll('[data-cart-dec]').forEach(btn => btn.onclick = () => {
+      const item = getCart().find(x => x.sku === btn.dataset.cartDec); if (item) setQty(item.sku, item.qty - 1);
+    });
+    host.querySelectorAll('[data-cart-inc]').forEach(btn => btn.onclick = () => {
+      const item = getCart().find(x => x.sku === btn.dataset.cartInc); if (item) setQty(item.sku, item.qty + 1);
     });
   }
 
@@ -193,7 +205,7 @@
     } catch (_) {}
   }
 
-  window.MaGelleStore = { getCart, saveCart, money, API_BASE, getProducts: () => activeProducts };
+  window.MaGelleStore = { getCart, saveCart, setQty, money, API_BASE, getProducts: () => activeProducts };
   updateCartCount();
   renderCart();
   loadProducts();
