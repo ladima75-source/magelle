@@ -55,3 +55,7 @@
 .unavailable-redirect h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(48px,7vw,82px);font-weight:500;margin:0 0 16px}
 .unavailable-redirect p{color:#756a5f;margin:0 0 24px}
 @media(max-width:760px){.collection-grid-series{grid-template-columns:1fr}.collection-photo-card{min-height:360px}.editorial-photo,.editorial-photo img{min-height:420px}}
+
+.family-hero-media{padding:0 0 18px}
+.family-hero-media img{display:block;width:100%;height:min(58vw,560px);object-fit:cover;background:#d8cabb}
+@media(max-width:640px){.family-hero-media img{height:420px}}
