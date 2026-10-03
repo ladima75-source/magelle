@@ -77,3 +77,19 @@
   .paired-grid>.sku-card>.product-meta h3{min-height:auto}
   .paired-grid>.sku-card>.product-meta>b{padding-top:0}
 }
+
+/* Catalog pair geometry v2: keep both cards exactly the same content width */
+.paired-grid>.sku-card{position:relative}
+.paired-grid>.sku-card:nth-child(2n){padding-left:0;border-left:0}
+.paired-grid>.sku-card:nth-child(2n)::before{
+  content:"";
+  position:absolute;
+  left:-9px;
+  top:0;
+  bottom:0;
+  width:1px;
+  background:#ddd1c2;
+}
+@media(max-width:640px){
+  .paired-grid>.sku-card:nth-child(2n)::before{display:none}
+}
