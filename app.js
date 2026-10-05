@@ -1,4 +1,16 @@
 (() => {
+  const measurementId = "G-1RM1S55BZW";
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = window.gtag || function gtag(){ window.dataLayer.push(arguments); };
+  window.gtag("js", new Date());
+  window.gtag("config", measurementId);
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(measurementId);
+  document.head.appendChild(script);
+})();
+
+(() => {
   const API_BASE = 'https://api.magelle.com.ua';
   const CART_KEY = 'magelle_cart_v1';
   const body = document.body;
