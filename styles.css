@@ -60,7 +60,10 @@
 .family-hero-media img{display:block;width:100%;height:min(58vw,560px);object-fit:cover;background:#d8cabb}
 @media(max-width:640px){.family-hero-media img{height:420px}}
 
-.media-awaiting{display:block;aspect-ratio:4/5;background:linear-gradient(145deg,#e8dfd3 0%,#d9cdbc 52%,#eee6dc 100%);border:1px solid rgba(61,51,42,.06)}
+.media-awaiting{display:flex;flex-direction:column;align-items:center;justify-content:center;aspect-ratio:4/5;background:linear-gradient(145deg,#e8dfd3 0%,#d9cdbc 52%,#eee6dc 100%);border:1px solid rgba(61,51,42,.06);text-align:center}
+.media-awaiting::before{content:"";display:block;width:46px;height:1px;background:#ad9d89;margin-bottom:17px}
+.photo-awaiting-label{font-family:Georgia,"Times New Roman",serif;font-size:clamp(15px,1.6vw,23px);font-style:italic;font-weight:400;line-height:1.35;color:#6d6053;padding:0 12px}
+.api-price.price-pending{color:#887d70;font-style:italic}
 
 /* Catalog row alignment */
 .paired-grid{align-items:stretch}

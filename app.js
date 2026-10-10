@@ -168,13 +168,27 @@
   function applyProductData(products) {
     activeProducts = new Map(products.map(p => [p.sku,p]));
     document.querySelectorAll('.sku-card').forEach(card => {
-      const sku = card.querySelector('.sku-code')?.textContent.trim();
+      // SKU is a data attribute, never a visible technical label.
+      const sku = card.dataset.sku || card.dataset.name?.match(/MG-[A-Z0-9-]+/)?.[0];
       const p = activeProducts.get(sku);
-      if (!p) return;
-      const price = card.querySelector('.product-meta>b');
-      if (price && p.price_uah != null) price.textContent = money(p.price_uah);
-      card.classList.add('api-active-product');
-      card.dataset.status = p.status;
+      const meta = card.querySelector('.product-meta');
+      if (!meta) return;
+      let price = meta.querySelector(':scope > b');
+      if (!price) {
+        price = document.createElement('b');
+        price.className = 'api-price';
+        meta.append(price);
+      }
+      if (p && Number.isFinite(Number(p.price_uah)) && Number(p.price_uah) > 0) {
+        price.textContent = money(p.price_uah);
+        price.classList.remove('price-pending');
+        card.classList.add('api-active-product');
+        card.dataset.status = p.status || '';
+      } else {
+        price.textContent = 'Ціну уточнюємо';
+        price.classList.add('price-pending');
+        card.classList.remove('api-active-product');
+      }
     });
 
     const sku = skuFromPdp();
@@ -182,10 +196,20 @@
       const p = activeProducts.get(sku);
       const info = document.querySelector('.sku-pdp');
       if (p && info) {
-        const price = info.querySelector('.price-placeholder');
-        if (price && p.price_uah != null) {
+        let price = info.querySelector('.price-placeholder');
+        if (!price) {
+          // All PDPs need a visible price before their purchase button.
+          price = document.createElement('div');
+          price.className = 'price-placeholder';
+          const anchor = info.querySelector('.sku-identity') || info.querySelector('.product-subtitle') || info.querySelector('h1');
+          anchor?.after(price);
+        }
+        if (p.price_uah != null && Number.isFinite(Number(p.price_uah)) && Number(p.price_uah) > 0) {
           price.textContent = money(p.price_uah);
           price.classList.add('real-price');
+        } else {
+          price.textContent = 'Ціну уточнюємо';
+          price.classList.remove('real-price');
         }
         const h1 = info.querySelector('h1');
         if (h1 && p.title_ua) h1.textContent = "Інтер'єрна композиція " + p.title_ua;
