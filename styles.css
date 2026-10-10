@@ -162,3 +162,29 @@
   .sibling-links>div{gap:7px}
   .mini-benefits{font-size:12px;line-height:1.45;gap:12px}
 }
+
+/* Seller and legal information */
+.contact-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(340px,.9fr);gap:64px;align-items:start}
+.contact-intro>p:not(.eyebrow){color:#6e6255;max-width:620px}
+.contact-intro .btn{margin-top:18px}
+.contact-details{border-top:1px solid #bfae9b}
+.contact-details>div{display:grid;grid-template-columns:145px 1fr;gap:18px;padding:15px 0;border-bottom:1px solid #c8b9a7}
+.contact-details span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#776b5d}
+.contact-details a,.contact-details strong,.contact-details p{margin:0;font-size:13px;font-weight:500;line-height:1.5}
+.contact-details>.text-link{display:inline-block;margin-top:18px}
+.legal-section{padding-top:24px}
+.legal-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.legal-card{background:#f7f1e8;border:1px solid #d7cabb;padding:28px}
+.legal-card dl{margin:0}
+.legal-card dt{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#807466;margin-top:16px}
+.legal-card dt:first-child{margin-top:0}
+.legal-card dd{margin:5px 0 0;font-size:14px;line-height:1.55}
+.legal-copy{max-width:820px}
+.legal-copy h2{font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:500;margin:30px 0 10px}
+.legal-copy h2:first-child{margin-top:0}
+.legal-copy p{color:#675e54;line-height:1.75}
+.footer-grid a[href^="tel:"],.footer-grid a[href^="mailto:"]{color:#e7dfd4}
+@media(max-width:800px){
+  .contact-layout,.legal-grid{grid-template-columns:1fr}
+  .contact-details>div{grid-template-columns:1fr;gap:5px}
+}
