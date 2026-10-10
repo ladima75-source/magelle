@@ -32,8 +32,8 @@
 .cart-line div{display:grid;gap:4px}.cart-line small{color:#817568;font-size:10px}.cart-line button{border:0;background:transparent;font-size:22px;cursor:pointer}
 .cart-total{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-size:16px}.cart-checkout{display:flex;align-items:center;justify-content:center;text-decoration:none}
 .api-availability{margin:4px 0 12px;color:#655b50;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
-.api-active-product[data-status="stock"] .product-meta>b::after{content:" · в наявності";font-size:9px;font-weight:400;color:#75695d}
-.api-active-product[data-status="preorder"] .product-meta>b::after{content:" · під замовлення";font-size:9px;font-weight:400;color:#75695d}
+.api-active-product[data-status="stock"] .product-meta>b::after{content:"в наявності"}
+.api-active-product[data-status="preorder"] .product-meta>b::after{content:"під замовлення"}
 .checkout-page{padding-bottom:72px}.checkout-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:48px;align-items:start}.checkout-layout h1{font-family:Georgia,"Times New Roman",serif;font-size:48px;font-weight:500;margin:8px 0 24px}.checkout-items{border-top:1px solid #cfc3b3}.checkout-line{display:flex;justify-content:space-between;gap:18px;padding:18px 0;border-bottom:1px solid #d8ccbc}.checkout-line div{display:grid;gap:4px}.checkout-line small{color:#817568}.checkout-total{display:flex;justify-content:space-between;padding:22px 0;font-size:18px}.checkout-form-card{background:#fffdfa;border:1px solid #d8ccbc;padding:24px;position:sticky;top:96px}.checkout-form-card form{display:grid;gap:14px}.checkout-form-card label{display:grid;gap:6px;font-size:11px;color:#75695d}.checkout-form-card input,.checkout-form-card textarea{width:100%;border:1px solid #d8ccbc;background:#fff;padding:12px}.checkout-note{font-size:10px;line-height:1.5;color:#817568}.checkout-message{font-size:11px;color:#8c3a2d}.order-success{padding:28px 0}.order-success h2{font-family:Georgia,"Times New Roman",serif;font-size:34px;font-weight:500}
 @media(max-width:800px){.checkout-layout{grid-template-columns:1fr}.checkout-form-card{position:static}.checkout-layout h1{font-size:38px}}
 
@@ -74,11 +74,32 @@
 .paired-grid>.sku-card>.product-meta>div{min-width:0}
 .paired-grid>.sku-card>.product-meta small{display:block;min-height:18px}
 .paired-grid>.sku-card>.product-meta h3{line-height:1.2;min-height:48px;margin-top:4px}
-.paired-grid>.sku-card>.product-meta>b{align-self:start;padding-top:22px}
+.paired-grid>.sku-card>.product-meta>b{
+  align-self:start;
+  padding-top:19px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:20px;
+  font-weight:600;
+  letter-spacing:-.015em;
+  line-height:1.2;
+  color:#302b25;
+  text-align:right;
+}
+.paired-grid>.sku-card.api-active-product>.product-meta>b::after{
+  display:block;
+  margin-top:5px;
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:12px;
+  font-weight:400;
+  letter-spacing:.015em;
+  line-height:1.35;
+  color:#75695d;
+  text-transform:none;
+}
 @media(max-width:640px){
   .paired-grid>.sku-card>.product-meta{grid-template-columns:1fr;min-height:auto}
   .paired-grid>.sku-card>.product-meta h3{min-height:auto}
-  .paired-grid>.sku-card>.product-meta>b{padding-top:0}
+  .paired-grid>.sku-card>.product-meta>b{padding-top:0;text-align:left;font-size:19px}
 }
 
 /* Catalog pair geometry v2: keep both cards exactly the same content width */
