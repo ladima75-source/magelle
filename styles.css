@@ -202,3 +202,25 @@
   .header-inner{height:64px}
   .site-nav{top:64px}
 }
+
+
+/* Pilot product variants — Organic Flare «Мед» */
+.pilot-variant-picker{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.pilot-color{display:flex;align-items:center;gap:6px;border:1px solid #cdbfae;background:transparent;padding:7px 9px;font-size:10px;cursor:pointer}
+.pilot-color.active{border-color:#1b1a17;background:#eee7dc}
+.pilot-selected-color{display:block;margin-top:5px;color:#887b6d;font-size:10px}
+.pilot-hero-media{width:100%;height:100%;display:grid;place-items:center}
+.pilot-hero-media .pilot-card-placeholder{width:100%;height:100%;display:grid;place-items:center;background:#e7ddcf;color:#5f5549;text-align:center}
+.pilot-card-placeholder strong{font-family:Georgia,serif;font-size:28px;font-weight:500}
+.pilot-card-placeholder small{display:block;margin-top:8px;text-transform:uppercase;letter-spacing:.1em;font-size:9px}
+.pilot-pdp-media{position:relative}
+.pilot-photo-placeholder{position:absolute;inset:0;display:grid;place-content:center;text-align:center;background:#e7ddcf;color:#4f473e}
+.pilot-photo-placeholder[hidden]{display:none}
+.pilot-photo-placeholder span{font-family:Georgia,serif;font-size:42px}
+.pilot-photo-placeholder small{margin-top:8px;text-transform:uppercase;letter-spacing:.14em;font-size:10px;color:#7a6f62}
+.pilot-pdp-colors{margin:18px 0 4px}
+@media(max-width:640px){
+  .pilot-variant-picker{gap:6px}
+  .pilot-color{flex:1 1 calc(50% - 6px);justify-content:center}
+  .pilot-photo-placeholder span{font-size:34px}
+}
