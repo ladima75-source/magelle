@@ -205,12 +205,20 @@
 
 
 /* Pilot product variants — Organic Flare «Мед» */
-.pilot-variant-picker{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
-.pilot-color{display:flex;align-items:center;gap:6px;border:1px solid #cdbfae;background:transparent;padding:7px 9px;font-size:10px;cursor:pointer}
+.pilot-variant-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px;width:100%}
+.pilot-color{width:100%;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #cdbfae;background:transparent;padding:8px 6px;font-size:10px;cursor:pointer;transition:border-color .18s ease,background .18s ease,transform .18s ease}
+.pilot-color:hover{border-color:#8f816f}
 .pilot-color.active{border-color:#1b1a17;background:#eee7dc}
+.pilot-color:active{transform:translateY(1px)}
 .pilot-selected-color{display:block;margin-top:5px;color:#887b6d;font-size:10px}
-.pilot-hero-media{width:100%;height:100%;display:grid;place-items:center}
-.pilot-hero-media .pilot-card-placeholder{width:100%;height:100%;display:grid;place-items:center;background:#e7ddcf;color:#5f5549;text-align:center}
+.pilot-hero-media{width:100%;height:100%;display:block;perspective:1200px;background:#e7ddcf}
+.pilot-media-stage{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .42s cubic-bezier(.2,.72,.2,1)}
+.pilot-media-stage.is-flipped{transform:rotateY(180deg)}
+.pilot-media-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.pilot-media-front{transform:rotateY(0deg);background:#e7ddcf}
+.pilot-media-front img{width:100%;height:100%;object-fit:cover;display:block}
+.pilot-media-back{transform:rotateY(180deg)}
+.pilot-card-placeholder{width:100%;height:100%;display:grid;place-items:center;background:#e7ddcf;color:#5f5549;text-align:center}
 .pilot-card-placeholder strong{font-family:Georgia,serif;font-size:28px;font-weight:500}
 .pilot-card-placeholder small{display:block;margin-top:8px;text-transform:uppercase;letter-spacing:.1em;font-size:9px}
 .pilot-pdp-media{position:relative}
@@ -220,7 +228,7 @@
 .pilot-photo-placeholder small{margin-top:8px;text-transform:uppercase;letter-spacing:.14em;font-size:10px;color:#7a6f62}
 .pilot-pdp-colors{margin:18px 0 4px}
 @media(max-width:640px){
-  .pilot-variant-picker{gap:6px}
-  .pilot-color{flex:1 1 calc(50% - 6px);justify-content:center}
+  .pilot-variant-picker{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .pilot-color{justify-content:center}
   .pilot-photo-placeholder span{font-size:34px}
 }
