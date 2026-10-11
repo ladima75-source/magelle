@@ -194,13 +194,11 @@
 
   function renderPilotCatalog(card, code, temporary=false) {
     const v=PILOT_VARIANTS[code] || PILOT_VARIANTS.GRA;
-    const media=card.querySelector('.pilot-hero-media');
+    const stage=card.querySelector('.pilot-media-stage');
+    const backLabel=card.querySelector('.pilot-media-back strong');
     const link=card.querySelector('.pilot-hero-link');
-    if (media) {
-      media.innerHTML = code==='GRA'
-        ? '<img src="'+PILOT_GRA_IMAGE+'" alt="Organic Flare «Мед» — Виразний — Графіт" loading="lazy">'
-        : '<div class="pilot-card-placeholder"><div><strong>'+v.label+'</strong><small>Фото готуємо</small></div></div>';
-    }
+    if (backLabel && code!=='GRA') backLabel.textContent=v.label;
+    if (stage) stage.classList.toggle('is-flipped',code!=='GRA');
     if (!temporary) {
       card.dataset.sku=v.sku;
       card.dataset.color=code;
