@@ -11,7 +11,8 @@ STATIC=BASE/"static"
 MAIN_IMAGE_IDS={
   "MG-AS-DEL-CHO":"1P6t08BOG5VqOeI9hhcQ0RrJzs06STsX8",
   "MG-OF-DEL-CHO":"1yualdTQFowIzxZPf0LIGpK2NNsN8I72b",
-  "MG-OF-VYR-MLK":"1iMPVYqOeReP-vWnoS7AEaV1-owVuB5ZZ"
+  "MG-OF-VYR-MLK":"1iMPVYqOeReP-vWnoS7AEaV1-owVuB5ZZ",
+  "MG-OF-VYR-SND":"19nfscVIyI4t-RxV0cLlxNX_4LAxBTnm9"
 }
 
 def db():
@@ -117,7 +118,7 @@ def application(environ,start_response):
         start_response("200 OK",headers(ctype="application/javascript; charset=utf-8")); return [(STATIC/"admin.js").read_bytes()]
       if path=="/api/health":
         start_response("200 OK",headers(cors(environ))); return [jdump({"ok":True,"service":"magelle-admin","version":"0.1.0"})]
-      if path.startswith("/media/") and (path.endswith(".jpg") or path.endswith(".png")) and method=="GET":
+      if path.startswith("/media/") and (path.endswith(".jpg") or path.endswith(".png") or path.endswith(".webp")) and method=="GET":
         sku=path.rsplit("/",1)[-1].rsplit(".",1)[0]
         fid=MAIN_IMAGE_IDS.get(sku)
         if not fid:
