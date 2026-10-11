@@ -188,3 +188,17 @@
   .contact-layout,.legal-grid{grid-template-columns:1fr}
   .contact-details>div{grid-template-columns:1fr;gap:5px}
 }
+
+/* Mobile sticky header v4 */
+@media(max-width:640px){
+  .site-header{
+    position:sticky;
+    top:0;
+    z-index:100;
+    background:#171715;
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+  .header-inner{height:64px}
+  .site-nav{top:64px}
+}
