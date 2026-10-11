@@ -232,3 +232,13 @@
   .pilot-color{justify-content:center}
   .pilot-photo-placeholder span{font-size:34px}
 }
+
+.design-gallery-shell{position:relative}
+.design-gallery-placeholder{position:absolute;inset:0;z-index:5;display:grid;place-content:center;text-align:center;background:#e7ddcf;color:#4f473e}
+.design-gallery-placeholder[hidden]{display:none}
+.design-gallery-placeholder span{font-family:Georgia,"Times New Roman",serif;font-size:42px;font-weight:500}
+.design-gallery-placeholder small{display:block;margin-top:8px;text-transform:uppercase;letter-spacing:.14em;font-size:10px;color:#7a6f62}
+.design-empty-photo{min-height:650px;background:#e7ddcf}
+.design-pdp-colors{margin:18px 0 4px}
+@media(max-width:980px){.design-empty-photo{min-height:520px}}
+@media(max-width:640px){.design-gallery-placeholder span{font-size:34px}.design-empty-photo{min-height:430px}}
