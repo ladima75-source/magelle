@@ -39,9 +39,14 @@ def init_db():
     CREATE TABLE IF NOT EXISTS order_items(
       id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, sku TEXT NOT NULL,
       qty INTEGER NOT NULL DEFAULT 1, price_uah INTEGER NOT NULL DEFAULT 0,
+      family TEXT, design TEXT, size TEXT, vase_color TEXT,
       FOREIGN KEY(order_id) REFERENCES orders(id)
     );
     """)
+    cols={row["name"] for row in con.execute("PRAGMA table_info(order_items)").fetchall()}
+    for name in ("family","design","size","vase_color"):
+        if name not in cols:
+            con.execute(f"ALTER TABLE order_items ADD COLUMN {name} TEXT")
     count=con.execute("SELECT COUNT(*) n FROM products").fetchone()["n"]
     if count==0:
         seed=json.loads((BASE/"seed.json").read_text("utf-8"))
@@ -151,15 +156,17 @@ def application(environ,start_response):
         if len(items)>20: raise ValueError("too_many_items")
         con=db(); total=0; clean=[]
         for it in items:
-            p=con.execute("SELECT sku,price_uah,status FROM products WHERE sku=?",(it.get("sku"),)).fetchone()
+            p=con.execute("SELECT sku,series,size_name,color,price_uah,status FROM products WHERE sku=?",(it.get("sku"),)).fetchone()
             if not p or p["status"] not in ("stock","preorder") or p["price_uah"] is None: raise ValueError("unavailable_product")
             qty=int(it.get("qty",1))
             if qty<1 or qty>20: raise ValueError("invalid_quantity")
-            price=int(p["price_uah"]); total+=qty*price; clean.append((p["sku"],qty,price))
+            price=int(p["price_uah"]); total+=qty*price
+            design="Мед" if p["sku"] in ("MG-OF-VYR-GRA","MG-OF-VYR-MLK","MG-OF-VYR-WHT","MG-OF-VYR-CHO") and str(it.get("design") or "")=="Мед" else ""
+            clean.append((p["sku"],qty,price,p["series"],design,p["size_name"],p["color"]))
         cur=con.execute("""INSERT INTO orders(customer_name,phone,email,delivery,comment,total_uah)
           VALUES(?,?,?,?,?,?)""",(customer_name,phone,str(data.get("email") or "").strip(),str(data.get("delivery") or "").strip(),str(data.get("comment") or "").strip(),total))
         oid=cur.lastrowid
-        con.executemany("INSERT INTO order_items(order_id,sku,qty,price_uah) VALUES(?,?,?,?)",[(oid,*x) for x in clean])
+        con.executemany("INSERT INTO order_items(order_id,sku,qty,price_uah,family,design,size,vase_color) VALUES(?,?,?,?,?,?,?,?)",[(oid,*x) for x in clean])
         con.commit(); con.close(); notify_telegram(oid)
         start_response("201 Created",headers(cors(environ))); return [jdump({"ok":True,"order_id":oid,"total_uah":total})]
       if path.startswith("/api/admin/"):
@@ -183,7 +190,7 @@ def application(environ,start_response):
             start_response("200 OK",headers(cors(environ))); return [jdump({"ok":True})]
         if path=="/api/admin/orders" and method=="GET":
             con=db(); orders=[dict(x) for x in con.execute("SELECT * FROM orders ORDER BY id DESC").fetchall()]
-            for o in orders:o["items"]=[dict(x) for x in con.execute("SELECT sku,qty,price_uah FROM order_items WHERE order_id=?",(o["id"],)).fetchall()]
+            for o in orders:o["items"]=[dict(x) for x in con.execute("SELECT sku,qty,price_uah,family,design,size,vase_color FROM order_items WHERE order_id=?",(o["id"],)).fetchall()]
             con.close(); start_response("200 OK",headers(cors(environ))); return [jdump(orders)]
         if path.startswith("/api/admin/orders/") and method=="PUT":
             oid=int(path.rsplit("/",1)[-1]); data=body_json(environ)
