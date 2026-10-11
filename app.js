@@ -14,6 +14,13 @@
   const API_BASE = 'https://api.magelle.com.ua';
   const CART_KEY = 'magelle_cart_v1';
   const body = document.body;
+  const PILOT_VARIANTS = {
+    GRA:{sku:'MG-OF-VYR-GRA',label:'Графіт',swatch:'gra'},
+    MLK:{sku:'MG-OF-VYR-MLK',label:'Молочний',swatch:'mlk'},
+    WHT:{sku:'MG-OF-VYR-WHT',label:'Білий',swatch:'wht'},
+    CHO:{sku:'MG-OF-VYR-CHO',label:'Шоколад',swatch:'cho'}
+  };
+  const PILOT_GRA_IMAGE = 'https://drive.google.com/thumbnail?id=1es3QEWbwENjx7vfbkkrPz7x2OadMpS00&sz=w1600';
 
   const menuButton = document.querySelector('.menu-button');
   if (menuButton) menuButton.addEventListener('click', () => {
@@ -122,16 +129,41 @@
 
   let activeProducts = new Map();
 
-  function addToCart(sku) {
+  function pilotMeta(info, sku) {
+    if (!info?.classList.contains('pilot-variant-pdp')) return {};
+    return {
+      family: info.dataset.family || 'Organic Flare',
+      design: info.dataset.design || 'Мед',
+      size: info.dataset.variantSize || 'Виразний',
+      vase_color: info.dataset.selectedColor || '',
+      sku
+    };
+  }
+
+  function addToCart(sku, meta={}) {
     const p = activeProducts.get(sku);
     if (!p || p.price_uah == null || !['stock','preorder'].includes(p.status)) return;
     const cart = getCart();
     const item = cart.find(x => x.sku === sku);
-    if (item) item.qty += 1;
-    else cart.push({sku, qty:1});
+    if (item) {
+      item.qty += 1;
+      Object.assign(item, meta);
+    } else cart.push({sku, qty:1, ...meta});
     saveCart(cart);
     renderCart();
     setCart(true);
+  }
+
+  function itemTitle(item, p) {
+    if (item.design) return (item.family || p?.series || '') + ' «' + item.design + '» — ' + (item.size || p?.size_name || '');
+    return p?.title_ua || item.sku;
+  }
+
+  function itemDetails(item) {
+    const parts=[];
+    if (item.vase_color) parts.push('Ваза: '+item.vase_color);
+    parts.push(item.sku);
+    return parts.join(' · ');
   }
 
   function renderCart() {
@@ -146,9 +178,9 @@
     let total = 0;
     const rows = cart.map(item => {
       const p = activeProducts.get(item.sku);
-      if (!p) return '<div class="cart-line"><div><b>'+item.sku+'</b><small>Тимчасово недоступно</small></div><button type="button" data-cart-remove="'+item.sku+'">×</button></div>';
+      if (!p) return '<div class="cart-line"><div><b>'+itemTitle(item,p)+'</b><small>'+itemDetails(item)+' · Тимчасово недоступно</small></div><button type="button" data-cart-remove="'+item.sku+'">×</button></div>';
       total += Number(p.price_uah || 0) * item.qty;
-      return '<div class="cart-line"><div class="cart-line-main"><b>'+p.title_ua+'</b><small>'+item.sku+' · '+money(p.price_uah)+'</small><div class="cart-qty"><button type="button" data-cart-dec="'+item.sku+'" aria-label="Зменшити кількість">−</button><span>'+item.qty+'</span><button type="button" data-cart-inc="'+item.sku+'" aria-label="Збільшити кількість">+</button></div></div><div class="cart-line-side"><b>'+money(Number(p.price_uah||0)*item.qty)+'</b><button type="button" data-cart-remove="'+item.sku+'" aria-label="Видалити">×</button></div></div>';
+      return '<div class="cart-line"><div class="cart-line-main"><b>'+itemTitle(item,p)+'</b><small>'+itemDetails(item)+' · '+money(p.price_uah)+'</small><div class="cart-qty"><button type="button" data-cart-dec="'+item.sku+'" aria-label="Зменшити кількість">−</button><span>'+item.qty+'</span><button type="button" data-cart-inc="'+item.sku+'" aria-label="Збільшити кількість">+</button></div></div><div class="cart-line-side"><b>'+money(Number(p.price_uah||0)*item.qty)+'</b><button type="button" data-cart-remove="'+item.sku+'" aria-label="Видалити">×</button></div></div>';
     }).join('');
     host.innerHTML = rows + '<div class="cart-total"><span>Разом</span><b>'+money(total)+'</b></div><a class="btn dark wide cart-checkout" href="/checkout.html">Оформити замовлення</a>';
     host.querySelectorAll('[data-cart-remove]').forEach(btn => btn.onclick = () => setQty(btn.dataset.cartRemove, 0));
@@ -160,75 +192,143 @@
     });
   }
 
+  function renderPilotCatalog(card, code, temporary=false) {
+    const v=PILOT_VARIANTS[code] || PILOT_VARIANTS.GRA;
+    const media=card.querySelector('.pilot-hero-media');
+    const link=card.querySelector('.pilot-hero-link');
+    if (media) {
+      media.innerHTML = code==='GRA'
+        ? '<img src="'+PILOT_GRA_IMAGE+'" alt="Organic Flare «Мед» — Виразний — Графіт" loading="lazy">'
+        : '<div class="pilot-card-placeholder"><div><strong>'+v.label+'</strong><small>Фото готуємо</small></div></div>';
+    }
+    if (!temporary) {
+      card.dataset.sku=v.sku;
+      card.dataset.color=code;
+      card.querySelectorAll('.pilot-color').forEach(b=>b.classList.toggle('active',b.dataset.variantColor===code));
+      const label=card.querySelector('.pilot-selected-color'); if(label) label.textContent=v.label;
+      if(link) link.href='/organic-flare-vyraznyi-hrafit.html?color='+code;
+      const p=activeProducts.get(v.sku), price=card.querySelector('.product-meta>b');
+      if(price){
+        if(p && Number(p.price_uah)>0){price.textContent=money(p.price_uah);price.classList.remove('price-pending');}
+        else {price.textContent='Ціну уточнюємо';price.classList.add('price-pending');}
+      }
+    }
+  }
+
+  function initPilotCatalog() {
+    document.querySelectorAll('.pilot-variant-card').forEach(card=>{
+      let selected=card.dataset.color || 'GRA';
+      card.querySelectorAll('.pilot-color').forEach(btn=>{
+        btn.addEventListener('mouseenter',()=>renderPilotCatalog(card,btn.dataset.variantColor,true));
+        btn.addEventListener('mouseleave',()=>renderPilotCatalog(card,selected,true));
+        btn.addEventListener('focus',()=>renderPilotCatalog(card,btn.dataset.variantColor,true));
+        btn.addEventListener('blur',()=>renderPilotCatalog(card,selected,true));
+        btn.addEventListener('click',e=>{
+          e.preventDefault(); e.stopPropagation();
+          selected=btn.dataset.variantColor;
+          renderPilotCatalog(card,selected,false);
+        });
+      });
+      renderPilotCatalog(card,selected,false);
+    });
+  }
+
   function skuFromPdp() {
+    const info=document.querySelector('.sku-pdp');
+    if(info?.dataset.selectedSku) return info.dataset.selectedSku;
     const values = [...document.querySelectorAll('.sku-identity strong')];
     return values.map(x => x.textContent.trim()).find(x => /^MG-[A-Z0-9-]+$/.test(x)) || '';
+  }
+
+  function applyPdpProduct(info, sku) {
+    const p=activeProducts.get(sku);
+    if(!p || !info) return;
+    let price = info.querySelector('.price-placeholder');
+    if (!price) {
+      price = document.createElement('div');
+      price.className = 'price-placeholder';
+      const anchor = info.querySelector('.sku-identity') || info.querySelector('.product-subtitle') || info.querySelector('h1');
+      anchor?.after(price);
+    }
+    if (p.price_uah != null && Number(p.price_uah) > 0) {
+      price.textContent = money(p.price_uah); price.classList.add('real-price');
+    } else {
+      price.textContent = 'Ціну уточнюємо'; price.classList.remove('real-price');
+    }
+    const h1=info.querySelector('h1');
+    if(h1 && p.title_ua && !info.classList.contains('pilot-variant-pdp')) h1.textContent="Інтер'єрна композиція "+p.title_ua;
+    let badge=info.querySelector('.api-availability');
+    if(!badge){badge=document.createElement('p');badge.className='api-availability';price.after(badge);}
+    badge.textContent=p.status==='stock'?'В наявності':(p.status==='preorder'?'Під замовлення'+(p.lead_time_days?' · '+p.lead_time_days+' дн.':''):'Недоступно');
+    const cta=info.querySelector('.disabled-buy, [data-add-sku]');
+    if(cta){
+      if(p.price_uah != null && ['stock','preorder'].includes(p.status)){
+        cta.disabled=false; cta.classList.remove('disabled-buy'); cta.dataset.addSku=sku;
+        cta.textContent=p.status==='stock'?'Додати в кошик':'Замовити';
+        cta.onclick=()=>addToCart(sku,pilotMeta(info,sku));
+      }else{
+        cta.disabled=true; cta.classList.add('disabled-buy'); cta.textContent='Доступність уточнюється'; cta.onclick=null;
+      }
+    }
+  }
+
+  function selectPilotPdp(code, updateUrl=true) {
+    const info=document.querySelector('.pilot-variant-pdp');
+    if(!info) return;
+    const v=PILOT_VARIANTS[code] || PILOT_VARIANTS.GRA;
+    info.dataset.selectedSku=v.sku;
+    info.dataset.selectedColor=v.label;
+    const sku=document.getElementById('pilot-selected-sku'); if(sku) sku.textContent=v.sku;
+    const label=document.getElementById('pilot-pdp-color-label'); if(label) label.textContent=v.label;
+    const color=document.getElementById('pilot-pdp-color'); if(color) color.innerHTML='<i class="swatch swatch-'+v.swatch+'"></i><span>'+v.label+'</span>';
+    const spec=document.getElementById('pilot-spec-color'); if(spec) spec.textContent=v.label;
+    info.querySelectorAll('.pilot-pdp-color').forEach(b=>b.classList.toggle('active',b.dataset.variantColor===code));
+    const main=document.getElementById('product-main-image');
+    const ph=document.getElementById('pilot-photo-placeholder');
+    const phLabel=document.getElementById('pilot-photo-placeholder-label');
+    const thumbs=document.querySelector('.real-gallery .thumbs');
+    if(code==='GRA'){
+      if(main){main.hidden=false;main.src=PILOT_GRA_IMAGE;}
+      if(ph) ph.hidden=true;
+      if(thumbs) thumbs.style.display='';
+    }else{
+      if(main) main.hidden=true;
+      if(ph){ph.hidden=false;if(phLabel) phLabel.textContent=v.label;}
+      if(thumbs) thumbs.style.display='none';
+    }
+    if(updateUrl){
+      const url=new URL(location.href); url.searchParams.set('color',code); history.replaceState({},'',url);
+    }
+    applyPdpProduct(info,v.sku);
+  }
+
+  function initPilotPdp(){
+    const info=document.querySelector('.pilot-variant-pdp'); if(!info) return;
+    const requested=new URL(location.href).searchParams.get('color') || 'GRA';
+    const initial=PILOT_VARIANTS[requested]?requested:'GRA';
+    info.querySelectorAll('.pilot-pdp-color').forEach(btn=>btn.addEventListener('click',()=>selectPilotPdp(btn.dataset.variantColor,true)));
+    selectPilotPdp(initial,false);
   }
 
   function applyProductData(products) {
     activeProducts = new Map(products.map(p => [p.sku,p]));
     document.querySelectorAll('.sku-card').forEach(card => {
-      // SKU is a data attribute, never a visible technical label.
       const sku = card.dataset.sku || card.dataset.name?.match(/MG-[A-Z0-9-]+/)?.[0];
       const p = activeProducts.get(sku);
       const meta = card.querySelector('.product-meta');
       if (!meta) return;
       let price = meta.querySelector(':scope > b');
-      if (!price) {
-        price = document.createElement('b');
-        price.className = 'api-price';
-        meta.append(price);
-      }
-      if (p && Number.isFinite(Number(p.price_uah)) && Number(p.price_uah) > 0) {
-        price.textContent = money(p.price_uah);
-        price.classList.remove('price-pending');
-        card.classList.add('api-active-product');
-        card.dataset.status = p.status || '';
+      if (!price) { price=document.createElement('b'); price.className='api-price'; meta.append(price); }
+      if (p && Number(p.price_uah)>0) {
+        price.textContent=money(p.price_uah); price.classList.remove('price-pending'); card.classList.add('api-active-product'); card.dataset.status=p.status||'';
       } else {
-        price.textContent = 'Ціну уточнюємо';
-        price.classList.add('price-pending');
-        card.classList.remove('api-active-product');
+        price.textContent='Ціну уточнюємо'; price.classList.add('price-pending'); card.classList.remove('api-active-product');
       }
     });
-
-    const sku = skuFromPdp();
-    if (sku) {
-      const p = activeProducts.get(sku);
-      const info = document.querySelector('.sku-pdp');
-      if (p && info) {
-        let price = info.querySelector('.price-placeholder');
-        if (!price) {
-          // All PDPs need a visible price before their purchase button.
-          price = document.createElement('div');
-          price.className = 'price-placeholder';
-          const anchor = info.querySelector('.sku-identity') || info.querySelector('.product-subtitle') || info.querySelector('h1');
-          anchor?.after(price);
-        }
-        if (p.price_uah != null && Number.isFinite(Number(p.price_uah)) && Number(p.price_uah) > 0) {
-          price.textContent = money(p.price_uah);
-          price.classList.add('real-price');
-        } else {
-          price.textContent = 'Ціну уточнюємо';
-          price.classList.remove('real-price');
-        }
-        const h1 = info.querySelector('h1');
-        if (h1 && p.title_ua) h1.textContent = "Інтер'єрна композиція " + p.title_ua;
-        const cta = info.querySelector('.disabled-buy, [data-add-sku]');
-        if (cta && p.price_uah != null && ['stock','preorder'].includes(p.status)) {
-          cta.disabled = false;
-          cta.classList.remove('disabled-buy');
-          cta.dataset.addSku = sku;
-          cta.textContent = p.status === 'stock' ? 'Додати в кошик' : 'Замовити';
-          cta.onclick = () => addToCart(sku);
-          if (!info.querySelector('.api-availability')) {
-            const badge = document.createElement('p');
-            badge.className = 'api-availability';
-            badge.textContent = p.status === 'stock' ? 'В наявності' : ('Під замовлення' + (p.lead_time_days ? ' · ' + p.lead_time_days + ' дн.' : ''));
-            price?.after(badge);
-          }
-        }
-      }
-    }
+    document.querySelectorAll('.pilot-variant-card').forEach(card=>renderPilotCatalog(card,card.dataset.color||'GRA',false));
+    const info=document.querySelector('.sku-pdp');
+    const sku=skuFromPdp();
+    if(sku && info) applyPdpProduct(info,sku);
     renderCart();
   }
 
@@ -242,6 +342,8 @@
   }
 
   window.MaGelleStore = { getCart, saveCart, setQty, money, API_BASE, getProducts: () => activeProducts };
+  initPilotCatalog();
+  initPilotPdp();
   updateCartCount();
   renderCart();
   loadProducts();
