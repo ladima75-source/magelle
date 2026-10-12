@@ -297,3 +297,9 @@
 .products-preview .real-start .product-meta{flex-wrap:wrap}
 @media(max-width:980px){.collection-grid-series{grid-template-columns:repeat(2,minmax(0,1fr))}.collection-grid-series .collection-photo-card:last-child{grid-column:1/-1;min-height:390px}.products-preview .real-start{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-side-stack{min-height:420px}}
 @media(max-width:640px){.hero-side-stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr;min-height:230px;gap:8px}.hero-side-stack .hero-photo{min-height:230px}.collection-grid-series{grid-template-columns:1fr}.collection-grid-series .collection-photo-card:last-child{grid-column:auto;min-height:350px}.products-preview .real-start{grid-template-columns:1fr}}
+
+/* Hero three collections: full object visibility in the smaller stacked panels */
+.hero-side-stack .hero-photo{background:#d9cbbb}
+.hero-side-stack .hero-photo img{object-fit:contain;object-position:center center}
+.hero-side-stack .hero-photo-monolit img{object-position:center 52%}
+.hero-side-stack .hero-photo-koral img{object-position:center center}
