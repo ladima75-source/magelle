@@ -309,3 +309,39 @@
 .hero-side-stack .hero-photo::before{content:"";position:absolute;inset:-16px;z-index:0;background-image:var(--hero-image);background-size:cover;background-position:center;filter:blur(16px) brightness(.93);transform:scale(1.06)}
 .hero-side-stack .hero-photo::after{content:"";position:absolute;inset:0;background:rgba(222,207,186,.12);z-index:0;pointer-events:none}
 .hero-side-stack .hero-photo img{z-index:1;position:relative;inset:auto;display:block;width:100%;height:100%;object-fit:contain;object-position:center center}
+
+/* Mobile MaGelle catalog and product UX */
+.mobile-catalog-link,.mobile-filter-toggle{display:none}
+@media(max-width:640px){
+  .header-inner{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .header-inner .brand{margin-right:auto}
+  .mobile-catalog-link{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 11px;border:1px solid #82786d;color:#f3e9de;font-size:11px;text-decoration:none}
+  .header-inner .menu-button{min-width:36px;min-height:36px;font-size:0;padding:0}
+  .header-inner .menu-button::before{content:"☰";font-size:17px}
+  .catalog-hero{padding:25px 0 8px}
+  .catalog-hero .eyebrow{margin-bottom:7px}
+  .catalog-hero h1{font-size:clamp(29px,8vw,38px);line-height:1.05}
+  .catalog-hero p:last-child{font-size:12px;line-height:1.45;margin:9px 0 0}
+  .catalog-section{padding-top:10px}
+  .catalog-layout{gap:14px}
+  .filters{display:block;position:static;border-top:0}
+  .mobile-filter-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;border:1px solid #cabbab;background:transparent;padding:12px 14px;color:#2c2823;font-weight:600;font-size:13px}
+  .mobile-filter-toggle span{font-weight:400;font-size:11px;color:#766c60}
+  .mobile-filter-fields{display:none;padding:8px 0}
+  .mobile-filter-toggle[aria-expanded="true"]+.mobile-filter-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
+  .mobile-filter-fields .filter-title{grid-column:1/-1;padding:4px 0 8px}
+  .mobile-filter-fields label{padding:7px 0;font-size:10px}
+  .mobile-filter-fields label select{margin-top:4px}
+  .catalog-toolbar{margin:0 0 12px;gap:8px}
+  .catalog-toolbar input{padding:7px 0}
+  .family-heading{margin-bottom:12px}
+  .family-heading h2{font-size:29px}
+  .family-block{margin-bottom:30px}
+  .product-main-photo{position:relative}
+  .mobile-photo-colors{display:flex;position:absolute;left:8px;right:8px;bottom:10px;z-index:8;gap:5px;padding:7px;background:rgba(242,233,222,.96);box-shadow:0 3px 16px rgba(30,24,18,.15);border-radius:5px}
+  .mobile-photo-colors button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:center;border:1px solid transparent;background:transparent;padding:5px 2px;font-size:9px;color:#322b25}
+  .mobile-photo-colors button.active{border-color:#6a5948;background:#fff9f1}
+  .mobile-photo-colors .swatch{width:14px;height:14px;display:inline-block}
+  .design-variant-pdp .design-pdp-colors{display:none}
+}
+@media(min-width:641px){.mobile-photo-colors{display:none}}
