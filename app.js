@@ -163,6 +163,21 @@
     host.querySelectorAll('[data-cart-inc]').forEach(btn=>btn.onclick=()=>{const item=getCart().find(x=>x.sku===btn.dataset.cartInc);if(item)setQty(item.sku,item.qty+1)});
   }
 
+  const variantPhotoLoads=new Map();
+  function preloadVariantPhoto(src){
+    if(!src)return Promise.resolve();
+    if(!variantPhotoLoads.has(src)){
+      variantPhotoLoads.set(src,new Promise(resolve=>{
+        const image=new Image();
+        image.onload=()=>resolve(true);
+        image.onerror=()=>resolve(false);
+        image.src=src;
+        if(image.complete)resolve(true);
+      }));
+    }
+    return variantPhotoLoads.get(src);
+  }
+
   function renderDesignCard(card,code,temporary=false,forceSource=false){
     const color=COLORS[code]||COLORS.GRA;
     const photoColor=card.dataset.photoColor||'';
@@ -180,30 +195,35 @@
       if(backLabel)backLabel.textContent=color.label;
       if(stage)stage.classList.toggle('is-flipped',!showPhoto);
     };
-    if(media && media.dataset.previewColor!==code && media.dataset.previewColor &&
-       !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    if(media){
       media._colorTurnToken=(media._colorTurnToken||0)+1;
       const token=media._colorTurnToken;
+      const previous=media.dataset.previewColor;
+      media.dataset.previewColor=code;
       media.getAnimations().forEach(a=>a.cancel());
-      const first=media.animate([
-        {transform:'perspective(950px) rotateY(0deg)',opacity:1},
-        {transform:'perspective(950px) rotateY(-90deg)',opacity:.75}
-      ],{duration:190,easing:'ease-in',fill:'forwards'});
-      first.finished.then(()=>{
-        if(media._colorTurnToken!==token)return;
-        first.cancel();
-        applyVisual();
-        const second=media.animate([
-          {transform:'perspective(950px) rotateY(-90deg)',opacity:.75},
-          {transform:'perspective(950px) rotateY(-360deg)',opacity:1}
-        ],{duration:460,easing:'ease-out'});
-        second.finished.then(()=>{if(media._colorTurnToken===token)second.cancel()}).catch(()=>{});
-      }).catch(()=>{});
-    }else{
-      if(media){media._colorTurnToken=(media._colorTurnToken||0)+1;media.getAnimations().forEach(a=>a.cancel())}
-      applyVisual();
-    }
-    if(media)media.dataset.previewColor=code;
+      const ready=variantSrc ? preloadVariantPhoto(variantSrc) : Promise.resolve();
+      if(previous && previous!==code && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+        ready.then(()=>{
+          if(media._colorTurnToken!==token)return;
+          const first=media.animate([
+            {transform:'perspective(950px) rotateY(0deg)',opacity:1},
+            {transform:'perspective(950px) rotateY(-90deg)',opacity:.75}
+          ],{duration:175,easing:'ease-in',fill:'forwards'});
+          first.finished.then(()=>{
+            if(media._colorTurnToken!==token)return;
+            applyVisual();
+            first.cancel();
+            const second=media.animate([
+              {transform:'perspective(950px) rotateY(-90deg)',opacity:.75},
+              {transform:'perspective(950px) rotateY(-360deg)',opacity:1}
+            ],{duration:475,easing:'ease-out'});
+            second.finished.then(()=>{if(media._colorTurnToken===token)second.cancel()}).catch(()=>{});
+          }).catch(()=>{});
+        });
+      }else{
+        ready.then(()=>{if(media._colorTurnToken===token)applyVisual()});
+      }
+    }else applyVisual();
     if(!temporary){
       const sizeCode=card.dataset.sizeCode;
       const designCode=card.dataset.designCode;
@@ -228,6 +248,7 @@
     document.querySelectorAll('.design-variant-card').forEach(card=>{
       let selected=card.dataset.defaultColor||'GRA';
       card.dataset.sourcePreview='1';
+      Object.keys(card.dataset).filter(key=>key.startsWith('variant') && /^variant[A-Z][a-z]+$/.test(key)).forEach(key=>preloadVariantPhoto(card.dataset[key]));
       card.querySelectorAll('.pilot-color').forEach(btn=>{
         btn.addEventListener('mouseenter',()=>renderDesignCard(card,btn.dataset.variantColor,true,false));
         btn.addEventListener('mouseleave',()=>renderDesignCard(card,selected,true,card.dataset.sourcePreview==='1'));
