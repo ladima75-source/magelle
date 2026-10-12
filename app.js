@@ -283,7 +283,6 @@
       const showPhoto=!!main && (!!variantSrc || (forceSource && code===photoColor) || code===photoColor);
       if(main && variantSrc)main.src=variantSrc;
       if(main)main.hidden=!showPhoto;
-      if(main)main.hidden=!showPhoto;
       if(ph){ph.hidden=showPhoto;if(phLabel)phLabel.textContent=color.label}
       if(thumbs)thumbs.style.display=showPhoto?'':'none';
     }
