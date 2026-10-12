@@ -65,7 +65,7 @@
       let shown=0;
       const q=(search?.value||'').trim().toLowerCase();
       document.querySelectorAll('.filter-item').forEach(item=>{
-        const colorOk=!color?.value || (item.classList.contains('design-variant-card') ? (item.dataset.availableColors||'GRA,MLK,WHT,CHO').split(',').includes(color.value) : item.dataset.color===color.value);
+        const colorOk=!color?.value || (item.classList.contains('design-variant-card') ? (item.dataset.availableColors||'GRA,MLK,WHT,SND,CHO').split(',').includes(color.value) : item.dataset.color===color.value);
         const ok=(!size?.value||item.dataset.size===size.value)
           && colorOk
           &&(!collection?.value||item.dataset.collection===collection.value)
@@ -354,7 +354,7 @@
       if(main && variantSrc)main.src=variantSrc;
       if(main)main.hidden=!showPhoto;
       if(ph){ph.hidden=showPhoto;if(phLabel)phLabel.textContent=color.label}
-      if(thumbs)thumbs.style.display=showPhoto?'':'none';
+      if(thumbs)thumbs.style.display=(showPhoto&&code===photoColor)?'':'none';
     }
 
     if(updateUrl){
