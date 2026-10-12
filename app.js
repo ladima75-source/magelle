@@ -466,6 +466,10 @@
   }
   function hydrateCatalog(model){
     model.colors.forEach(c=>{COLORS[c.code]={label:c.title_ua,swatch:c.code.toLowerCase(),hex:c.hex};});
+    // Approved storefront media is authoritative. The catalog API may lag behind
+    // the reviewed 2 bouquets × 5 colors. Never recreate their hero/photo DOM
+    // from that API response; use API data for pricing and SKU status only.
+    if(document.querySelector('.design-variant-card'))return;
     const reviewedMedia=new Map([...document.querySelectorAll('.design-variant-card')].map(card=>{
       const key=[familyCode(card),card.dataset.designCode,card.dataset.sizeCode].join('|');
       const media={};
