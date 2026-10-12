@@ -268,3 +268,12 @@
 .catalog-grid .sku-card .product-meta h3 {
   min-height: 2.4em;
 }
+
+/* Architectural Step: tall real photo sets (9:16) must remain complete, without narrow letterboxing */
+.catalog-grid .sku-card[data-collection="architectural-step"] .sku-photo {
+  aspect-ratio: 3 / 5;
+}
+.catalog-grid .sku-card[data-collection="architectural-step"] .pilot-media-front img {
+  object-fit: contain;
+  object-position: center center;
+}
