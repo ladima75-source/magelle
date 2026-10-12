@@ -359,3 +359,11 @@
 .pilot-hero-media.color-page-turn{animation:magelleColorPageTurn .38s ease-in-out}
 @media(prefers-reduced-motion:reduce){.pilot-hero-media.color-page-turn{animation:none}}
 @media(max-width:640px){.catalog-grid .sku-card[data-collection="organic-flare"] .pilot-variant-picker{gap:2px}.catalog-grid .sku-card[data-collection="organic-flare"] .pilot-color{font-size:8px}.catalog-grid .sku-card[data-collection="organic-flare"] .pilot-color .swatch{width:10px;height:10px}}
+
+/* Media QA: preserve the full bouquet on narrow mobile product pages */
+@media(max-width:640px){
+ .product-page .product-main-photo img,.product-page .real-gallery .product-main-photo img{object-fit:contain;object-position:center center}
+ .catalog-grid .product-photo img,.catalog-grid .pilot-media-front img{object-fit:contain;object-position:center center;background:#e7ddcf}
+ .products-preview .product-photo img{object-fit:contain;object-position:center center}
+ .hero-photo-main img{object-fit:contain;object-position:center;background:#d9cbbb}
+}
