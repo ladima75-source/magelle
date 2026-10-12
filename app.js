@@ -21,8 +21,9 @@
   };
   const body=document.body;
 
-  const canonicalSku=(sizeCode,color)=>'MG-OF-'+sizeCode+'-'+color;
-  const designSku=(designCode,sizeCode,color)=>'MG-OF-'+designCode+'-'+sizeCode+'-'+color;
+  const familyCode=el=>el?.dataset?.familyCode||(el?.dataset?.family==='Architectural Step'?'AS':'OF');
+  const canonicalSku=(family,sizeCode,color)=>'MG-'+family+'-'+sizeCode+'-'+color;
+  const designSku=(family,designCode,sizeCode,color)=>'MG-'+family+'-'+designCode+'-'+sizeCode+'-'+color;
 
   const menuButton=document.querySelector('.menu-button');
   if(menuButton) menuButton.addEventListener('click',()=>{
@@ -55,7 +56,7 @@
       let shown=0;
       const q=(search?.value||'').trim().toLowerCase();
       catalogItems.forEach(item=>{
-        const colorOk=!color?.value || (item.classList.contains('design-variant-card') ? !!COLORS[color.value] : item.dataset.color===color.value);
+        const colorOk=!color?.value || (item.classList.contains('design-variant-card') ? (item.dataset.availableColors||'GRA,MLK,WHT,CHO').split(',').includes(color.value) : item.dataset.color===color.value);
         const ok=(!size?.value||item.dataset.size===size.value)
           && colorOk
           &&(!collection?.value||item.dataset.collection===collection.value)
@@ -168,8 +169,9 @@
     if(!temporary){
       const sizeCode=card.dataset.sizeCode;
       const designCode=card.dataset.designCode;
-      const baseSku=canonicalSku(sizeCode,code);
-      const itemSku=designSku(designCode,sizeCode,code);
+      const family=familyCode(card);
+      const baseSku=canonicalSku(family,sizeCode,code);
+      const itemSku=designSku(family,designCode,sizeCode,code);
       card.dataset.color=code;
       card.dataset.sku=itemSku;
       card.dataset.baseSku=baseSku;
@@ -242,8 +244,9 @@
     const color=COLORS[code]||COLORS.GRA;
     const sizeCode=info.dataset.sizeCode;
     const designCode=info.dataset.designCode;
-    const baseSku=canonicalSku(sizeCode,code);
-    const itemSku=designSku(designCode,sizeCode,code);
+    const family=familyCode(info);
+    const baseSku=canonicalSku(family,sizeCode,code);
+    const itemSku=designSku(family,designCode,sizeCode,code);
     info.dataset.selectedSku=itemSku;
     info.dataset.selectedBaseSku=baseSku;
     info.dataset.selectedColor=color.label;
