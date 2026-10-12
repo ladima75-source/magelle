@@ -286,7 +286,7 @@
       info.dataset.sourcePreview='0';
       selectDesignPdp(btn.dataset.variantColor,true,false);
     }));
-    selectDesignPdp(initial,false,true);
+    selectDesignPdp(initial,false,initial===(document.querySelector('[data-design-gallery]')?.dataset.photoColor||''));
   }
 
   function skuFromPdp(){
