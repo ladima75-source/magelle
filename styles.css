@@ -277,3 +277,8 @@
   object-fit: contain;
   object-position: center center;
 }
+
+/* Architectural Step: composition-safe catalog thumbnails, GRA 3:4 vs CHO 9:16 */
+.catalog-grid .sku-card[data-collection="architectural-step"] .sku-photo{aspect-ratio:3/5;overflow:hidden}
+.catalog-grid .sku-card[data-collection="architectural-step"] .pilot-media-front img{object-fit:cover;object-position:center center}
+.catalog-grid .sku-card[data-collection="architectural-step"][data-design="Ритм"] .pilot-media-front img{object-position:center 48%}
