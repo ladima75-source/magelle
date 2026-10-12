@@ -1,4 +1,19 @@
 (() => {
+  // Protect product cards from Drive previews that return HTML instead of images.
+  document.addEventListener('error',event=>{
+    const img=event.target;
+    if(!(img instanceof HTMLImageElement) || img.dataset.fallbackDone)return;
+    if(!img.closest('.product-photo,.hero-photo,.collection-photo-card,.pilot-media-front,.product-main-photo'))return;
+    img.dataset.fallbackDone='1';
+    img.style.display='none';
+    const frame=img.parentElement;
+    if(!frame || frame.querySelector('.media-unavailable'))return;
+    const label=document.createElement('span');
+    label.className='media-unavailable';
+    label.textContent='Фото готуємо';
+    frame.appendChild(label);
+  },true);
+
   const measurementId = "G-1RM1S55BZW";
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function gtag(){ window.dataLayer.push(arguments); };
