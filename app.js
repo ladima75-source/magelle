@@ -17,6 +17,7 @@
     GRA:{label:'Графіт',swatch:'gra'},
     MLK:{label:'Молочний',swatch:'mlk'},
     WHT:{label:'Білий',swatch:'wht'},
+    SND:{label:'Пісочний',swatch:'snd'},
     CHO:{label:'Шоколад',swatch:'cho'}
   };
   const body=document.body;
