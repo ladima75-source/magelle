@@ -86,7 +86,18 @@ def import_rows(con, root):
             photos=photo_urls if color==source_color else []
             if color==c.get('photo_color') and c.get('photo_src'):
                 photos=list(dict.fromkeys([c['photo_src']]+photos))
-            if exact: photos=list(dict.fromkeys([exact]+photos))
+            if exact:
+                # A Drive thumbnail at w900 and w1600 is the same photo.
+                # Keep the PDP exact variant first, without duplicating it.
+                def media_identity(url):
+                    from urllib.parse import urlsplit, parse_qs
+                    parsed=urlsplit(html.unescape(url))
+                    if parsed.hostname == 'drive.google.com' and parsed.path == '/thumbnail':
+                        return ('drive',parse_qs(parsed.query).get('id',[''])[0])
+                    return ('url',url)
+                seen=set()
+                photos=[u for u in [exact]+photos
+                        if not (media_identity(u) in seen or seen.add(media_identity(u)))]
             fields={
                 'sku':sku,'series':c['family'],'size_name':c['variant_size'],'size_code':c['size_code'],
                 'color':label['title_ua'],'color_code':color,'design_id':did,
