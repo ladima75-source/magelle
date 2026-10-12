@@ -351,3 +351,11 @@
   .design-gallery-shell .mobile-photo-colors{left:10px;right:10px;bottom:86px;z-index:12}
   .design-gallery-shell:has(.thumbs[style*="none"]) .mobile-photo-colors{bottom:12px}
 }
+
+/* Organic Flare: five equal color choices and tactile photo leaf animation */
+.catalog-grid .sku-card[data-collection="organic-flare"] .pilot-variant-picker{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.catalog-grid .sku-card[data-collection="organic-flare"] .pilot-color{min-width:0;padding-inline:2px;font-size:9px;gap:3px}
+@keyframes magelleColorPageTurn{0%{transform:perspective(900px) rotateY(0);opacity:1}48%{transform:perspective(900px) rotateY(-17deg);opacity:.72}100%{transform:perspective(900px) rotateY(0);opacity:1}}
+.pilot-hero-media.color-page-turn{animation:magelleColorPageTurn .38s ease-in-out}
+@media(prefers-reduced-motion:reduce){.pilot-hero-media.color-page-turn{animation:none}}
+@media(max-width:640px){.catalog-grid .sku-card[data-collection="organic-flare"] .pilot-variant-picker{gap:2px}.catalog-grid .sku-card[data-collection="organic-flare"] .pilot-color{font-size:8px}.catalog-grid .sku-card[data-collection="organic-flare"] .pilot-color .swatch{width:10px;height:10px}}
