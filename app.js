@@ -179,10 +179,13 @@
     if(stage) stage.classList.toggle('is-flipped',!showPhoto);
     const media=card.querySelector('.pilot-hero-media');
     if(media && media.dataset.previewColor!==code){
-      if(media.dataset.previewColor){
-        media.classList.remove('color-page-turn');
-        void media.offsetWidth;
-        media.classList.add('color-page-turn');
+      if(media.dataset.previewColor && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+        media.getAnimations().forEach(animation=>animation.cancel());
+        media.animate([
+          {transform:'perspective(950px) rotateY(0deg)',opacity:1},
+          {transform:'perspective(950px) rotateY(-78deg)',opacity:.45,offset:.48},
+          {transform:'perspective(950px) rotateY(0deg)',opacity:1}
+        ],{duration:520,easing:'ease-in-out'});
       }
       media.dataset.previewColor=code;
     }
