@@ -155,14 +155,14 @@
     host.querySelectorAll('[data-cart-inc]').forEach(btn=>btn.onclick=()=>{const item=getCart().find(x=>x.sku===btn.dataset.cartInc);if(item)setQty(item.sku,item.qty+1)});
   }
 
-  function renderDesignCard(card,code,temporary=false){
+  function renderDesignCard(card,code,temporary=false,forceSource=false){
     const color=COLORS[code]||COLORS.GRA;
     const photoColor=card.dataset.photoColor||'';
     const photoSrc=card.dataset.photoSrc||'';
     const stage=card.querySelector('.pilot-media-stage');
     const backLabel=card.querySelector('.pilot-media-back strong');
     const link=card.querySelector('.pilot-hero-link');
-    const showPhoto=!!photoSrc;
+    const showPhoto=!!photoSrc && (forceSource || code===photoColor);
     if(backLabel) backLabel.textContent=color.label;
     if(stage) stage.classList.toggle('is-flipped',!showPhoto);
     if(!temporary){
@@ -187,18 +187,20 @@
   function initDesignCards(){
     document.querySelectorAll('.design-variant-card').forEach(card=>{
       let selected=card.dataset.defaultColor||'GRA';
+      card.dataset.sourcePreview='1';
       card.querySelectorAll('.pilot-color').forEach(btn=>{
-        btn.addEventListener('mouseenter',()=>renderDesignCard(card,btn.dataset.variantColor,true));
-        btn.addEventListener('mouseleave',()=>renderDesignCard(card,selected,true));
-        btn.addEventListener('focus',()=>renderDesignCard(card,btn.dataset.variantColor,true));
-        btn.addEventListener('blur',()=>renderDesignCard(card,selected,true));
+        btn.addEventListener('mouseenter',()=>renderDesignCard(card,btn.dataset.variantColor,true,false));
+        btn.addEventListener('mouseleave',()=>renderDesignCard(card,selected,true,card.dataset.sourcePreview==='1'));
+        btn.addEventListener('focus',()=>renderDesignCard(card,btn.dataset.variantColor,true,false));
+        btn.addEventListener('blur',()=>renderDesignCard(card,selected,true,card.dataset.sourcePreview==='1'));
         btn.addEventListener('click',e=>{
           e.preventDefault();e.stopPropagation();
           selected=btn.dataset.variantColor;
-          renderDesignCard(card,selected,false);
+          card.dataset.sourcePreview='0';
+          renderDesignCard(card,selected,false,false);
         });
       });
-      renderDesignCard(card,selected,false);
+      renderDesignCard(card,selected,false,true);
     });
   }
 
@@ -234,7 +236,7 @@
     }
   }
 
-  function selectDesignPdp(code,updateUrl=true){
+  function selectDesignPdp(code,updateUrl=true,forceSource=false){
     const info=document.querySelector('.design-variant-pdp');
     if(!info)return;
     const color=COLORS[code]||COLORS.GRA;
@@ -259,7 +261,7 @@
       const ph=document.getElementById('design-photo-placeholder');
       const phLabel=document.getElementById('design-photo-placeholder-label');
       const thumbs=gallery.querySelector('.thumbs');
-      const showPhoto=!!main;
+      const showPhoto=!!main && (forceSource || code===photoColor);
       if(main)main.hidden=!showPhoto;
       if(ph){ph.hidden=showPhoto;if(phLabel)phLabel.textContent=color.label}
       if(thumbs)thumbs.style.display=showPhoto?'':'none';
@@ -275,8 +277,12 @@
     const info=document.querySelector('.design-variant-pdp');if(!info)return;
     const requested=new URL(location.href).searchParams.get('color')||info.dataset.defaultColor||'GRA';
     const initial=COLORS[requested]?requested:(info.dataset.defaultColor||'GRA');
-    info.querySelectorAll('.design-pdp-color').forEach(btn=>btn.addEventListener('click',()=>selectDesignPdp(btn.dataset.variantColor,true)));
-    selectDesignPdp(initial,false);
+    info.dataset.sourcePreview='1';
+    info.querySelectorAll('.design-pdp-color').forEach(btn=>btn.addEventListener('click',()=>{
+      info.dataset.sourcePreview='0';
+      selectDesignPdp(btn.dataset.variantColor,true,false);
+    }));
+    selectDesignPdp(initial,false,true);
   }
 
   function skuFromPdp(){
@@ -296,11 +302,11 @@
       if(p&&Number(p.price_uah)>0){price.textContent=money(p.price_uah);price.classList.remove('price-pending');card.classList.add('api-active-product')}
       else{price.textContent='Ціну уточнюємо';price.classList.add('price-pending');card.classList.remove('api-active-product')}
     });
-    document.querySelectorAll('.design-variant-card').forEach(card=>renderDesignCard(card,card.dataset.color||card.dataset.defaultColor||'GRA',false));
+    document.querySelectorAll('.design-variant-card').forEach(card=>renderDesignCard(card,card.dataset.color||card.dataset.defaultColor||'GRA',false,card.dataset.sourcePreview==='1'));
     const designInfo=document.querySelector('.design-variant-pdp');
     if(designInfo){
       const code=new URL(location.href).searchParams.get('color')||designInfo.dataset.defaultColor||'GRA';
-      selectDesignPdp(COLORS[code]?code:(designInfo.dataset.defaultColor||'GRA'),false);
+      selectDesignPdp(COLORS[code]?code:(designInfo.dataset.defaultColor||'GRA'),false,designInfo.dataset.sourcePreview==='1');
     }else{
       const info=document.querySelector('.sku-pdp'),sku=skuFromPdp();
       if(sku&&info){
