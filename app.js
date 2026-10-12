@@ -162,7 +162,7 @@
     const stage=card.querySelector('.pilot-media-stage');
     const backLabel=card.querySelector('.pilot-media-back strong');
     const link=card.querySelector('.pilot-hero-link');
-    const showPhoto=!!photoSrc && code===photoColor;
+    const showPhoto=!!photoSrc;
     if(backLabel) backLabel.textContent=color.label;
     if(stage) stage.classList.toggle('is-flipped',!showPhoto);
     if(!temporary){
@@ -259,7 +259,7 @@
       const ph=document.getElementById('design-photo-placeholder');
       const phLabel=document.getElementById('design-photo-placeholder-label');
       const thumbs=gallery.querySelector('.thumbs');
-      const showPhoto=code===photoColor && !!main;
+      const showPhoto=!!main;
       if(main)main.hidden=!showPhoto;
       if(ph){ph.hidden=showPhoto;if(phLabel)phLabel.textContent=color.label}
       if(thumbs)thumbs.style.display=showPhoto?'':'none';
