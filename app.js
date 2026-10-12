@@ -170,7 +170,11 @@
     const stage=card.querySelector('.pilot-media-stage');
     const backLabel=card.querySelector('.pilot-media-back strong');
     const link=card.querySelector('.pilot-hero-link');
-    const showPhoto=!!photoSrc && (forceSource || code===photoColor);
+    const variantSrc=card.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
+    const img=card.querySelector('.pilot-media-front img');
+    if(img && variantSrc){img.src=variantSrc;img.hidden=false}
+    const showPhoto=!!variantSrc || (!!photoSrc && (forceSource || code===photoColor));
+    if(img && !variantSrc && !photoSrc)img.hidden=true;
     if(backLabel) backLabel.textContent=color.label;
     if(stage) stage.classList.toggle('is-flipped',!showPhoto);
     if(!temporary){
@@ -275,7 +279,10 @@
       const ph=document.getElementById('design-photo-placeholder');
       const phLabel=document.getElementById('design-photo-placeholder-label');
       const thumbs=gallery.querySelector('.thumbs');
-      const showPhoto=!!main && (forceSource || code===photoColor);
+      const variantSrc=info.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
+      const showPhoto=!!main && (!!variantSrc || (forceSource && code===photoColor) || code===photoColor);
+      if(main && variantSrc)main.src=variantSrc;
+      if(main)main.hidden=!showPhoto;
       if(main)main.hidden=!showPhoto;
       if(ph){ph.hidden=showPhoto;if(phLabel)phLabel.textContent=color.label}
       if(thumbs)thumbs.style.display=showPhoto?'':'none';
