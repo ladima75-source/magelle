@@ -190,8 +190,11 @@
     const showPhoto=!!variantSrc || (!!photoSrc && (forceSource || code===photoColor));
     const media=card.querySelector('.pilot-hero-media');
     const applyVisual=()=>{
-      if(img && variantSrc){img.src=variantSrc;img.hidden=false}
-      else if(img && !photoSrc)img.hidden=true;
+      if(img){
+        const targetSrc=variantSrc || (showPhoto ? photoSrc : '');
+        if(targetSrc && img.getAttribute('src')!==targetSrc)img.src=targetSrc;
+        img.hidden=!showPhoto;
+      }
       if(backLabel)backLabel.textContent=color.label;
       if(stage)stage.classList.toggle('is-flipped',!showPhoto);
     };
@@ -201,7 +204,7 @@
       const previous=media.dataset.previewColor;
       media.dataset.previewColor=code;
       media.getAnimations().forEach(a=>a.cancel());
-      const ready=variantSrc ? preloadVariantPhoto(variantSrc) : Promise.resolve();
+      const ready=(variantSrc || (showPhoto ? photoSrc : '')) ? preloadVariantPhoto(variantSrc || photoSrc) : Promise.resolve();
       if(previous && previous!==code && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
         ready.then(()=>{
           if(media._colorTurnToken!==token)return;
