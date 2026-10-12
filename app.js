@@ -347,7 +347,9 @@
     const gallery=document.querySelector('[data-design-gallery]');
     if(gallery&&catalogModel?.enabled){
       const d=catalogModel.designs.find(d=>d.id===info.dataset.catalogDesignId);
-      const photos=variant?.photo_urls?.length?variant.photo_urls:(d?.source_color===code?d.source_photo_urls:[]);
+      const staticVariantSrc=info.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
+      const apiPhotos=variant?.photo_urls?.length?variant.photo_urls:(d?.source_color===code?d.source_photo_urls:[]);
+      const photos=staticVariantSrc?[staticVariantSrc,...apiPhotos.filter(src=>src!==staticVariantSrc)]:apiPhotos;
       const main=document.getElementById('product-main-image'),ph=document.getElementById('design-photo-placeholder');
       if(main){main.hidden=!photos.length;if(photos.length)main.src=photos[0];}
       if(ph){ph.hidden=!!photos.length;const label=ph.querySelector('strong');if(label)label.textContent=color.label;}
@@ -464,6 +466,16 @@
   }
   function hydrateCatalog(model){
     model.colors.forEach(c=>{COLORS[c.code]={label:c.title_ua,swatch:c.code.toLowerCase(),hex:c.hex};});
+    const reviewedMedia=new Map([...document.querySelectorAll('.design-variant-card')].map(card=>{
+      const key=[familyCode(card),card.dataset.designCode,card.dataset.sizeCode].join('|');
+      const media={};
+      for(const code of Object.keys(COLORS)){
+        const value=card.dataset['variant'+code[0]+code.slice(1).toLowerCase()];
+        if(value)media[code]=value;
+      }
+      if(card.dataset.photoColor&&card.dataset.photoSrc&&!media[card.dataset.photoColor])media[card.dataset.photoColor]=card.dataset.photoSrc;
+      return [key,media];
+    }));
     const variantsFor=d=>model.products.filter(p=>p.design_id===d.id);
     const cardFor=d=>{
       const variants=variantsFor(d),selected=variants.some(p=>p.color_code===d.default_color)?d.default_color:(variants[0]?.color_code||d.default_color||'GRA');
