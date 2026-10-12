@@ -46,6 +46,12 @@
   if(closeButton) closeButton.addEventListener('click',()=>setCart(false));
   if(backdrop) backdrop.addEventListener('click',()=>setCart(false));
 
+  const mobileFilterToggle=document.querySelector('.mobile-filter-toggle');
+  mobileFilterToggle?.addEventListener('click',()=>{
+    const expanded=mobileFilterToggle.getAttribute('aria-expanded')==='true';
+    mobileFilterToggle.setAttribute('aria-expanded',String(!expanded));
+    mobileFilterToggle.querySelector('span').textContent=expanded?'Показати ▾':'Сховати ▴';
+  });
   const catalogItems=[...document.querySelectorAll('.filter-item')];
   if(catalogItems.length){
     const size=document.getElementById('filter-size');
@@ -257,6 +263,10 @@
     const colorEl=document.getElementById('design-pdp-color');if(colorEl)colorEl.innerHTML='<i class="swatch swatch-'+color.swatch+'"></i><span>'+color.label+'</span>';
     const spec=document.getElementById('design-spec-color');if(spec)spec.textContent=color.label;
     info.querySelectorAll('.design-pdp-color').forEach(b=>b.classList.toggle('active',b.dataset.variantColor===code));
+    document.querySelectorAll('.mobile-photo-colors button').forEach(b=>{
+      b.classList.toggle('active',b.dataset.mobileColor===code);
+      b.setAttribute('aria-pressed',String(b.dataset.mobileColor===code));
+    });
 
     const gallery=document.querySelector('[data-design-gallery]');
     if(gallery){
@@ -282,6 +292,25 @@
     const requested=new URL(location.href).searchParams.get('color')||info.dataset.defaultColor||'GRA';
     const initial=COLORS[requested]?requested:(info.dataset.defaultColor||'GRA');
     info.dataset.sourcePreview='1';
+    const gallery=document.querySelector('[data-design-gallery]');
+    const mainPhoto=gallery?.querySelector('.product-main-photo');
+    if(mainPhoto && !gallery.querySelector('.mobile-photo-colors')){
+      const panel=document.createElement('div');
+      panel.className='mobile-photo-colors';
+      panel.setAttribute('aria-label','Колір вази');
+      info.querySelectorAll('.design-pdp-color').forEach(original=>{
+        const code=original.dataset.variantColor;
+        const color=COLORS[code];if(!color)return;
+        const btn=document.createElement('button');
+        btn.type='button';btn.dataset.mobileColor=code;
+        btn.setAttribute('aria-label',color.label);
+        btn.title=color.label;
+        btn.innerHTML='<i class="swatch swatch-'+color.swatch+'"></i><span>'+color.label+'</span>';
+        btn.addEventListener('click',()=>original.click());
+        panel.appendChild(btn);
+      });
+      mainPhoto.appendChild(panel);
+    }
     info.querySelectorAll('.design-pdp-color').forEach(btn=>btn.addEventListener('click',()=>{
       info.dataset.sourcePreview='0';
       selectDesignPdp(btn.dataset.variantColor,true,false);
