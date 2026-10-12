@@ -4,3 +4,8 @@
 !.env.example
 !.env.*.example
 .bb610-secrets/
+__pycache__/
+*.pyc
+*.db
+*.db-*
+venv/

@@ -20,6 +20,8 @@
     SND:{label:'Пісочний',swatch:'snd'},
     CHO:{label:'Шоколад',swatch:'cho'}
   };
+  const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let catalogModel=null;
   const body=document.body;
 
   const familyCode=el=>el?.dataset?.familyCode||(el?.dataset?.family==='Architectural Step'?'AS':'OF');
@@ -62,7 +64,7 @@
     const apply=()=>{
       let shown=0;
       const q=(search?.value||'').trim().toLowerCase();
-      catalogItems.forEach(item=>{
+      document.querySelectorAll('.filter-item').forEach(item=>{
         const colorOk=!color?.value || (item.classList.contains('design-variant-card') ? (item.dataset.availableColors||'GRA,MLK,WHT,CHO').split(',').includes(color.value) : item.dataset.color===color.value);
         const ok=(!size?.value||item.dataset.size===size.value)
           && colorOk
@@ -77,6 +79,7 @@
       if(count) count.textContent=shown+(shown===1?' позиція':' позицій');
     };
     [size,color,collection,search].forEach(el=>el&&el.addEventListener('input',apply));
+    document.addEventListener('magelle:catalog-refresh',apply);
     document.getElementById('reset-filters')?.addEventListener('click',()=>{
       [size,color,collection].forEach(el=>{if(el)el.value=''});
       if(search)search.value='';
@@ -110,7 +113,7 @@
   const money=v=>new Intl.NumberFormat('uk-UA').format(Number(v||0))+' грн';
   let activeProducts=new Map();
 
-  const productForItem=item=>activeProducts.get(item.base_sku||item.sku);
+  const productForItem=item=>activeProducts.get(item.sku)||(!catalogModel?.enabled?activeProducts.get(item.base_sku||item.sku):null);
 
   const setQty=(sku,qty)=>{
     const cart=getCart(),item=cart.find(x=>x.sku===sku);
@@ -122,16 +125,17 @@
   };
 
   function addToCart(itemSku,baseSku,meta={}){
-    const p=activeProducts.get(baseSku||itemSku);
+    const p=activeProducts.get(itemSku)||(!catalogModel?.enabled?activeProducts.get(baseSku||itemSku):null);
     if(!p||p.price_uah==null||!['stock','preorder'].includes(p.status))return;
     const cart=getCart();
     const item=cart.find(x=>x.sku===itemSku);
-    if(item){item.qty+=1;Object.assign(item,{base_sku:baseSku||itemSku},meta)}
+    if(item){item.qty=Math.min(20,item.qty+1);Object.assign(item,{base_sku:baseSku||itemSku},meta)}
     else cart.push({sku:itemSku,base_sku:baseSku||itemSku,qty:1,...meta});
     saveCart(cart);renderCart();setCart(true);
   }
 
   function itemTitle(item,p){
+    if(p?.design_id)return p.title_ua;
     if(item.design)return (item.family||p?.series||'')+' «'+item.design+'» — '+(item.size||p?.size_name||'');
     return p?.title_ua||item.sku;
   }
@@ -153,9 +157,9 @@
     let total=0;
     const rows=cart.map(item=>{
       const p=productForItem(item);
-      if(!p)return '<div class="cart-line"><div><b>'+itemTitle(item,p)+'</b><small>'+itemDetails(item)+' · Тимчасово недоступно</small></div><button type="button" data-cart-remove="'+item.sku+'">×</button></div>';
+      if(!p)return '<div class="cart-line"><div><b>'+escapeHtml(itemTitle(item,p))+'</b><small>'+escapeHtml(itemDetails(item))+' · Тимчасово недоступно</small></div><button type="button" data-cart-remove="'+escapeHtml(item.sku)+'">×</button></div>';
       total+=Number(p.price_uah||0)*item.qty;
-      return '<div class="cart-line"><div class="cart-line-main"><b>'+itemTitle(item,p)+'</b><small>'+itemDetails(item)+' · '+money(p.price_uah)+'</small><div class="cart-qty"><button type="button" data-cart-dec="'+item.sku+'">−</button><span>'+item.qty+'</span><button type="button" data-cart-inc="'+item.sku+'">+</button></div></div><div class="cart-line-side"><b>'+money(Number(p.price_uah||0)*item.qty)+'</b><button type="button" data-cart-remove="'+item.sku+'">×</button></div></div>';
+      return '<div class="cart-line"><div class="cart-line-main"><b>'+escapeHtml(itemTitle(item,p))+'</b><small>'+escapeHtml((p.color?'Ваза: '+p.color+' · ':'')+item.sku)+' · '+money(p.price_uah)+'</small><div class="cart-qty"><button type="button" data-cart-dec="'+escapeHtml(item.sku)+'">−</button><span>'+escapeHtml(item.qty)+'</span><button type="button" data-cart-inc="'+escapeHtml(item.sku)+'">+</button></div></div><div class="cart-line-side"><b>'+money(Number(p.price_uah||0)*item.qty)+'</b><button type="button" data-cart-remove="'+escapeHtml(item.sku)+'">×</button></div></div>';
     }).join('');
     host.innerHTML=rows+'<div class="cart-total"><span>Разом</span><b>'+money(total)+'</b></div><a class="btn dark wide cart-checkout" href="/checkout.html">Оформити замовлення</a>';
     host.querySelectorAll('[data-cart-remove]').forEach(btn=>btn.onclick=()=>setQty(btn.dataset.cartRemove,0));
@@ -187,7 +191,7 @@
     const link=card.querySelector('.pilot-hero-link');
     const variantSrc=card.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
     const img=card.querySelector('.pilot-media-front img');
-    const showPhoto=!!variantSrc || (!!photoSrc && (forceSource || code===photoColor));
+    const showPhoto=!!variantSrc || (!!photoSrc && ((!catalogModel?.enabled&&forceSource) || code===photoColor));
     const media=card.querySelector('.pilot-hero-media');
     const applyVisual=()=>{
       if(img){
@@ -231,15 +235,16 @@
       const sizeCode=card.dataset.sizeCode;
       const designCode=card.dataset.designCode;
       const family=familyCode(card);
-      const baseSku=canonicalSku(family,sizeCode,code);
-      const itemSku=designSku(family,designCode,sizeCode,code);
+      const variant=catalogModel?.enabled?catalogModel.products.find(p=>p.design_id===card.dataset.catalogDesignId&&p.color_code===code):null;
+      const itemSku=variant?.sku||designSku(family,designCode,sizeCode,code);
+      const baseSku=catalogModel?.enabled?itemSku:canonicalSku(family,sizeCode,code);
       card.dataset.color=code;
       card.dataset.sku=itemSku;
       card.dataset.baseSku=baseSku;
       card.querySelectorAll('.pilot-color').forEach(b=>b.classList.toggle('active',b.dataset.variantColor===code));
       const label=card.querySelector('.pilot-selected-color');if(label)label.textContent=color.label;
-      if(link)link.href=(card.dataset.pdpUrl||'#')+'?color='+code;
-      const p=activeProducts.get(baseSku),price=card.querySelector('.product-meta>b');
+      if(link){const url=new URL(card.dataset.pdpUrl||'#',location.origin);url.searchParams.set('color',code);link.href=url.href;}
+      const p=activeProducts.get(itemSku)||(!catalogModel?.enabled?activeProducts.get(baseSku):null),price=card.querySelector('.product-meta>b');
       if(price){
         if(p&&Number(p.price_uah)>0){price.textContent=money(p.price_uah);price.classList.remove('price-pending')}
         else{price.textContent='Ціну уточнюємо';price.classList.add('price-pending')}
@@ -269,8 +274,8 @@
   }
 
   function applyPdpProduct(info,itemSku,baseSku){
-    const p=activeProducts.get(baseSku);
-    if(!p||!info)return;
+    if(!info)return;
+    const p=activeProducts.get(itemSku)||(!catalogModel?.enabled?activeProducts.get(baseSku):null);
     let price=info.querySelector('.price-placeholder');
     if(!price){
       price=document.createElement('div');
@@ -278,14 +283,14 @@
       const anchor=info.querySelector('.sku-identity')||info.querySelector('.product-subtitle')||info.querySelector('h1');
       anchor?.after(price);
     }
-    if(p.price_uah!=null&&Number(p.price_uah)>0){price.textContent=money(p.price_uah);price.classList.add('real-price')}
+    if(p?.price_uah!=null&&Number(p.price_uah)>0){price.textContent=money(p.price_uah);price.classList.add('real-price')}
     else{price.textContent='Ціну уточнюємо';price.classList.remove('real-price')}
     let badge=info.querySelector('.api-availability');
     if(!badge){badge=document.createElement('p');badge.className='api-availability';price.after(badge)}
-    badge.textContent=p.status==='stock'?'В наявності':(p.status==='preorder'?'Під замовлення'+(p.lead_time_days?' · '+p.lead_time_days+' дн.':''):'Недоступно');
+    badge.textContent=p?.status==='stock'?'В наявності':(p?.status==='preorder'?'Під замовлення'+(p.lead_time_days?' · '+p.lead_time_days+' дн.':''):'Недоступно');
     const cta=info.querySelector('.disabled-buy,[data-add-sku]');
     if(cta){
-      if(p.price_uah!=null&&['stock','preorder'].includes(p.status)){
+      if(p?.price_uah>0&&['stock','preorder'].includes(p.status)){
         cta.disabled=false;cta.classList.remove('disabled-buy');cta.dataset.addSku=itemSku;
         cta.textContent=p.status==='stock'?'Додати в кошик':'Замовити';
         cta.onclick=()=>addToCart(itemSku,baseSku,{
@@ -307,15 +312,16 @@
     const sizeCode=info.dataset.sizeCode;
     const designCode=info.dataset.designCode;
     const family=familyCode(info);
-    const baseSku=canonicalSku(family,sizeCode,code);
-    const itemSku=designSku(family,designCode,sizeCode,code);
+    const variant=catalogModel?.enabled?catalogModel.products.find(p=>p.design_id===info.dataset.catalogDesignId&&p.color_code===code):null;
+    const itemSku=variant?.sku||designSku(family,designCode,sizeCode,code);
+    const baseSku=catalogModel?.enabled?itemSku:canonicalSku(family,sizeCode,code);
     info.dataset.selectedSku=itemSku;
     info.dataset.selectedBaseSku=baseSku;
     info.dataset.selectedColor=color.label;
 
     const sku=document.getElementById('design-selected-sku');if(sku)sku.textContent=itemSku;
     const label=document.getElementById('design-pdp-color-label');if(label)label.textContent=color.label;
-    const colorEl=document.getElementById('design-pdp-color');if(colorEl)colorEl.innerHTML='<i class="swatch swatch-'+color.swatch+'"></i><span>'+color.label+'</span>';
+    const colorEl=document.getElementById('design-pdp-color');if(colorEl)colorEl.innerHTML='<i class="swatch swatch-'+escapeHtml(color.swatch)+'" '+(color.hex?'style="background:'+escapeHtml(color.hex)+'"':'')+'></i><span>'+escapeHtml(color.label)+'</span>';
     const spec=document.getElementById('design-spec-color');if(spec)spec.textContent=color.label;
     info.querySelectorAll('.design-pdp-color').forEach(b=>b.classList.toggle('active',b.dataset.variantColor===code));
     document.querySelectorAll('.mobile-photo-colors button').forEach(b=>{
@@ -324,7 +330,20 @@
     });
 
     const gallery=document.querySelector('[data-design-gallery]');
-    if(gallery){
+    if(gallery&&catalogModel?.enabled){
+      const d=catalogModel.designs.find(d=>d.id===info.dataset.catalogDesignId);
+      const photos=variant?.photo_urls?.length?variant.photo_urls:(d?.source_color===code?d.source_photo_urls:[]);
+      const main=document.getElementById('product-main-image'),ph=document.getElementById('design-photo-placeholder');
+      if(main){main.hidden=!photos.length;if(photos.length)main.src=photos[0];}
+      if(ph){ph.hidden=!!photos.length;const label=ph.querySelector('strong');if(label)label.textContent=color.label;}
+      const thumbs=gallery.querySelector('.thumbs');
+      if(thumbs){thumbs.hidden=false;thumbs.innerHTML=photos.map((src,i)=>`<button type="button" class="photo-thumb ${i===0?'active':''}" data-catalog-photo="${escapeHtml(src)}"><img src="${escapeHtml(src)}" alt="${escapeHtml(color.label)} · фото ${i+1}"></button>`).join('');thumbs.style.display=photos.length>1?'':'none';thumbs.querySelectorAll('[data-catalog-photo]').forEach(b=>b.onclick=()=>{if(main)main.src=b.dataset.catalogPhoto;});}
+      const desc=info.querySelector('.product-description');if(desc)desc.textContent=variant?.description_ua||d?.description_ua||'';
+      let specs=document.querySelector('.catalog2-specs');if(!specs){specs=document.createElement('div');specs.className='catalog2-specs';info.append(specs);}
+      const values=[['Габарити',variant?.dimensions||d?.dimensions],['Склад',variant?.composition||d?.composition]];
+      specs.innerHTML='<dl>'+values.filter(([,v])=>v).map(([k,v])=>`<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('')+'</dl>';
+      const oldSpecs=document.querySelector('.specs-section');if(oldSpecs)oldSpecs.hidden=true;
+    }else if(gallery){
       const photoColor=gallery.dataset.photoColor||'';
       const main=document.getElementById('product-main-image');
       const ph=document.getElementById('design-photo-placeholder');
@@ -384,6 +403,7 @@
 
   function applyProductData(products){
     activeProducts=new Map(products.map(p=>[p.sku,p]));
+    products.forEach(p=>(p.aliases||[]).forEach(alias=>activeProducts.set(alias,p)));
     document.querySelectorAll('.sku-card:not(.design-variant-card)').forEach(card=>{
       const sku=card.dataset.sku||card.dataset.name?.match(/MG-[A-Z0-9-]+/)?.[0];
       const p=activeProducts.get(sku);
@@ -413,13 +433,63 @@
 
   async function loadProducts(){
     try{
+      const modelResponse=await fetch(API_BASE+'/api/catalog',{headers:{Accept:'application/json'}});
+      if(modelResponse.ok){
+        const model=await modelResponse.json();
+        if(model.enabled){catalogModel=model;hydrateCatalog(model);applyProductData(model.products);document.dispatchEvent(new CustomEvent('magelle:cart-change'));return;}
+      }
       const r=await fetch(API_BASE+'/api/products',{headers:{Accept:'application/json'}});
       if(!r.ok)return;
       applyProductData(await r.json());
     }catch(_){}
   }
 
-  window.MaGelleStore={getCart,saveCart,setQty,money,API_BASE,getProducts:()=>activeProducts};
+  function variantButtons(variants,kind){
+    return variants.map(p=>{const c=COLORS[p.color_code];if(!c)return '';return `<button type="button" class="${kind}" data-variant-color="${escapeHtml(p.color_code)}" aria-label="${escapeHtml(c.label)}"><i class="swatch" style="background:${escapeHtml(c.hex||'#777')}"></i><span>${escapeHtml(c.label)}</span></button>`;}).join('');
+  }
+  function hydrateCatalog(model){
+    model.colors.forEach(c=>{COLORS[c.code]={label:c.title_ua,swatch:c.code.toLowerCase(),hex:c.hex};});
+    const variantsFor=d=>model.products.filter(p=>p.design_id===d.id);
+    const cardFor=d=>{
+      const variants=variantsFor(d),selected=variants.some(p=>p.color_code===d.default_color)?d.default_color:(variants[0]?.color_code||d.default_color||'GRA');
+      const url=d.pdp_url||('/product.html?design='+encodeURIComponent(d.id));
+      const link=url+(url.includes('?')?'&':'?')+'color='+selected;
+      const photos=Object.fromEntries(variants.map(p=>['data-variant-'+p.color_code.toLowerCase(),p.photo_urls?.[0]||'']));
+      const attr=Object.entries(photos).map(([k,v])=>k+'="'+escapeHtml(v)+'"').join(' ');
+      const src=variants.find(p=>p.color_code===selected)?.photo_urls?.[0]||d.source_photo_urls?.[0]||'';
+      return `<article class="product-card sku-card filter-item design-variant-card" data-catalog-design-id="${escapeHtml(d.id)}" data-size="${d.size_code==='DEL'?'S':d.size_code==='VYR'?'M':escapeHtml(d.size_code)}" data-size-code="${escapeHtml(d.size_code)}" data-collection="${escapeHtml(d.collection)}" data-name="${escapeHtml(d.series+' '+d.title_ua+' '+d.size_name+' '+variants.map(p=>p.color).join(' '))}" data-family="${escapeHtml(d.series)}" data-family-code="${escapeHtml(d.family_code)}" data-design="${escapeHtml(d.title_ua)}" data-design-code="${escapeHtml(d.code)}" data-variant-size="${escapeHtml(d.size_name)}" data-default-color="${escapeHtml(selected)}" data-photo-color="${escapeHtml(d.source_color)}" data-photo-src="${escapeHtml(d.source_photo_urls?.[0]||'')}" data-available-colors="${escapeHtml(variants.map(p=>p.color_code).join(','))}" data-pdp-url="${escapeHtml(url)}" ${attr}>
+      <a href="${escapeHtml(link)}" class="product-photo sku-photo pilot-hero-link"><div class="pilot-hero-media"><div class="pilot-media-stage"><div class="pilot-media-face pilot-media-front"><img src="${escapeHtml(src)}" alt="${escapeHtml(d.series+' «'+d.title_ua+'»')}" loading="lazy" ${src?'':'hidden'}></div><div class="pilot-media-face pilot-media-back pilot-card-placeholder"><div><strong>${escapeHtml(COLORS[selected]?.label)}</strong><small>Фото готуємо</small></div></div></div></div></a>
+      <div class="pilot-variant-picker" aria-label="Колір вази">${variantButtons(variants,'pilot-color')}</div><div class="product-meta"><div><small>${escapeHtml(d.size_name)}</small><h3><span class="catalog-title-name">${escapeHtml(d.series)} «${escapeHtml(d.title_ua)}» —</span><span class="catalog-title-size">${escapeHtml(d.size_name)}</span></h3><span class="pilot-selected-color"></span></div><b class="api-price price-pending">Ціну уточнюємо</b></div></article>`;
+    };
+    const catalogMain=document.querySelector('.catalog-main');
+    if(catalogMain){
+      catalogMain.querySelectorAll('.family-block').forEach(n=>n.remove());
+      let section=null,last=null;
+      model.designs.forEach(d=>{if(last!==d.collection){section=document.createElement('section');section.className='family-block';section.innerHTML=`<div class="family-heading"><h2>${escapeHtml(d.series)}</h2></div><div class="product-grid catalog-grid paired-grid"></div>`;catalogMain.append(section);last=d.collection;}section.querySelector('.product-grid').insertAdjacentHTML('beforeend',cardFor(d));});
+    }else{
+      const cards=document.querySelectorAll('.design-variant-card');
+      if(cards.length){const collection=cards[0].dataset.collection,grid=cards[0].parentElement;grid.innerHTML=model.designs.filter(d=>d.collection===collection).map(cardFor).join('');}
+    }
+    initDesignCards();
+    const colors=document.getElementById('filter-color');if(colors)colors.innerHTML='<option value="">Усі</option>'+model.colors.map(c=>`<option value="${escapeHtml(c.code)}">${escapeHtml(c.title_ua)}</option>`).join('');
+    const collections=document.getElementById('filter-collection');if(collections){const seen=new Map(model.designs.map(d=>[d.collection,d.series]));collections.innerHTML='<option value="">Усі</option>'+[...seen].map(([k,v])=>`<option value="${escapeHtml(k)}">${escapeHtml(v)}</option>`).join('');}
+    const sizes=document.getElementById('filter-size');if(sizes){const seen=new Map(model.designs.map(d=>[d.size_code==='DEL'?'S':d.size_code==='VYR'?'M':d.size_code,d.size_name]));sizes.innerHTML='<option value="">Усі</option>'+[...seen].map(([k,v])=>`<option value="${escapeHtml(k)}">${escapeHtml(v)}</option>`).join('');}
+    const info=document.querySelector('.design-variant-pdp');
+    if(info){
+      const requested=new URL(location.href).searchParams.get('design');
+      const d=model.designs.find(d=>requested?d.id===requested:d.code===info.dataset.designCode&&d.family_code===familyCode(info)&&d.size_code===info.dataset.sizeCode);
+      if(d){
+        Object.assign(info.dataset,{catalogDesignId:d.id,family:d.series,familyCode:d.family_code,design:d.title_ua,designCode:d.code,sizeCode:d.size_code,variantSize:d.size_name,defaultColor:d.default_color});
+        const h1=info.querySelector('h1');if(h1)h1.textContent=d.series+' «'+d.title_ua+'» — '+d.size_name;
+        document.title=d.series+' «'+d.title_ua+'» — MaGelle';
+        const picker=info.querySelector('.design-pdp-colors .color-options');if(picker)picker.innerHTML=variantButtons(variantsFor(d),'color-option design-pdp-color');
+        document.querySelector('.mobile-photo-colors')?.remove();initDesignPdp();
+      }
+    }
+    document.dispatchEvent(new CustomEvent('magelle:catalog-refresh'));
+  }
+
+  window.MaGelleStore={getCart,saveCart,setQty,money,API_BASE,escapeHtml,productForItem,getProducts:()=>activeProducts};
   initDesignCards();
   initDesignPdp();
   updateCartCount();

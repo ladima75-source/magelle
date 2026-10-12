@@ -1,4 +1,5 @@
 import os, json, sqlite3, hmac, hashlib, time, urllib.request, urllib.parse
+import catalog
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -17,7 +18,9 @@ MAIN_IMAGE_IDS={
 
 def db():
     DB.parent.mkdir(parents=True,exist_ok=True)
-    con=sqlite3.connect(DB); con.row_factory=sqlite3.Row
+    con=sqlite3.connect(DB,timeout=15); con.row_factory=sqlite3.Row
+    con.execute('PRAGMA foreign_keys=ON')
+    con.execute('PRAGMA busy_timeout=15000')
     return con
 
 def init_db():
@@ -62,6 +65,11 @@ def init_db():
     con.close()
 
 init_db()
+migration_connection=db()
+try:
+    catalog.migrate(migration_connection)
+finally:
+    migration_connection.close()
 
 def jdump(obj): return json.dumps(obj,ensure_ascii=False).encode("utf-8")
 def headers(extra=None,ctype="application/json; charset=utf-8"):
@@ -70,8 +78,11 @@ def headers(extra=None,ctype="application/json; charset=utf-8"):
     return h
 def body_json(environ):
     n=int(environ.get("CONTENT_LENGTH") or 0)
+    if n<0 or n>262144: raise catalog.ApiError('request_too_large',413)
     raw=environ["wsgi.input"].read(n) if n else b"{}"
-    return json.loads(raw.decode("utf-8") or "{}")
+    result=json.loads(raw.decode("utf-8") or "{}")
+    if not isinstance(result,dict): raise catalog.ApiError('invalid_json')
+    return result
 
 def sign(ts):
     return hmac.new(SECRET.encode(),str(ts).encode(),hashlib.sha256).hexdigest()
@@ -92,8 +103,8 @@ def cors(environ):
     origin=environ.get("HTTP_ORIGIN","")
     return [("Access-Control-Allow-Origin",origin if origin==ALLOWED_ORIGIN else ALLOWED_ORIGIN),
             ("Access-Control-Allow-Credentials","true"),
-            ("Access-Control-Allow-Headers","Content-Type"),
-            ("Access-Control-Allow-Methods","GET,POST,PUT,OPTIONS")]
+            ("Access-Control-Allow-Headers","Content-Type,X-CSRF-Token"),
+            ("Access-Control-Allow-Methods","GET,POST,PUT,DELETE,OPTIONS"),("Vary","Origin")]
 
 def product_dict(r):
     d=dict(r)
@@ -109,18 +120,18 @@ def notify_telegram(order_id):
         urllib.request.urlopen(f"https://api.telegram.org/bot{token}/sendMessage",data=data,timeout=5)
     except Exception: pass
 
-def application(environ,start_response):
+def legacy_application(environ,start_response):
     method=environ["REQUEST_METHOD"]; path=environ.get("PATH_INFO","/")
     if method=="OPTIONS":
         start_response("204 No Content",headers(cors(environ))); return [b""]
     try:
       if path in ("/","/admin","/admin/"):
-        data=(STATIC/"admin.html").read_bytes()
+        data=(STATIC/"admin2.html").read_bytes()
         start_response("200 OK",headers(ctype="text/html; charset=utf-8")); return [data]
       if path=="/admin.css":
-        start_response("200 OK",headers(ctype="text/css; charset=utf-8")); return [(STATIC/"admin.css").read_bytes()]
+        start_response("200 OK",headers(ctype="text/css; charset=utf-8")); return [(STATIC/"admin2.css").read_bytes()]
       if path=="/admin.js":
-        start_response("200 OK",headers(ctype="application/javascript; charset=utf-8")); return [(STATIC/"admin.js").read_bytes()]
+        start_response("200 OK",headers(ctype="application/javascript; charset=utf-8")); return [(STATIC/"admin2.js").read_bytes()]
       if path=="/api/health":
         start_response("200 OK",headers(cors(environ))); return [jdump({"ok":True,"service":"magelle-admin","version":"0.1.0"})]
       if path.startswith("/media/") and (path.endswith(".jpg") or path.endswith(".png") or path.endswith(".webp")) and method=="GET":
@@ -211,3 +222,34 @@ def application(environ,start_response):
       start_response("400 Bad Request",headers(cors(environ))); return [jdump({"ok":False,"error":str(e)})]
     except Exception as e:
       start_response("500 Internal Server Error",headers(cors(environ))); return [jdump({"ok":False,"error":"server_error"})]
+
+def application(environ,start_response):
+    if environ['REQUEST_METHOD']=='OPTIONS':
+        start_response('204 No Content',headers(cors(environ))); return [b'']
+    try:
+        path=environ.get('PATH_INFO','')
+        if path.startswith('/uploads/') and environ['REQUEST_METHOD']=='GET':
+            import re
+            filename=path.rsplit('/',1)[-1]
+            if not re.fullmatch(r'[a-f0-9]{48}\.(png|jpg|webp)',filename):
+                raise catalog.ApiError('not_found',404)
+            file=DB.parent/'media'/filename
+            if not file.is_file(): raise catalog.ApiError('not_found',404)
+            mime={'png':'image/png','jpg':'image/jpeg','webp':'image/webp'}[file.suffix[1:]]
+            start_response('200 OK',[('Content-Type',mime),('X-Content-Type-Options','nosniff'),('Cache-Control','public,max-age=31536000,immutable')])
+            return [file.read_bytes()]
+        result=catalog.route(environ,db,SECRET,ADMIN_PASSWORD,body_json,notify_telegram)
+        if result is None:
+            return legacy_application(environ,start_response)
+        status,data,extra=result
+    except catalog.ApiError as error:
+        status,data,extra=error.status,{'ok':False,'error':error.code},[]
+    except sqlite3.IntegrityError:
+        status,data,extra=409,{'ok':False,'error':'duplicate_sku_or_variant'},[]
+    except (ValueError,TypeError,KeyError):
+        status,data,extra=400,{'ok':False,'error':'invalid_request'},[]
+    except Exception:
+        status,data,extra=500,{'ok':False,'error':'server_error'},[]
+    reason={200:'OK',201:'Created',400:'Bad Request',401:'Unauthorized',403:'Forbidden',404:'Not Found',409:'Conflict',413:'Payload Too Large',429:'Too Many Requests',500:'Internal Server Error'}[status]
+    start_response(str(status)+' '+reason,headers(cors(environ)+extra+[('X-Content-Type-Options','nosniff')]))
+    return [jdump(data)]
