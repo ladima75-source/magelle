@@ -309,7 +309,7 @@
         btn.addEventListener('click',()=>original.click());
         panel.appendChild(btn);
       });
-      mainPhoto.appendChild(panel);
+      gallery.appendChild(panel);
     }
     info.querySelectorAll('.design-pdp-color').forEach(btn=>btn.addEventListener('click',()=>{
       info.dataset.sourcePreview='0';
