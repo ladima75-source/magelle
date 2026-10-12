@@ -177,6 +177,15 @@
     if(img && !variantSrc && !photoSrc)img.hidden=true;
     if(backLabel) backLabel.textContent=color.label;
     if(stage) stage.classList.toggle('is-flipped',!showPhoto);
+    const media=card.querySelector('.pilot-hero-media');
+    if(media && media.dataset.previewColor!==code){
+      if(media.dataset.previewColor){
+        media.classList.remove('color-page-turn');
+        void media.offsetWidth;
+        media.classList.add('color-page-turn');
+      }
+      media.dataset.previewColor=code;
+    }
     if(!temporary){
       const sizeCode=card.dataset.sizeCode;
       const designCode=card.dataset.designCode;
