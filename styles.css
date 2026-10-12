@@ -246,3 +246,25 @@
 /* Sculptural Fold — 3-color variant picker */
 .pilot-variant-picker.three-colors{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:640px){.pilot-variant-picker.three-colors{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Catalog visual consistency: full composition and aligned two-line titles (12 Oct 2026) */
+.catalog-grid .sku-card .pilot-media-front img,
+.catalog-grid .sku-card .product-photo img {
+  object-fit: contain;
+  object-position: center center;
+}
+.catalog-grid .sku-card .pilot-media-front,
+.catalog-grid .sku-card .pilot-hero-media,
+.catalog-grid .sku-card .product-photo {
+  background-color: #e7ddcf;
+}
+.catalog-grid .sku-card .product-meta h3 .catalog-title-name,
+.catalog-grid .sku-card .product-meta h3 .catalog-title-size {
+  display:block;
+}
+.catalog-grid .sku-card .product-meta h3 .catalog-title-size {
+  white-space:nowrap;
+}
+.catalog-grid .sku-card .product-meta h3 {
+  min-height: 2.4em;
+}
