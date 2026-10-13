@@ -401,3 +401,25 @@
 @media(max-width:720px){.interior-editorial{padding:60px 0;scroll-margin-top:65px}.interior-editorial-head{display:block;margin-bottom:24px}.interior-editorial-head h2{font-size:clamp(37px,8.1vw,51px)}.interior-editorial-head>p{max-width:100%;font-size:15px;margin-top:18px}.interior-editorial-showcase{grid-template-columns:1fr;min-height:0}.interior-editorial-visual img{max-height:none;aspect-ratio:1122/1402;object-fit:contain}.interior-editorial-copy{padding:30px 25px 34px}.interior-editorial-copy h3{font-size:clamp(32px,7vw,44px)}.interior-editorial-paths{grid-template-columns:1fr;gap:12px}.interior-editorial-path{grid-template-columns:minmax(0,1fr) 115px;min-height:200px}.interior-editorial-path p:not(.eyebrow){font-size:12px}}
 @media(max-width:390px){.interior-editorial-path{grid-template-columns:minmax(0,1fr) 94px;gap:11px;padding:17px}.interior-editorial-path h3{font-size:23px}.interior-editorial-specs>div{grid-template-columns:75px 1fr;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.interior-editorial *{scroll-behavior:auto}}
+
+/* Instagram-sourced interior visual journal — editorial, not product images */
+.interior-gallery-intro{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);align-items:end;gap:50px;margin:62px 0 23px}
+.interior-gallery-intro h3{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(33px,3.5vw,47px);letter-spacing:-.035em;line-height:1.12;margin:7px 0 0}
+.interior-gallery-intro>p{color:#675d54;max-width:410px;line-height:1.75;font-size:15px;margin:0 0 3px}
+.interior-gallery{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.interior-scene{display:block;position:relative;grid-column:span 4;aspect-ratio:1/1;overflow:hidden;background:#c6b7a6;isolation:isolate}
+.interior-scene:nth-child(-n+2),.interior-scene:nth-last-child(-n+2){grid-column:span 6}
+.interior-scene img{width:100%;height:100%;display:block;object-fit:cover;object-position:center;transition:transform .6s ease}
+.interior-scene:hover img,.interior-scene:focus-visible img{transform:scale(1.04)}
+.interior-scene-tint{position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(25,20,17,.78) 100%);pointer-events:none}
+.interior-scene-label{position:absolute;bottom:25px;left:27px;right:27px;color:#fff;display:flex;flex-direction:column;gap:4px;z-index:1}
+.interior-scene-label small{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#f2e6da}
+.interior-scene-label b{font:400 clamp(26px,2.8vw,37px)/1.08 Georgia,"Times New Roman",serif}
+.interior-scene-label>span{font-size:13px;line-height:1.5;color:#f2e9e0}
+.interior-scene:focus-visible{outline:3px solid #80654e;outline-offset:3px}
+.interior-gallery-footer{display:flex;align-items:center;justify-content:space-between;gap:26px;border-top:1px solid #cdbda9;margin-top:26px;padding-top:24px}
+.interior-gallery-footer p{color:#786b60;line-height:1.7;font-size:13px;max-width:730px;margin:0}
+.interior-gallery-footer .btn{white-space:nowrap}
+@media(max-width:960px){.interior-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.interior-scene,.interior-scene:nth-child(-n+2),.interior-scene:nth-last-child(-n+2){grid-column:auto}}
+@media(max-width:620px){.interior-gallery-intro{grid-template-columns:1fr;gap:12px;margin:40px 0 20px}.interior-gallery-intro>p{font-size:14px}.interior-gallery{grid-template-columns:1fr;gap:12px}.interior-scene{aspect-ratio:1/1}.interior-scene-label{bottom:21px;left:22px;right:22px}.interior-scene-label b{font-size:31px}.interior-gallery-footer{align-items:flex-start;flex-direction:column;gap:20px}.interior-gallery-footer .btn{width:100%;text-align:center}}
+@media(prefers-reduced-motion:reduce){.interior-scene img{transition:none}}
