@@ -320,6 +320,33 @@
     }
   }
 
+  // Use the exact Admin 2.0 SKU, image, stock and price in Google Product/Offer.
+  function updateExactSchema(p,code,info){
+    const existing=document.getElementById('magelle-product-schema');
+    document.querySelectorAll('script[type="application/ld+json"]').forEach(n=>{
+      if(n.id==='magelle-product-schema')return;
+      try{if(JSON.parse(n.textContent)['@type']==='Product')n.remove()}catch(_){}
+    });
+    const images=(p?.photo_urls||[]).filter(u=>/^https:\/\/api\.magelle\.com\.ua\/(media|uploads)\//.test(u));
+    if(!p||!images.length||!(Number(p.price_uah)>0)){existing?.remove();return;}
+    const url=new URL(location.pathname,location.origin);
+    if(code!==info.dataset.defaultColor)url.searchParams.set('color',code);
+    const data={'@context':'https://schema.org','@type':'Product',
+      name:'MaGelle '+p.title_ua,sku:p.sku,
+      description:p.description_ua||'Інтер’єрна композиція MaGelle з сухоцвітів та стабілізованих рослин.',
+      image:images,brand:{'@type':'Brand',name:'MaGelle'},color:p.color,url:url.href};
+    if(p.status==='stock')data.offers={'@type':'Offer',price:p.price_uah,priceCurrency:'UAH',
+      availability:'https://schema.org/InStock',itemCondition:'https://schema.org/NewCondition',url:url.href};
+    else if(p.status==='hidden')data.offers={'@type':'Offer',price:p.price_uah,priceCurrency:'UAH',
+      availability:'https://schema.org/OutOfStock',itemCondition:'https://schema.org/NewCondition',url:url.href};
+    const node=existing||document.createElement('script');
+    node.id='magelle-product-schema';node.type='application/ld+json';
+    node.textContent=JSON.stringify(data);
+    if(!existing)document.head.appendChild(node);
+    const canonical=document.querySelector('link[rel="canonical"]');
+    if(canonical)canonical.href=url.href;
+  }
+
   function selectDesignPdp(code,updateUrl=true,forceSource=false){
     const info=document.querySelector('.design-variant-pdp');
     if(!info)return;
@@ -378,6 +405,7 @@
       const url=new URL(location.href);url.searchParams.set('color',code);history.replaceState({},'',url);
     }
     applyPdpProduct(info,itemSku,baseSku);
+    if(catalogModel?.enabled)updateExactSchema(variant,code,info);
   }
 
   function initDesignPdp(){
