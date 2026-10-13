@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/build_merchant_feed.py'
+      - 'scripts/verify_merchant_feed.py'
       - '.github/workflows/merchant-feed.yml'
   schedule:
     - cron: '7,22,37,52 * * * *'
@@ -29,6 +30,8 @@ jobs:
         run: python -m py_compile scripts/build_merchant_feed.py
       - name: Build feed from Admin 2.0
         run: python scripts/build_merchant_feed.py
+      - name: Check XML, canonical, Product/Offer against price and photos
+        run: python scripts/verify_merchant_feed.py
       - name: Commit only changed feed
         run: |
           if git diff --quiet -- merchant.xml organic-flare-vyraznyi-pisochnyi.html organic-flare-vyraznyi-molochnyi.html organic-flare-delikatnyi-shokolad.html; then
