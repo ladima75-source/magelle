@@ -84,7 +84,10 @@ def import_rows(con, root):
             exact=info.get('variant_'+color.lower()) or c.get('variant_'+color.lower())
             # Keep source gallery separate: never assign another color's photo as exact media.
             photos=photo_urls if color==source_color else []
-            if color==c.get('photo_color') and c.get('photo_src'):
+            # The reviewed PDP gallery is authoritative. A catalog thumbnail
+            # may be a different encoding of the same photograph and must not
+            # become a second SKU photo or leak across vase colors.
+            if not photo_urls and color==c.get('photo_color') and c.get('photo_src'):
                 photos=list(dict.fromkeys([c['photo_src']]+photos))
             if exact:
                 # A Drive thumbnail at w900 and w1600 is the same photo.
