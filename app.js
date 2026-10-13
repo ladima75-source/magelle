@@ -486,6 +486,8 @@
       }
     }
     renderCart();
+    // Notify checkout when the public product API snapshot is available.
+    document.dispatchEvent(new CustomEvent('magelle:cart-change'));
   }
 
   async function loadProducts(){
