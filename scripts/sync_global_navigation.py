@@ -1,3 +1,4 @@
+# One source of truth: the homepage header menu.
 from pathlib import Path
 import re
 pattern=re.compile(r'<nav class="site-nav" id="nav">[\s\S]*?</nav>')
