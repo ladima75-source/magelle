@@ -26,14 +26,18 @@ window.addEventListener('DOMContentLoaded', async () => {
   const render=()=>{ const cart=store.getCart();
     const products=store.getProducts();
     if(!cart.length){ itemsHost.innerHTML='<p>Кошик порожній.</p><a class="text-link" href="/catalog.html">До каталогу →</a>'; submit.disabled=true; return; }
+    // Do not mark products unavailable before Admin 2.0 catalog has finished loading.
+    if(!products.size){itemsHost.innerHTML='<p>Перевіряємо наявність і ціни…</p>';submit.disabled=true;msg.textContent='';return;}
     let total=0, unavailable=false;
     itemsHost.innerHTML=cart.map(x=>{ const p=store.productForItem(x); if(!p||!p.price_uah||!["stock","preorder"].includes(p.status)){unavailable=true; return '<div class="checkout-line"><div><b>'+x.sku+'</b><small>Недоступно для замовлення</small></div></div>'; } total+=Number(p.price_uah||0)*x.qty; const title=store.escapeHtml(p.title_ua); const details=store.escapeHtml((p.color?('Ваза: '+p.color+' · '):'')+x.sku+' · '+x.qty+' шт.'); return '<div class="checkout-line"><div><b>'+title+'</b><small>'+details+'</small></div><b>'+store.money(Number(p.price_uah||0)*x.qty)+'</b></div>'; }).join('')+'<div class="checkout-total"><span>Разом</span><b>'+store.money(total)+'</b></div>';
     submit.disabled=unavailable;
     if(unavailable) msg.textContent='У кошику є позиція, яка зараз недоступна. Видаліть її з кошика.';
+    else if(msg.textContent.includes('У кошику є позиція, яка зараз недоступна')) msg.textContent='';
   };
   setTimeout(render,250);
   setTimeout(render,900);
   document.addEventListener('magelle:cart-change',render);
+  document.addEventListener('magelle:catalog-refresh',render);
   form.addEventListener('submit',async e=>{
     e.preventDefault(); msg.textContent=''; submit.disabled=true; submit.textContent='Оформлюємо…';
     const fd=new FormData(form);
