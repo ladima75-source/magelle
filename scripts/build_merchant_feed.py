@@ -94,7 +94,7 @@ def sync_pdp_schema(products):
         if not path.exists():
             raise RuntimeError('Missing PDP: '+page)
         body=path.read_text(encoding='utf-8')
-        pattern=r'<script id="merchant-static-schema" type="application/ld\\+json">[\\s\\S]*?</script>'
+        pattern=r'<script id="merchant-static-schema" type="application/ld\+json">[\s\S]*?</script>'
         if not re.search(pattern,body):
             raise RuntimeError('Merchant schema marker missing: '+page)
         if p and p.get('price_uah') and p.get('photo_urls') and acceptable_photo(p['photo_urls'][0]):
