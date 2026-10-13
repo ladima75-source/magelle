@@ -6,6 +6,9 @@ on:
     paths:
       - 'scripts/build_merchant_feed.py'
       - 'scripts/verify_merchant_feed.py'
+      - 'organic-flare-med-vyraznyi-hrafit.html'
+      - 'organic-flare-vyraznyi-molochnyi.html'
+      - 'organic-flare-delikatnyi-shokolad.html'
       - '.github/workflows/merchant-feed.yml'
   schedule:
     - cron: '7 * * * *'
