@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Build Google Merchant RSS from the public Admin 2.0 catalog.
+"""Build the existing MaGelle Google Merchant RSS using Admin 2.0 exact SKU data.
 
-No handmade images, prices or stock levels are hard-coded here. The initial
-pilot is intentionally limited to 3 reviewed physical SKU/color combinations.
+The approved three-SKU pilot is an immutable identity contract (SKU, name,
+size, vase color, canonical PDP). Image, price and availability come from
+live Admin 2.0. A mismatch FAILS publishing instead of silently swapping
+compositions, colors or dropping a product from the feed.
 """
+import html
 import json
 import os
+import re
 from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.parse import urlsplit
@@ -17,110 +21,180 @@ SITE = 'https://magelle.com.ua'
 G = 'http://base.google.com/ns/1.0'
 ET.register_namespace('g', G)
 
-# Each PDP defaults to exactly this color. No other colors are eligible yet.
 APPROVED = {
-    'MG-OF-MED-VYR-GRA': '/organic-flare-vyraznyi-pisochnyi.html',
-    'MG-OF-PER-VYR-MLK': '/organic-flare-vyraznyi-molochnyi.html',
-    'MG-OF-OLI-DEL-CHO': '/organic-flare-delikatnyi-shokolad.html',
+    'MG-OF-MED-VYR-GRA': {
+        'path': '/organic-flare-med-vyraznyi-hrafit.html',
+        'title_ua': 'Organic Flare «Мед» — Виразний, Графіт',
+        'color': 'Графіт', 'color_code': 'GRA', 'design_id': 'design-OF-MED-VYR',
+    },
+    'MG-OF-PER-VYR-MLK': {
+        'path': '/organic-flare-vyraznyi-molochnyi.html',
+        'title_ua': 'Organic Flare «Перлина» — Виразний, Молочний',
+        'color': 'Молочний', 'color_code': 'MLK', 'design_id': 'design-OF-PER-VYR',
+    },
+    'MG-OF-OLI-DEL-CHO': {
+        'path': '/organic-flare-delikatnyi-shokolad.html',
+        'title_ua': 'Organic Flare «Олива» — Делікатний, Шоколад',
+        'color': 'Шоколад', 'color_code': 'CHO', 'design_id': 'design-OF-OLI-DEL',
+    },
 }
 
+
 def get_products():
-    with urlopen(Request(SOURCE, headers={'User-Agent':'MaGelle-Merchant-Feed/1.0',
-                                           'Accept':'application/json'}), timeout=20) as response:
-        return json.load(response)
+    with urlopen(Request(SOURCE, headers={'User-Agent': 'MaGelle-Merchant-Feed/2.0',
+                                           'Accept': 'application/json'}), timeout=30) as response:
+        result = json.load(response)
+    if not isinstance(result, list):
+        raise ValueError('Admin products response must be a JSON array')
+    return result
+
 
 def acceptable_photo(url):
-    if not url or not isinstance(url, str):
+    if not isinstance(url, str) or not url:
         return False
     p = urlsplit(url)
-    # Do not allow Google Drive thumbnails, placeholders or user supplied hosts.
-    return (p.scheme == 'https' and p.netloc == 'api.magelle.com.ua'
+    return (p.scheme == 'https'
+            and p.netloc == 'api.magelle.com.ua'
             and (p.path.startswith('/uploads/') or p.path.startswith('/media/'))
             and p.path.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')))
+
+
+def validated_products(products):
+    by_sku = {}
+    for product in products:
+        if isinstance(product, dict) and product.get('sku'):
+            if product['sku'] in by_sku:
+                raise ValueError('Duplicate SKU in Admin 2.0: ' + product['sku'])
+            by_sku[product['sku']] = product
+    selected = {}
+    for sku, spec in APPROVED.items():
+        p = by_sku.get(sku)
+        if not p:
+            raise ValueError('Approved Merchant SKU missing in Admin 2.0: ' + sku)
+        for field in ('title_ua', 'color', 'color_code', 'design_id'):
+            if p.get(field) != spec[field]:
+                raise ValueError(f'{sku}: {field} mismatch: Admin {p.get(field)!r}, approved {spec[field]!r}')
+        if p.get('lifecycle') not in ('active', None):
+            raise ValueError(sku + ': lifecycle not active')
+        if p.get('status') not in ('stock', 'preorder', 'hidden'):
+            raise ValueError(sku + ': unsupported stock status')
+        if isinstance(p.get('price_uah'), bool) or not isinstance(p.get('price_uah'), (int, float)) or p['price_uah'] <= 0:
+            raise ValueError(sku + ': missing positive price')
+        photos = p.get('photo_urls')
+        if not isinstance(photos, list) or not photos or not acceptable_photo(photos[0]):
+            raise ValueError(sku + ': exact first-party photo missing')
+        selected[sku] = p
+    return selected
+
+
+def availability(product):
+    # "preorder" has no reliable availability date in the Admin API; do not
+    # send Google's preorder/backorder attribute without one.
+    return 'in_stock' if product['status'] == 'stock' else 'out_of_stock'
+
 
 def add_text(parent, tag, value):
     ET.SubElement(parent, tag).text = str(value)
 
+
 def add_google(parent, tag, value):
-    add_text(parent, '{%s}%s' % (G,tag), value)
+    add_text(parent, '{%s}%s' % (G, tag), value)
+
 
 def build(products):
-    by_sku = {p['sku']:p for p in products if isinstance(p, dict) and p.get('sku')}
-    rss = ET.Element('rss', {'version':'2.0'})
-    channel = ET.SubElement(rss,'channel')
-    add_text(channel,'title','MaGelle — товарний фід')
-    add_text(channel,'link',SITE+'/')
-    add_text(channel,'description','Підтверджені SKU MaGelle з Admin 2.0')
-    count=0
-    for sku, path in APPROVED.items():
-        p = by_sku.get(sku)
-        if not p or p.get('lifecycle') not in ('active', None):
-            continue
-        if p.get('status') != 'stock':
-            continue  # No made-up availability dates for preorder items
-        price = p.get('price_uah')
-        if not isinstance(price,(int,float)) or price <= 0:
-            continue
-        pics = p.get('photo_urls')
-        main = pics[0] if isinstance(pics,list) and pics else ''
-        if not acceptable_photo(main) or not p.get('design_id'):
-            continue
-        item = ET.SubElement(channel,'item')
-        add_google(item,'id',sku)
-        add_text(item,'title','MaGelle '+str(p.get('title_ua') or sku))
-        add_text(item,'description',p.get('description_ua') or 'Інтер’єрна композиція із сухоцвітів та стабілізованих рослин у дизайнерській вазі MaGelle.')
-        add_text(item,'link',SITE+path)
-        add_google(item,'image_link',main)
-        add_google(item,'availability','in_stock')
-        add_google(item,'price',f'{price:.2f} UAH')
-        add_google(item,'condition','new')
-        add_google(item,'brand','MaGelle')
-        add_google(item,'identifier_exists','no')
-        add_google(item,'color',p.get('color') or '')
-        add_google(item,'item_group_id',p['design_id'])
-        count+=1
-    if count < 1:
-        raise RuntimeError('Refusing to overwrite Merchant feed with zero validated products')
-    ET.indent(rss,space='  ')
-    return ET.tostring(rss,encoding='unicode',xml_declaration=True),count
+    chosen = validated_products(products)
+    rss = ET.Element('rss', {'version': '2.0'})
+    channel = ET.SubElement(rss, 'channel')
+    add_text(channel, 'title', 'MaGelle — товарний фід')
+    add_text(channel, 'link', SITE + '/')
+    add_text(channel, 'description', 'Підтверджені SKU MaGelle з Admin 2.0')
+    for sku, spec in APPROVED.items():
+        p = chosen[sku]
+        item = ET.SubElement(channel, 'item')
+        add_google(item, 'id', sku)
+        add_text(item, 'title', 'MaGelle ' + p['title_ua'])
+        add_text(item, 'description', p.get('description_ua') or 'Інтер’єрна композиція із сухоцвітів та стабілізованих рослин у дизайнерській вазі MaGelle.')
+        add_text(item, 'link', SITE + spec['path'])
+        add_google(item, 'image_link', p['photo_urls'][0])
+        add_google(item, 'availability', availability(p))
+        add_google(item, 'price', f"{p['price_uah']:.2f} UAH")
+        add_google(item, 'condition', 'new')
+        add_google(item, 'brand', 'MaGelle')
+        add_google(item, 'identifier_exists', 'no')
+        add_google(item, 'color', p['color'])
+        add_google(item, 'item_group_id', p['design_id'])
+    ET.indent(rss, space='  ')
+    return ET.tostring(rss, encoding='unicode', xml_declaration=True), len(chosen)
+
 
 def sync_pdp_schema(products):
-    """Keep crawlable HTML Offer values aligned with the same Admin data as RSS."""
-    import re
-    by_sku = {p['sku']:p for p in products if isinstance(p,dict) and p.get('sku')}
-    for sku, page in APPROVED.items():
-        p=by_sku.get(sku)
-        path=Path(page.lstrip('/'))
-        if not path.exists():
-            raise RuntimeError('Missing PDP: '+page)
-        body=path.read_text(encoding='utf-8')
-        pattern=r'<script id="merchant-static-schema" type="application/ld\+json">[\s\S]*?</script>'
-        if not re.search(pattern,body):
-            raise RuntimeError('Merchant schema marker missing: '+page)
-        if p and p.get('price_uah') and p.get('photo_urls') and acceptable_photo(p['photo_urls'][0]):
-            url=SITE+page
-            data={'@context':'https://schema.org','@type':'Product',
-                  'sku':sku,'name':'MaGelle '+str(p.get('title_ua') or sku),
-                  'description':p.get('description_ua') or 'Інтер’єрна композиція MaGelle із сухоцвітів та стабілізованих рослин.',
-                  'brand':{'@type':'Brand','name':'MaGelle'},
-                  'color':p.get('color') or '',
-                  'image':[p['photo_urls'][0]],'url':url}
-            if p.get('status')=='stock':
-                data['offers']={'@type':'Offer','url':url,'price':p['price_uah'],
-                    'priceCurrency':'UAH','availability':'https://schema.org/InStock',
-                    'itemCondition':'https://schema.org/NewCondition'}
-            encoded=json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
-            replacement='<script id="merchant-static-schema" type="application/ld+json">'+encoded+'</script>'
+    chosen = validated_products(products)
+    for sku, spec in APPROVED.items():
+        p = chosen[sku]
+        path = Path(spec['path'].lstrip('/'))
+        if not path.is_file():
+            raise RuntimeError('Approved landing page missing: ' + spec['path'])
+        body = path.read_text(encoding='utf-8')
+        url = SITE + spec['path']
+        schema_pattern = r'<script id="merchant-static-schema" type="application/ld\+json">[\s\S]*?</script>'
+        if len(re.findall(schema_pattern, body)) != 1:
+            raise RuntimeError(sku + ': missing/duplicate static Product JSON-LD')
+        for pattern, reason in [
+            (r'<link rel="canonical" href="' + re.escape(url) + r'">', 'canonical'),
+            (r'data-selected-sku="' + re.escape(sku) + r'"', 'selected SKU'),
+            (r'data-default-color="' + spec['color_code'] + r'"', 'default vase color'),
+            (r'data-design-gallery', 'gallery'),
+        ]:
+            if not re.search(pattern, body):
+                raise RuntimeError(sku + ': landing page has wrong/missing ' + reason)
+        pic = p['photo_urls'][0]
+        data = {
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            'sku': sku,
+            'name': 'MaGelle ' + p['title_ua'],
+            'description': p.get('description_ua') or 'Інтер’єрна композиція MaGelle із сухоцвітів та стабілізованих рослин.',
+            'brand': {'@type': 'Brand', 'name': 'MaGelle'},
+            'color': p['color'],
+            'image': [pic],
+            'url': url,
+            'offers': {
+                '@type': 'Offer', 'url': url, 'price': p['price_uah'],
+                'priceCurrency': 'UAH',
+                'availability': 'https://schema.org/InStock' if p['status'] == 'stock' else 'https://schema.org/OutOfStock',
+                'itemCondition': 'https://schema.org/NewCondition',
+            }
+        }
+        encoded = json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c')
+        schema = '<script id="merchant-static-schema" type="application/ld+json">' + encoded + '</script>'
+        body = re.sub(schema_pattern, lambda _: schema, body, count=1)
+        # Google sees precisely the same default physical variant in the
+        # rendered first product photo and Product/Offer image.
+        hero_pattern = r'(<img id="product-main-image" src=")[^"]+(" alt=")[^"]*(")'
+        body, count = re.subn(hero_pattern, lambda m: m.group(1) + html.escape(pic, quote=True)
+                              + m.group(2) + html.escape(p['title_ua'] + ' — MaGelle', quote=True) + m.group(3),
+                              body, count=1)
+        if count != 1:
+            raise RuntimeError(sku + ': hero image missing')
+        attr = 'data-variant-' + spec['color_code'].lower()
+        if not re.search(attr + r'="[^"]*"', body):
+            raise RuntimeError(sku + ': default vase photo map missing')
+        body = re.sub(attr + r'="[^"]*"', lambda _: attr + '="' + html.escape(pic, quote=True) + '"', body, count=1)
+        og_pattern = r'<meta property="og:image" content="[^"]*">'
+        og_tag = '<meta property="og:image" content="' + html.escape(pic, quote=True) + '">'
+        if re.search(og_pattern, body):
+            body = re.sub(og_pattern, lambda _: og_tag, body, count=1)
         else:
-            # Keep the marker so a later image/stock restoration can be synced.
-            replacement='<script id="merchant-static-schema" type="application/ld+json">{}</script>'
-        path.write_text(re.sub(pattern,lambda _:replacement,body,count=1),encoding='utf-8')
+            body = body.replace('</head>', og_tag + '</head>', 1)
+        if body != path.read_text(encoding='utf-8'):
+            path.write_text(body, encoding='utf-8')
 
-if __name__=='__main__':
-    source=get_products()
-    xml, count=build(source)
+
+if __name__ == '__main__':
+    source = get_products()
+    xml, count = build(source)
     sync_pdp_schema(source)
-    if count>len(APPROVED):
-        raise AssertionError('Pilot cap exceeded')
-    OUTPUT.write_text(xml+'\n', encoding='utf-8')
-    print(f'Merchant feed updated: {count} validated SKU, source Admin 2.0')
+    if count != len(APPROVED):
+        raise AssertionError('Incomplete three-SKU pilot')
+    OUTPUT.write_text(xml + '\n', encoding='utf-8')
+    print(f'Merchant feed: validated exact identity of all {count} Admin 2.0 SKU')
