@@ -1,6 +1,11 @@
 name: Merchant feed sync
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/build_merchant_feed.py'
+      - '.github/workflows/merchant-feed.yml'
   schedule:
     - cron: '17 * * * *'
 permissions:
