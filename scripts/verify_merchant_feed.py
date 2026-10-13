@@ -4,6 +4,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.request import urlopen, Request
 from xml.etree import ElementTree as ET
 from build_merchant_feed import APPROVED
 
@@ -37,6 +38,13 @@ for row in rows:
     rss_image=row.findtext('g:image_link',namespaces=NS)
     assert rss_image==data['image'][0],sku+' first image mismatch'
     assert rss_image.startswith('https://api.magelle.com.ua/'),sku+' non-first-party media'
+    # GET rather than HEAD: certain image hosts return HEAD=404 but GET=200.
+    with urlopen(Request(rss_image,headers={'User-Agent':'MaGelle-Merchant-Image-QA/1.0'}),timeout=25) as response:
+        assert response.status==200,sku+' image HTTP error'
+        mime=response.headers.get_content_type()
+        start=response.read(16)
+        assert mime in ('image/png','image/jpeg','image/webp'),sku+' image MIME: '+mime
+        assert start.startswith((b'\x89PNG',b'\xff\xd8\xff',b'RIFF')),sku+' image bytes invalid'
     assert row.findtext('g:brand',namespaces=NS)=='MaGelle'
     assert row.findtext('g:condition',namespaces=NS)=='new'
 print(f'MAG-022 feed/schema consistency PASS ({len(rows)} SKU): '+', '.join(sorted(seen)))
