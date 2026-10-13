@@ -84,9 +84,41 @@ def build(products):
     ET.indent(rss,space='  ')
     return ET.tostring(rss,encoding='unicode',xml_declaration=True),count
 
+def sync_pdp_schema(products):
+    """Keep crawlable HTML Offer values aligned with the same Admin data as RSS."""
+    import re
+    by_sku = {p['sku']:p for p in products if isinstance(p,dict) and p.get('sku')}
+    for sku, page in APPROVED.items():
+        p=by_sku.get(sku)
+        path=Path(page.lstrip('/'))
+        if not path.exists():
+            raise RuntimeError('Missing PDP: '+page)
+        body=path.read_text(encoding='utf-8')
+        pattern=r'<script id="merchant-static-schema" type="application/ld\\+json">[\\s\\S]*?</script>'
+        if not re.search(pattern,body):
+            raise RuntimeError('Merchant schema marker missing: '+page)
+        if p and p.get('price_uah') and p.get('photo_urls') and acceptable_photo(p['photo_urls'][0]):
+            url=SITE+page
+            data={'@context':'https://schema.org','@type':'Product',
+                  'sku':sku,'name':'MaGelle '+str(p.get('title_ua') or sku),
+                  'description':p.get('description_ua') or 'Інтер’єрна композиція MaGelle із сухоцвітів та стабілізованих рослин.',
+                  'brand':{'@type':'Brand','name':'MaGelle'},
+                  'color':p.get('color') or '',
+                  'image':[p['photo_urls'][0]],'url':url}
+            if p.get('status')=='stock':
+                data['offers']={'@type':'Offer','url':url,'price':p['price_uah'],
+                    'priceCurrency':'UAH','availability':'https://schema.org/InStock',
+                    'itemCondition':'https://schema.org/NewCondition'}
+            encoded=json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
+            replacement='<script id="merchant-static-schema" type="application/ld+json">'+encoded+'</script>'
+        else:
+            replacement=''  # Never publish a stale Offer for an unavailable/missing-photo SKU
+        path.write_text(re.sub(pattern,lambda _:replacement,body,count=1),encoding='utf-8')
+
 if __name__=='__main__':
     source=get_products()
     xml, count=build(source)
+    sync_pdp_schema(source)
     if count>len(APPROVED):
         raise AssertionError('Pilot cap exceeded')
     OUTPUT.write_text(xml+'\n', encoding='utf-8')
