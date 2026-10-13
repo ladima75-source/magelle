@@ -370,3 +370,34 @@
 
 /* Fallback for remote images which are inaccessible or return HTML */
 .media-unavailable{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:#e7ddcf;color:#756859;text-transform:uppercase;letter-spacing:.12em;font-size:11px;text-align:center;z-index:2}
+
+/* MaGelle interior editorial: separate lifestyle inspiration from product catalog. */
+.interior-editorial{background:#e8ddcf;scroll-margin-top:74px;padding-top:90px;padding-bottom:90px}
+.interior-editorial-head{display:grid;grid-template-columns:1.3fr .7fr;align-items:end;gap:7%;margin-bottom:36px}
+.interior-editorial-head h2{margin:8px 0 0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(38px,4.55vw,66px);line-height:1.09;font-weight:400;letter-spacing:-.045em}
+.interior-editorial-head h2 em{font-weight:400;color:#80654e}
+.interior-editorial-head>p{color:#675d54;font-size:17px;line-height:1.7;margin:0 0 5px;max-width:350px}
+.interior-editorial-showcase{display:grid;grid-template-columns:minmax(0,1.13fr) minmax(0,.87fr);align-items:stretch;background:#f4ede2;min-height:600px;overflow:hidden}
+.interior-editorial-visual{position:relative;background:#c3a98f;margin:0;min-width:0;overflow:hidden;display:flex;flex-direction:column}
+.interior-editorial-visual img{display:block;width:100%;height:auto;max-height:735px;flex:1;min-height:0;object-fit:contain;object-position:center center}
+.interior-editorial-visual figcaption{padding:12px 18px;color:#5c4d40;background:#ded0be;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.interior-editorial-copy{padding:clamp(28px,4.3vw,67px);display:flex;flex-direction:column;justify-content:center}
+.interior-editorial-copy h3{font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,3.25vw,49px);font-weight:400;line-height:1.12;letter-spacing:-.035em;margin:10px 0 19px}
+.interior-editorial-copy>p:not(.eyebrow):not(.interior-editorial-note){color:#60574f;font-size:16px;line-height:1.78;margin:0 0 27px}
+.interior-editorial-specs{border-top:1px solid #d6c8b9;margin:0 0 28px}
+.interior-editorial-specs>div{display:grid;grid-template-columns:93px 1fr;gap:9px;padding:12px 0;border-bottom:1px solid #d6c8b9;font-size:13px}
+.interior-editorial-specs span{color:#897b6c}
+.interior-editorial-specs strong{font-weight:500}
+.interior-editorial-copy>.btn{align-self:flex-start}
+.interior-editorial-copy .interior-editorial-note{font-size:11px;line-height:1.65;color:#827465;margin:18px 0 0;max-width:400px}
+.interior-editorial-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:17px}
+.interior-editorial-path{display:grid;grid-template-columns:minmax(0,1fr) 138px;gap:14px;background:#f4ede2;padding:23px 23px 23px 28px;align-items:center;min-height:210px}
+.interior-editorial-path h3{font-family:Georgia,"Times New Roman",serif;font-size:29px;font-weight:400;margin:5px 0}
+.interior-editorial-path p:not(.eyebrow){font-size:13px;color:#675d54;line-height:1.6;max-width:300px;margin:8px 0 14px}
+.interior-editorial-path .text-link{font-size:12px}
+.interior-editorial-thumb{min-height:162px;height:100%;max-height:220px;background:#e0d3c1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.interior-editorial-thumb img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
+@media(max-width:960px){.interior-editorial-showcase{grid-template-columns:1fr 1fr}.interior-editorial-copy{padding:28px}.interior-editorial-path{grid-template-columns:1fr 100px;padding:20px}.interior-editorial-path h3{font-size:25px}}
+@media(max-width:720px){.interior-editorial{padding:60px 0;scroll-margin-top:65px}.interior-editorial-head{display:block;margin-bottom:24px}.interior-editorial-head h2{font-size:clamp(37px,8.1vw,51px)}.interior-editorial-head>p{max-width:100%;font-size:15px;margin-top:18px}.interior-editorial-showcase{grid-template-columns:1fr;min-height:0}.interior-editorial-visual img{max-height:none;aspect-ratio:1122/1402;object-fit:contain}.interior-editorial-copy{padding:30px 25px 34px}.interior-editorial-copy h3{font-size:clamp(32px,7vw,44px)}.interior-editorial-paths{grid-template-columns:1fr;gap:12px}.interior-editorial-path{grid-template-columns:minmax(0,1fr) 115px;min-height:200px}.interior-editorial-path p:not(.eyebrow){font-size:12px}}
+@media(max-width:390px){.interior-editorial-path{grid-template-columns:minmax(0,1fr) 94px;gap:11px;padding:17px}.interior-editorial-path h3{font-size:23px}.interior-editorial-specs>div{grid-template-columns:75px 1fr;font-size:12px}}
+@media(prefers-reduced-motion:reduce){.interior-editorial *{scroll-behavior:auto}}
