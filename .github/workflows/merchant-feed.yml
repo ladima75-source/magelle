@@ -8,7 +8,7 @@ on:
       - 'scripts/verify_merchant_feed.py'
       - '.github/workflows/merchant-feed.yml'
   schedule:
-    - cron: '7,22,37,52 * * * *'
+    - cron: '7 * * * *'
 permissions:
   contents: write
 concurrency:
