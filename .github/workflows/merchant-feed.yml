@@ -34,12 +34,13 @@ jobs:
         run: python scripts/verify_merchant_feed.py
       - name: Commit only changed feed
         run: |
-          if git diff --quiet -- merchant.xml organic-flare-vyraznyi-pisochnyi.html organic-flare-vyraznyi-molochnyi.html organic-flare-delikatnyi-shokolad.html; then
+          if git diff --quiet -- merchant.xml organic-flare-med-vyraznyi-hrafit.html organic-flare-vyraznyi-molochnyi.html organic-flare-delikatnyi-shokolad.html; then
             echo "No change in stock or price"
             exit 0
           fi
           git config user.name "MaGelle feed bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add merchant.xml organic-flare-vyraznyi-pisochnyi.html organic-flare-vyraznyi-molochnyi.html organic-flare-delikatnyi-shokolad.html
+          git add merchant.xml organic-flare-med-vyraznyi-hrafit.html organic-flare-vyraznyi-molochnyi.html organic-flare-delikatnyi-shokolad.html
           git commit -m "chore: sync Merchant price and stock from Admin 2.0 [skip ci]"
-          git push
+          git pull --rebase origin main
+          git push origin HEAD:main
