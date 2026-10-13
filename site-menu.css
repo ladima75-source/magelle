@@ -1,0 +1,6 @@
+/* Shared MaGelle header layout for the same seven links on every page. */
+@media (min-width:981px){
+  .header-inner{grid-template-columns:200px minmax(0,1fr) auto;gap:20px}
+  .site-nav{gap:clamp(9px,1.2vw,18px);font-size:10px;letter-spacing:.045em}
+  .site-nav a{white-space:nowrap}
+}
