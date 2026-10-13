@@ -1,4 +1,15 @@
 (() => {
+  // A gallery image can recover when the selected color changes to a working URL.
+  document.addEventListener('load',event=>{
+    const img=event.target;
+    if(!(img instanceof HTMLImageElement))return;
+    if(!img.closest('.product-photo,.hero-photo,.collection-photo-card,.pilot-media-front,.product-main-photo'))return;
+    if(!img.naturalWidth)return;
+    img.style.removeProperty('display');
+    img.removeAttribute('data-fallback-done');
+    const label=img.parentElement?.querySelector(':scope > .media-unavailable');
+    if(label)label.remove();
+  },true);
   // Protect product cards from Drive previews that return HTML instead of images.
   document.addEventListener('error',event=>{
     const img=event.target;
@@ -376,7 +387,8 @@
       const d=catalogModel.designs.find(d=>d.id===info.dataset.catalogDesignId);
       const staticVariantSrc=info.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
       const apiPhotos=variant?.photo_urls?.length?variant.photo_urls:(d?.source_color===code?d.source_photo_urls:[]);
-      const photos=staticVariantSrc?[staticVariantSrc,...apiPhotos.filter(src=>src!==staticVariantSrc)]:apiPhotos;
+      // Prefer the exact SKU's first-party media over stale static Drive previews.
+      const photos=apiPhotos.length?[...apiPhotos,...(staticVariantSrc&&!apiPhotos.includes(staticVariantSrc)?[staticVariantSrc]:[])]:staticVariantSrc?[staticVariantSrc]:[];
       const main=document.getElementById('product-main-image'),ph=document.getElementById('design-photo-placeholder');
       if(main){main.hidden=!photos.length;if(photos.length)main.src=photos[0];}
       if(ph){ph.hidden=!!photos.length;const label=ph.querySelector('strong');if(label)label.textContent=color.label;}
