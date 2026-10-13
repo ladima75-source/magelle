@@ -66,7 +66,12 @@ class CatalogTests(unittest.TestCase):
         with self.db() as con:
             gra=catalog.decoded(con.execute("SELECT * FROM products WHERE sku='MG-OF-MED-VYR-GRA'").fetchone())
             snd=catalog.decoded(con.execute("SELECT * FROM products WHERE sku='MG-OF-MED-VYR-SND'").fetchone())
-        self.assertEqual(len(gra['photo_urls']),1); self.assertGreaterEqual(len(snd['photo_urls']),4)
+        # MED now has a new, exact Graphite landing page. Its single hero
+        # must not absorb the previously sourced Sand gallery; the Sand SKU
+        # retains its own independently selected image.
+        self.assertEqual(len(gra['photo_urls']),1)
+        self.assertGreaterEqual(len(snd['photo_urls']),1)
+        self.assertNotEqual(gra['photo_urls'][0], snd['photo_urls'][0])
     def test_csrf_and_auth_required(self):
         p=self.first_product(); path='/api/admin/products/'+p['product_id']
         self.assertEqual(self.request(path,'PUT',{'version':1,'price_uah':5000},csrf=False)[0],403)
