@@ -112,7 +112,8 @@ def sync_pdp_schema(products):
             encoded=json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
             replacement='<script id="merchant-static-schema" type="application/ld+json">'+encoded+'</script>'
         else:
-            replacement=''  # Never publish a stale Offer for an unavailable/missing-photo SKU
+            # Keep the marker so a later image/stock restoration can be synced.
+            replacement='<script id="merchant-static-schema" type="application/ld+json">{}</script>'
         path.write_text(re.sub(pattern,lambda _:replacement,body,count=1),encoding='utf-8')
 
 if __name__=='__main__':
