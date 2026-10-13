@@ -10,6 +10,10 @@ for page in Path(".").glob("*.html"):
     nav=pattern.search(raw)
     if not nav: continue
     new=raw[:nav.start()]+master.group(0)+raw[nav.end():]
+    menu_css='<link rel="stylesheet" href="/site-menu.css?v=1">'
+    if menu_css not in new:
+        if '</head>' not in new: raise RuntimeError('Missing head on '+str(page))
+        new=new.replace('</head>',menu_css+'</head>',1)
     if new!=raw:
         page.write_bytes(new.encode("utf-8"))
         count+=1
