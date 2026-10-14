@@ -113,6 +113,85 @@ class CatalogTests(unittest.TestCase):
         admin_item=self.request('/api/admin/orders')[1][0]['items'][0]
         self.assertEqual(admin_item['snapshot']['price_uah'],4200)
         self.assertNotIn('snapshot_json',admin_item)
+    def test_ga4_purchase_only_after_merchant_confirmation_and_payment(self):
+        import ga4_orders
+        self.import_data()
+        p=self.first_product(True)
+        status,response,_=self.request('/api/orders','POST',{
+            'customer_name':'QA','phone':'TEST','analytics_client_id':'123456.789012',
+            'items':[{'sku':p['sku'],'qty':2}]
+        },cookie=False)
+        self.assertEqual(status,201)
+        order_id=response['order_id']
+        sender_calls=[]
+        fake=lambda measurement,secret,payload: sender_calls.append(payload)
+        self.assertFalse(ga4_orders.sync_paid_purchase(self.db,order_id,sender=fake,api_secret='test'))
+        self.assertEqual(sender_calls,[])
+        with self.db() as con:
+            row=con.execute('SELECT * FROM orders WHERE id=?',(order_id,)).fetchone()
+            self.assertEqual(row['status'],'new')
+            self.assertEqual(row['payment_status'],'unpaid')
+            self.assertEqual(row['ga4_client_id'],'123456.789012')
+        status,_,_=self.request('/api/admin/orders/'+str(order_id),'PUT',
+            {'status':'confirmed','expected':{'status':'new'}})
+        self.assertEqual(status,200)
+        self.assertFalse(ga4_orders.sync_paid_purchase(self.db,order_id,sender=fake,api_secret='test'))
+        status,_,_=self.request('/api/admin/orders/'+str(order_id),'PUT',
+            {'payment_status':'paid','expected':{'payment_status':'unpaid'}})
+        self.assertEqual(status,200)
+        self.assertTrue(ga4_orders.sync_paid_purchase(self.db,order_id,sender=fake,api_secret='test'))
+        self.assertEqual(len(sender_calls),1)
+        event=sender_calls[0]
+        self.assertEqual(event['client_id'],'123456.789012')
+        self.assertEqual(event['events'][0]['name'],'purchase')
+        details=event['events'][0]['params']
+        self.assertEqual(details['transaction_id'],'MG-'+str(order_id))
+        self.assertEqual(details['value'],response['total_uah'])
+        self.assertEqual(details['currency'],'UAH')
+        self.assertEqual(details['items'][0]['item_id'],p['sku'])
+        self.assertEqual(details['items'][0]['quantity'],2)
+        self.assertNotIn('customer_name',str(event))
+        self.assertFalse(ga4_orders.sync_paid_purchase(self.db,order_id,sender=fake,api_secret='test'))
+        self.assertEqual(len(sender_calls),1)
+
+    def test_ga4_payment_failure_not_counted_as_sale(self):
+        import ga4_orders
+        self.import_data()
+        p=self.first_product(True)
+        _,result,_=self.request('/api/orders','POST',{
+            'customer_name':'QA','phone':'TEST','analytics_client_id':'221.443',
+            'items':[{'sku':p['sku'],'qty':1}]
+        },cookie=False)
+        oid=result['order_id']
+        self.request('/api/admin/orders/'+str(oid),'PUT',
+            {'payment_status':'paid','expected':{'payment_status':'unpaid'}})
+        self.assertFalse(ga4_orders.sync_paid_purchase(self.db,oid,sender=lambda *_:None,api_secret='test'))
+        self.request('/api/admin/orders/'+str(oid),'PUT',
+            {'status':'cancelled','expected':{'status':'new'}})
+        self.assertFalse(ga4_orders.sync_paid_purchase(self.db,oid,sender=lambda *_:None,api_secret='test'))
+        with self.db() as con:
+            row=con.execute('SELECT * FROM orders WHERE id=?',(oid,)).fetchone()
+            self.assertIsNone(row['ga4_purchase_sent_at'])
+
+    def test_ga4_failed_delivery_can_retry_after_payment_confirmed(self):
+        import ga4_orders
+        self.import_data()
+        p=self.first_product(True)
+        _,r,_=self.request('/api/orders','POST',{
+            'customer_name':'QA','phone':'TEST','analytics_client_id':'221.443',
+            'items':[{'sku':p['sku'],'qty':1}]
+        },cookie=False)
+        oid=r['order_id']
+        self.request('/api/admin/orders/'+str(oid),'PUT',
+            {'status':'confirmed','expected':{'status':'new'}})
+        self.request('/api/admin/orders/'+str(oid),'PUT',
+            {'payment_status':'paid','expected':{'payment_status':'unpaid'}})
+        def fail(*_): raise RuntimeError('Test simulated HTTP failure')
+        self.assertFalse(ga4_orders.sync_paid_purchase(self.db,oid,sender=fail,api_secret='test'))
+        delivered=[]
+        self.assertTrue(ga4_orders.sync_paid_purchase(self.db,oid,sender=lambda _,__,event:delivered.append(event),api_secret='test'))
+        self.assertEqual(len(delivered),1)
+
     def test_arbitrary_virtual_sku_cannot_use_cheaper_base(self):
         self.assertEqual(self.request('/api/orders','POST',{'customer_name':'QA','phone':'TEST','items':[{'sku':'MG-OF-FAKE-VYR-GRA','base_sku':'MG-OF-VYR-GRA','qty':1}]},cookie=False)[0],400)
     def test_hidden_design_blocks_api_and_order(self):
