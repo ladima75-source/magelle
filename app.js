@@ -138,6 +138,38 @@
   };
   const money=v=>new Intl.NumberFormat('uk-UA').format(Number(v||0))+' грн';
   let activeProducts=new Map();
+  // Exact Admin 2.0 SKU analytics, never buyer names/phones or email.
+  const GA_MEASUREMENT_ID='G-1RM1S55BZW';
+  const analyticsItem=(p,qty=1)=>({
+    item_id:p.sku,item_name:p.title_ua||p.sku,
+    item_brand:'MaGelle',item_category:p.series||'Інтер’єрні композиції',
+    item_variant:p.color||'',price:Number(p.price_uah),quantity:Number(qty)
+  });
+  const gaEvent=(name,params)=>{
+    if(typeof window.gtag==='function')window.gtag('event',name,{send_to:GA_MEASUREMENT_ID,...params});
+  };
+  let lastViewedSku='';
+  const trackViewItem=p=>{
+    if(!p||!p.sku||!(Number(p.price_uah)>0)||p.sku===lastViewedSku)return;
+    lastViewedSku=p.sku;
+    gaEvent('view_item',{currency:'UAH',value:Number(p.price_uah),items:[analyticsItem(p)]});
+  };
+  const trackBeginCheckout=cart=>{
+    const lines=(cart||[]).map(x=>({p:activeProducts.get(x.sku),qty:Number(x.qty)}));
+    if(!lines.length||lines.some(x=>!x.p||!(Number(x.p.price_uah)>0)||!Number.isInteger(x.qty)||x.qty<1))return false;
+    const items=lines.map(x=>analyticsItem(x.p,x.qty));
+    gaEvent('begin_checkout',{currency:'UAH',value:items.reduce((sum,x)=>sum+x.price*x.quantity,0),items});
+    return true;
+  };
+  const trackOrderRequest=(response,cart)=>{
+    // The server returns status=new, payment_status=unpaid. It is an accepted
+    // order *request*, not a sale. The checkout MUST NEVER fire purchase.
+    if(response?.ok!==true||!Number.isSafeInteger(Number(response.order_id))||Number(response.order_id)<1)return false;
+    const items=(cart||[]).map(x=>({p:activeProducts.get(x.sku),qty:Number(x.qty)})).filter(x=>x.p&&x.qty>0).map(x=>analyticsItem(x.p,x.qty));
+    gaEvent('generate_lead',{currency:'UAH',value:Number(response.total_uah)||0,lead_source:'website_checkout',items});
+    return true;
+  };
+
 
   const productForItem=item=>activeProducts.get(item.sku)||(!catalogModel?.enabled?activeProducts.get(item.base_sku||item.sku):null);
 
@@ -158,6 +190,7 @@
     if(item){item.qty=Math.min(20,item.qty+1);Object.assign(item,{base_sku:baseSku||itemSku},meta)}
     else cart.push({sku:itemSku,base_sku:baseSku||itemSku,qty:1,...meta});
     saveCart(cart);renderCart();setCart(true);
+    gaEvent('add_to_cart',{currency:'UAH',value:Number(p.price_uah),items:[analyticsItem(p,1)]});
   }
 
   function itemTitle(item,p){
@@ -417,6 +450,7 @@
       const url=new URL(location.href);url.searchParams.set('color',code);history.replaceState({},'',url);
     }
     applyPdpProduct(info,itemSku,baseSku);
+    trackViewItem(activeProducts.get(itemSku)||(!catalogModel?.enabled?activeProducts.get(baseSku):null));
     if(catalogModel?.enabled)updateExactSchema(variant,code,info);
   }
 
@@ -482,6 +516,7 @@
           let price=info.querySelector('.price-placeholder');
           if(!price){price=document.createElement('div');price.className='price-placeholder';(info.querySelector('.sku-identity')||info.querySelector('.product-subtitle')||info.querySelector('h1'))?.after(price)}
           price.textContent=p.price_uah!=null?money(p.price_uah):'Ціну уточнюємо';
+          trackViewItem(p);
         }
       }
     }
@@ -564,7 +599,7 @@
     document.dispatchEvent(new CustomEvent('magelle:catalog-refresh'));
   }
 
-  window.MaGelleStore={getCart,saveCart,setQty,money,API_BASE,escapeHtml,productForItem,getProducts:()=>activeProducts};
+  window.MaGelleStore={getCart,saveCart,setQty,money,API_BASE,escapeHtml,productForItem,getProducts:()=>activeProducts,trackBeginCheckout,trackOrderRequest};
   initDesignCards();
   initDesignPdp();
   updateCartCount();
