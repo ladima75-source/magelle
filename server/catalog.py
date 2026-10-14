@@ -33,6 +33,8 @@ def migrate(con):
             'products': {'product_id': 'TEXT', 'design_id': 'TEXT', 'color_code': 'TEXT',
                          'lifecycle': "TEXT NOT NULL DEFAULT 'active'", 'version': 'INTEGER NOT NULL DEFAULT 1'},
             'order_items': {'product_id': 'TEXT', 'snapshot_json': 'TEXT'},
+            'orders': {'ga4_client_id': 'TEXT', 'ga4_purchase_sent_at': 'TEXT',
+                       'ga4_purchase_claimed_at': 'TEXT'},
         }
         for table, fields in additions.items():
             present = {r['name'] for r in con.execute('PRAGMA table_info(' + table + ')')}
@@ -323,6 +325,8 @@ def route(environ, db, secret, admin_password, body_json, notify):
     if path == '/api/orders' and method == 'POST':
         data=body_json(environ)
         name=text(data,'customer_name',200,True); phone=text(data,'phone',40,True)
+        client_id=str(data.get('analytics_client_id') or '')[:120]
+        if not re.fullmatch(r'[0-9]{1,30}\\.[0-9]{1,30}',client_id): client_id=''
         items=data.get('items')
         if not isinstance(items,list) or not 1<=len(items)<=20:
             raise ApiError('empty_or_too_large_order')
@@ -340,8 +344,8 @@ def route(environ, db, secret, admin_password, body_json, notify):
                           'size_name':p['size_name'],'color':p['color'],'price_uah':p['price_uah'],'photo_urls':json.loads(p['photo_urls'])}
                 clean.append((item_sku,qty,p['price_uah'],p['series'],snapshot['design'],p['size_name'],p['color'],p['sku'],p['product_id'],dumps(snapshot)))
                 total+=qty*p['price_uah']
-            cur=con.execute('INSERT INTO orders(customer_name,phone,email,delivery,comment,total_uah) VALUES(?,?,?,?,?,?)',
-                            (name,phone,text(data,'email',300),text(data,'delivery',3000),text(data,'comment',3000),total))
+            cur=con.execute('INSERT INTO orders(customer_name,phone,email,delivery,comment,total_uah,ga4_client_id) VALUES(?,?,?,?,?,?,?)',
+                            (name,phone,text(data,'email',300),text(data,'delivery',3000),text(data,'comment',3000),total,client_id))
             oid=cur.lastrowid
             con.executemany('INSERT INTO order_items(order_id,sku,qty,price_uah,family,design,size,vase_color,base_sku,product_id,snapshot_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)',[(oid,*x) for x in clean])
         notify(oid)
