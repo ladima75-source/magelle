@@ -326,7 +326,7 @@ def route(environ, db, secret, admin_password, body_json, notify):
         data=body_json(environ)
         name=text(data,'customer_name',200,True); phone=text(data,'phone',40,True)
         client_id=str(data.get('analytics_client_id') or '')[:120]
-        if not re.fullmatch(r'[0-9]{1,30}\\.[0-9]{1,30}',client_id): client_id=''
+        if not re.fullmatch(r'[0-9]{1,30}\.[0-9]{1,30}',client_id): client_id=''
         items=data.get('items')
         if not isinstance(items,list) or not 1<=len(items)<=20:
             raise ApiError('empty_or_too_large_order')
