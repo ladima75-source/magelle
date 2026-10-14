@@ -165,7 +165,7 @@
     // _ga is a first-party GA4 pseudonymous client identifier; never send PII.
     const cookie=document.cookie.split(';').map(x=>x.trim()).find(x=>x.startsWith('_ga='));
     if(!cookie)return '';
-    const match=decodeURIComponent(cookie.split('=').slice(1).join('=')).match(/(?:^|\\.)([0-9]{1,30}\\.[0-9]{1,30})$/);
+    const match=decodeURIComponent(cookie.split('=').slice(1).join('=')).match(/(?:^|\.)([0-9]{1,30}\.[0-9]{1,30})$/);
     return match?match[1]:'';
   };
   const trackOrderRequest=(response,cart)=>{
