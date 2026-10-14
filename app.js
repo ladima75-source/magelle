@@ -161,6 +161,13 @@
     gaEvent('begin_checkout',{currency:'UAH',value:items.reduce((sum,x)=>sum+x.price*x.quantity,0),items});
     return true;
   };
+  const getAnalyticsClientId=()=>{
+    // _ga is a first-party GA4 pseudonymous client identifier; never send PII.
+    const cookie=document.cookie.split(';').map(x=>x.trim()).find(x=>x.startsWith('_ga='));
+    if(!cookie)return '';
+    const match=decodeURIComponent(cookie.split('=').slice(1).join('=')).match(/(?:^|\\.)([0-9]{1,30}\\.[0-9]{1,30})$/);
+    return match?match[1]:'';
+  };
   const trackOrderRequest=(response,cart)=>{
     // The server returns status=new, payment_status=unpaid. It is an accepted
     // order *request*, not a sale. The checkout MUST NEVER fire purchase.
@@ -599,7 +606,7 @@
     document.dispatchEvent(new CustomEvent('magelle:catalog-refresh'));
   }
 
-  window.MaGelleStore={getCart,saveCart,setQty,money,API_BASE,escapeHtml,productForItem,getProducts:()=>activeProducts,trackBeginCheckout,trackOrderRequest};
+  window.MaGelleStore={getCart,saveCart,setQty,money,API_BASE,escapeHtml,productForItem,getProducts:()=>activeProducts,trackBeginCheckout,trackOrderRequest,getAnalyticsClientId};
   initDesignCards();
   initDesignPdp();
   updateCartCount();
