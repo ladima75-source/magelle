@@ -1,5 +1,7 @@
 import os, json, sqlite3, hmac, hashlib, time, urllib.request, urllib.parse
 import catalog
+import ga4_orders
+import logging
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -264,6 +266,14 @@ def application(environ,start_response):
         if result is None:
             return legacy_application(environ,start_response)
         status,data,extra=result
+        # The admin PUT has COMMITTED by this point. Trigger the purchase only
+        # when the persisted order is both merchant-confirmed and paid; browser
+        # checkout visits and newly accepted unpaid requests never reach here.
+        if status == 200 and path.startswith('/api/admin/orders/') and environ['REQUEST_METHOD']=='PUT':
+            try:
+                ga4_orders.sync_paid_purchase(db,int(path.rsplit('/',1)[-1]))
+            except Exception:
+                logging.exception('GA4 confirmed purchase synchronization failed')
     except catalog.ApiError as error:
         status,data,extra=error.status,{'ok':False,'error':error.code},[]
     except sqlite3.IntegrityError:
