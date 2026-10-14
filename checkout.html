@@ -44,7 +44,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault(); msg.textContent=''; submit.disabled=true; submit.textContent='Оформлюємо…';
     const submittedCart=store.getCart();
     const fd=new FormData(form);
-    const payload=Object.fromEntries(fd.entries()); payload.items=store.getCart().map(x=>({sku:x.sku,base_sku:x.base_sku||x.sku,qty:x.qty,family:x.family||'',design:x.design||'',size:x.size||'',vase_color:x.vase_color||''}));
+    const payload=Object.fromEntries(fd.entries()); payload.analytics_client_id=store.getAnalyticsClientId(); payload.items=store.getCart().map(x=>({sku:x.sku,base_sku:x.base_sku||x.sku,qty:x.qty,family:x.family||'',design:x.design||'',size:x.size||'',vase_color:x.vase_color||''}));
     try{
       const r=await fetch(store.API_BASE+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const j=await r.json();
