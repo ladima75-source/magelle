@@ -452,8 +452,9 @@
       const d=catalogModel.designs.find(d=>d.id===info.dataset.catalogDesignId);
       const staticVariantSrc=info.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
       const apiPhotos=variant?.photo_urls?.length?variant.photo_urls:(d?.source_color===code?d.source_photo_urls:[]);
-      // Prefer the exact SKU's first-party media over stale static Drive previews.
-      const photos=apiPhotos.length?[...apiPhotos,...(staticVariantSrc&&!apiPhotos.includes(staticVariantSrc)?[staticVariantSrc]:[])]:staticVariantSrc?[staticVariantSrc]:[];
+      // Keep exact SKU/gallery identity; only substitute a cached exact source.
+      const rawPhotos=apiPhotos.length?[...apiPhotos,...(staticVariantSrc&&!apiPhotos.includes(staticVariantSrc)?[staticVariantSrc]:[])]:staticVariantSrc?[staticVariantSrc]:[];
+      const photos=[...new Set(rawPhotos.map(u=>optimizedImageSrc(u,1600)))];
       const main=document.getElementById('product-main-image'),ph=document.getElementById('design-photo-placeholder');
       if(main){main.hidden=!photos.length;if(photos.length)main.src=photos[0];}
       if(ph){ph.hidden=!!photos.length;const label=ph.querySelector('strong');if(label)label.textContent=color.label;}
