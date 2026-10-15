@@ -257,7 +257,7 @@
     const link=card.querySelector('.pilot-hero-link');
     const variantSrc=card.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
     const img=card.querySelector('.pilot-media-front img');
-    const showPhoto=!!variantSrc || (!!photoSrc && ((!catalogModel?.enabled&&forceSource) || code===photoColor));
+    const showPhoto=!!variantSrc || (!!photoSrc && code===photoColor);
     const media=card.querySelector('.pilot-hero-media');
     const applyVisual=()=>{
       if(img){
@@ -325,9 +325,9 @@
       Object.keys(card.dataset).filter(key=>key.startsWith('variant') && /^variant[A-Z][a-z]+$/.test(key)).forEach(key=>preloadVariantPhoto(card.dataset[key]));
       card.querySelectorAll('.pilot-color').forEach(btn=>{
         btn.addEventListener('mouseenter',()=>renderDesignCard(card,btn.dataset.variantColor,true,false));
-        btn.addEventListener('mouseleave',()=>renderDesignCard(card,selected,true,card.dataset.sourcePreview==='1'));
+        btn.addEventListener('mouseleave',()=>renderDesignCard(card,card.dataset.color||selected,true,card.dataset.sourcePreview==='1'));
         btn.addEventListener('focus',()=>renderDesignCard(card,btn.dataset.variantColor,true,false));
-        btn.addEventListener('blur',()=>renderDesignCard(card,selected,true,card.dataset.sourcePreview==='1'));
+        btn.addEventListener('blur',()=>renderDesignCard(card,card.dataset.color||selected,true,card.dataset.sourcePreview==='1'));
         btn.addEventListener('click',e=>{
           e.preventDefault();e.stopPropagation();
           selected=btn.dataset.variantColor;
@@ -499,6 +499,20 @@
     return values.map(x=>x.textContent.trim()).find(x=>/^MG-[A-Z0-9-]+$/.test(x))||'';
   }
 
+  // Prefer an exact-color multi-photo gallery for the initial storefront view.
+  // Respect explicit buyer choice and the static Merchant pilot landing identity.
+  function preferredGalleryColor(d){
+    if(!d || !catalogModel?.enabled)return d?.default_color||'GRA';
+    const variants=catalogModel.products.filter(p=>p.design_id===d.id);
+    const count=(code)=>{
+      const variant=variants.find(p=>p.color_code===code);
+      return Math.max(variant?.photo_urls?.length||0,d.source_color===code?(d.source_photo_urls?.length||0):0);
+    };
+    if(count(d.default_color)>=2)return d.default_color;
+    if(d.source_color&&count(d.source_color)>=2)return d.source_color;
+    return variants.find(p=>count(p.color_code)>=2)?.color_code||d.default_color||'GRA';
+  }
+
   function applyProductData(products){
     activeProducts=new Map(products.map(p=>[p.sku,p]));
     products.forEach(p=>(p.aliases||[]).forEach(alias=>activeProducts.set(alias,p)));
@@ -510,7 +524,21 @@
       if(p&&Number(p.price_uah)>0){price.textContent=money(p.price_uah);price.classList.remove('price-pending');card.classList.add('api-active-product')}
       else{price.textContent='Ціну уточнюємо';price.classList.add('price-pending');card.classList.remove('api-active-product')}
     });
-    document.querySelectorAll('.design-variant-card').forEach(card=>renderDesignCard(card,card.dataset.color||card.dataset.defaultColor||'GRA',false,card.dataset.sourcePreview==='1'));
+    document.querySelectorAll('.design-variant-card').forEach(card=>{
+      if(catalogModel?.enabled && card.dataset.sourcePreview==='1'){
+        const d=catalogModel.designs.find(d=>d.family_code===familyCode(card)&&d.code===card.dataset.designCode&&d.size_code===card.dataset.sizeCode);
+        const preferred=preferredGalleryColor(d);
+        if(preferred && card.querySelector('.pilot-color[data-variant-color="'+preferred+'"]')){
+          card.dataset.defaultColor=preferred;
+          card.dataset.color=preferred;
+          if(d?.source_color===preferred && d.source_photo_urls?.length){
+            card.dataset.photoColor=preferred;
+            if(!card.dataset.photoSrc)card.dataset.photoSrc=d.source_photo_urls[0];
+          }
+        }
+      }
+      renderDesignCard(card,card.dataset.color||card.dataset.defaultColor||'GRA',false,card.dataset.sourcePreview==='1');
+    });
     const designInfo=document.querySelector('.design-variant-pdp');
     if(designInfo){
       const code=new URL(location.href).searchParams.get('color')||designInfo.dataset.defaultColor||'GRA';
@@ -596,7 +624,7 @@
       const requested=new URL(location.href).searchParams.get('design');
       const d=model.designs.find(d=>requested?d.id===requested:d.code===info.dataset.designCode&&d.family_code===familyCode(info)&&d.size_code===info.dataset.sizeCode);
       if(d){
-        Object.assign(info.dataset,{catalogDesignId:d.id,family:d.series,familyCode:d.family_code,design:d.title_ua,designCode:d.code,sizeCode:d.size_code,variantSize:d.size_name,defaultColor:d.default_color});
+        Object.assign(info.dataset,{catalogDesignId:d.id,family:d.series,familyCode:d.family_code,design:d.title_ua,designCode:d.code,sizeCode:d.size_code,variantSize:d.size_name,defaultColor:document.getElementById('merchant-static-schema')?d.default_color:preferredGalleryColor(d)});
         const h1=info.querySelector('h1');if(h1)h1.textContent=d.series+' «'+d.title_ua+'» — '+d.size_name;
         document.title=d.series+' «'+d.title_ua+'» — MaGelle';
         const picker=info.querySelector('.design-pdp-colors .color-options');if(picker)picker.innerHTML=variantButtons(variantsFor(d),'color-option design-pdp-color');
