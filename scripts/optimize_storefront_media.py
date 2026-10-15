@@ -105,6 +105,18 @@ changed=[]
 for path in HTML:
     original=path.read_text(encoding="utf-8")
     body=PAT.sub(localize,original)
+    # Gallery button images are small, but their data-gallery-src stays full-size.
+    def small_thumb(m):
+        return re.sub(
+            r'(<img\b[^>]*\s+src=")(/media/optimized/drive-[A-Za-z0-9_-]+-w)(?:900|1600)(\.webp")',
+            lambda x:x.group(1)+x.group(2)+'360'+x.group(3),
+            m.group(0),count=1
+        )
+    body=re.sub(r'<button\b(?=[^>]*\bclass="[^"]*photo-thumb)[^>]*>.*?<img\b[^>]*>',small_thumb,body,flags=re.DOTALL)
+    # Give the real product hero priority over secondary gallery thumbnails.
+    body=re.sub(r'(<img\b[^>]*id="product-main-image"[^>]*)(>)',
+                lambda m:m.group(1)+(' fetchpriority="high" decoding="async"' if 'fetchpriority=' not in m.group(1) else '')+m.group(2),
+                body,count=1)
     # A small map script must load before deferred app.js, in DOM parse order.
     if 'src="/app.js' in body and 'src="/media/optimized-image-map.js"' not in body:
         body=re.sub(r'(<script src="/app\.js)',r'<script src="/media/optimized-image-map.js" defer></script>\1',body,count=1)
