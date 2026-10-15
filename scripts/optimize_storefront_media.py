@@ -11,6 +11,7 @@ import concurrent.futures as cf
 import io
 import json
 import re
+import shutil
 import time
 from pathlib import Path
 from urllib.parse import urlparse
@@ -22,6 +23,16 @@ OUT=ROOT/"media"/"optimized"
 OUT.mkdir(parents=True,exist_ok=True)
 PAT=re.compile(r'https://drive\.google\.com/thumbnail\?id=([A-Za-z0-9_-]{16,})(?:&(?:amp;)?sz=w(\d+))?')
 SIZES=(360,900,1600)
+# Exact color/SKU matches verified against Admin 2.0 on 2026-10-15.
+# These three historical catalog Drive preview IDs are not anonymously
+# downloadable; the alternatives are the public media of the SAME variant.
+PUBLIC_EXACT_SOURCE={
+ "1Mp7TmtApw4ig6Q5bzbTy2iUVZmwwGvTm":"https://api.magelle.com.ua/uploads/0b7f57cf9acbcce111000d8fd5b45c555c46d7410ecd76a9.png",  # Мед, графіт
+ "1uSBLOH5vbrPvHR1OVQ2iGILlgeHj5Pmq":"https://api.magelle.com.ua/media/MG-OF-VYR-MLK.png",  # Перлина, молочний
+}
+EXACT_CACHED_ALIAS={
+ "1zAPLVcs7yKMhO-b-MYXXnJ1QxifbpWum":"1es3QEWbwENjx7vfbkkrPz7x2OadMpS00",  # Гранат, графіт (API 2.0 hero)
+}
 MAX_ID=175
 HTML=list(ROOT.glob("*.html"))
 URLS={}
@@ -59,7 +70,13 @@ def fetch_one(mid):
     saved={str(width):f"/media/optimized/drive-{mid}-w{width}.webp" for width in SIZES}
     if all((OUT/f"drive-{mid}-w{width}.webp").exists() for width in SIZES):
         return mid,saved,None
+    alias=EXACT_CACHED_ALIAS.get(mid)
+    if alias and all((OUT/f"drive-{alias}-w{width}.webp").exists() for width in SIZES):
+        for width in SIZES:
+            shutil.copyfile(OUT/f"drive-{alias}-w{width}.webp",OUT/f"drive-{mid}-w{width}.webp")
+        return mid,saved,None
     sources=[
+        *([PUBLIC_EXACT_SOURCE[mid]] if mid in PUBLIC_EXACT_SOURCE else []),
         f"https://drive.google.com/thumbnail?id={mid}&sz=w1600",
         f"https://lh3.googleusercontent.com/d/{mid}=w1600",
         f"https://drive.google.com/uc?export=download&id={mid}",
