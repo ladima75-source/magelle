@@ -413,9 +413,15 @@
     return src;
   }
   function galleryThumbSrc(src){
+    if(!src)return src;
+    // Full and preview WebP versions share exact Drive photo identity.
+    const local=src.match(/^(.*-w)(1600|900|360)(\.webp)$/);
+    if(local)return local[1]+'360'+local[3];
+    const cached=optimizedImageSrc(src,360);
+    if(cached!==src)return cached;
     try{
       const u=new URL(src,location.origin);
-      if(u.hostname==='drive.google.com' && u.pathname==='/thumbnail'){
+      if(u.hostname==='drive.google.com'&&u.pathname==='/thumbnail'){
         u.searchParams.set('sz','w360');
         return u.href;
       }
