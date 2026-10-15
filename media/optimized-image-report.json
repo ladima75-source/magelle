@@ -1,32 +1,28 @@
 {
   "total_originals": 88,
-  "optimized": 68,
+  "optimized": 73,
   "failed": {
-    "1ZaKX3yZ7Z4HbLI2SLN8_7dVJD4YEphvO": "cannot identify image file <_io.BytesIO object at 0x7f9190165ad0> | cannot identify image file <_io.BytesIO object at 0x7f9190aefab0> | cannot identify image file <_io.BytesIO object at 0x7f9190aefec0>",
-    "1sauUxXY3ayenHdtj5YuZK-ey6xEIueTK": "cannot identify image file <_io.BytesIO object at 0x7f91955e2020> | cannot identify image file <_io.BytesIO object at 0x7f91955bc680> | cannot identify image file <_io.BytesIO object at 0x7f91955e2020>",
-    "1k4JilSLZC7XSzC_hEEkSfRqku3WHGaj1": "cannot identify image file <_io.BytesIO object at 0x7f9190aeff60> | cannot identify image file <_io.BytesIO object at 0x7f91955afec0> | cannot identify image file <_io.BytesIO object at 0x7f91955e2020>",
-    "13Rnl3aT8jY6VhlkCsIl_lCZktnoEmhUH": "cannot identify image file <_io.BytesIO object at 0x7f9190164540> | cannot identify image file <_io.BytesIO object at 0x7f9190aefbf0> | cannot identify image file <_io.BytesIO object at 0x7f9190166700>",
-    "19-8B8wT1tbDNOTG_ZPB4FcNARqF5gNB4": "cannot identify image file <_io.BytesIO object at 0x7f91955e1c60> | cannot identify image file <_io.BytesIO object at 0x7f91955bd300> | cannot identify image file <_io.BytesIO object at 0x7f91955e1c60>",
-    "19JU0cjqnP-mcvPUbHs-ym3aH8Hm-TaQK": "cannot identify image file <_io.BytesIO object at 0x7f9190164bd0> | cannot identify image file <_io.BytesIO object at 0x7f91955bda80> | cannot identify image file <_io.BytesIO object at 0x7f91955e1d00>",
-    "13GDYFEigp9d9hj8-P3KhBgF3wipj7Ag-": "cannot identify image file <_io.BytesIO object at 0x7f9190164770> | cannot identify image file <_io.BytesIO object at 0x7f91955e1cb0> | cannot identify image file <_io.BytesIO object at 0x7f91955e1c60>",
-    "1Vro5Is-4z96HkhY39NJ78oncctQBKfiG": "cannot identify image file <_io.BytesIO object at 0x7f9190165cb0> | cannot identify image file <_io.BytesIO object at 0x7f91955bcb30> | cannot identify image file <_io.BytesIO object at 0x7f9190aef970>",
-    "1PG_p7peZgVtotTLDpr7XY5zjtBei05xB": "cannot identify image file <_io.BytesIO object at 0x7f9190167240> | cannot identify image file <_io.BytesIO object at 0x7f91955bc900> | cannot identify image file <_io.BytesIO object at 0x7f9190aefc40>",
-    "1no9CbGaHu3icqI633kmChbs9Ok7NDSY-": "cannot identify image file <_io.BytesIO object at 0x7f91955e1940> | cannot identify image file <_io.BytesIO object at 0x7f9195557380> | cannot identify image file <_io.BytesIO object at 0x7f91955af5b0>",
-    "10uGUbj7K7VTUvwSar2i8O0RWj_K6WELh": "cannot identify image file <_io.BytesIO object at 0x7f91955add00> | cannot identify image file <_io.BytesIO object at 0x7f9190aefc40> | cannot identify image file <_io.BytesIO object at 0x7f91955ae070>",
-    "1DEIyoDjrJqXwtqAcZ3vAfjyyfbbRqJnn": "cannot identify image file <_io.BytesIO object at 0x7f91901667a0> | cannot identify image file <_io.BytesIO object at 0x7f91964227a0> | cannot identify image file <_io.BytesIO object at 0x7f91955e1c10>",
-    "1QkZlDHCQ835d55EeQvBvmhrBl8Jkx7vB": "cannot identify image file <_io.BytesIO object at 0x7f91955e21b0> | cannot identify image file <_io.BytesIO object at 0x7f91955e1670> | cannot identify image file <_io.BytesIO object at 0x7f91955affb0>",
-    "1z03DLCpD-AENjtlUGgg9DQJjt6i0zkPY": "cannot identify image file <_io.BytesIO object at 0x7f9190165ee0> | cannot identify image file <_io.BytesIO object at 0x7f91955bd3f0> | cannot identify image file <_io.BytesIO object at 0x7f91955bd300>",
-    "1S9u96vcyG7jw1cWzuINz9d0RxUcnoqI3": "cannot identify image file <_io.BytesIO object at 0x7f9190166750> | cannot identify image file <_io.BytesIO object at 0x7f91955afe20> | cannot identify image file <_io.BytesIO object at 0x7f9190aefba0>",
-    "1LhHoE5N6EcxmFaS7vqwABxXPUdxcI1zn": "cannot identify image file <_io.BytesIO object at 0x7f9190166bb0> | cannot identify image file <_io.BytesIO object at 0x7f91955e1940> | cannot identify image file <_io.BytesIO object at 0x7f91955afce0>",
-    "1qNDm1_VUP5mI-Oz4rnTw3hK9zDWyTm0X": "cannot identify image file <_io.BytesIO object at 0x7f9190167240> | cannot identify image file <_io.BytesIO object at 0x7f91955bc130> | cannot identify image file <_io.BytesIO object at 0x7f9190aefc40>",
-    "1Dd7i0uKzR2HixOevRnEim7G8GRcNRcJ0": "cannot identify image file <_io.BytesIO object at 0x7f91955add00> | cannot identify image file <_io.BytesIO object at 0x7f9195557380> | cannot identify image file <_io.BytesIO object at 0x7f91955bd170>",
-    "1jjOoujDCmENtrBVmHKMtu6XejLPn5Jhh": "cannot identify image file <_io.BytesIO object at 0x7f9190164950> | cannot identify image file <_io.BytesIO object at 0x7f91964227a0> | cannot identify image file <_io.BytesIO object at 0x7f9190aef970>",
-    "1RqfYl2qH7m2BzhrDGc5OrL-yql4xDe5_": "cannot identify image file <_io.BytesIO object at 0x7f91955bda30> | cannot identify image file <_io.BytesIO object at 0x7f9190aefa10> | cannot identify image file <_io.BytesIO object at 0x7f91955bda30>"
+    "1ZaKX3yZ7Z4HbLI2SLN8_7dVJD4YEphvO": "cannot identify image file <_io.BytesIO object at 0x7f062b55c8b0> | cannot identify image file <_io.BytesIO object at 0x7f062bbbd440> | cannot identify image file <_io.BytesIO object at 0x7f062b55c8b0>",
+    "1sauUxXY3ayenHdtj5YuZK-ey6xEIueTK": "cannot identify image file <_io.BytesIO object at 0x7f062b55eac0> | cannot identify image file <_io.BytesIO object at 0x7f062b55cd60> | cannot identify image file <_io.BytesIO object at 0x7f062b55eac0>",
+    "1k4JilSLZC7XSzC_hEEkSfRqku3WHGaj1": "cannot identify image file <_io.BytesIO object at 0x7f062b55cc20> | cannot identify image file <_io.BytesIO object at 0x7f062b55c680> | cannot identify image file <_io.BytesIO object at 0x7f062bbbc270>",
+    "13Rnl3aT8jY6VhlkCsIl_lCZktnoEmhUH": "cannot identify image file <_io.BytesIO object at 0x7f062b5d1ee0> | cannot identify image file <_io.BytesIO object at 0x7f062bbbd210> | cannot identify image file <_io.BytesIO object at 0x7f062b5d1ee0>",
+    "19-8B8wT1tbDNOTG_ZPB4FcNARqF5gNB4": "cannot identify image file <_io.BytesIO object at 0x7f0618f9d7b0> | cannot identify image file <_io.BytesIO object at 0x7f062b55c950> | cannot identify image file <_io.BytesIO object at 0x7f0618f9d7b0>",
+    "19JU0cjqnP-mcvPUbHs-ym3aH8Hm-TaQK": "cannot identify image file <_io.BytesIO object at 0x7f0618f6cdb0> | cannot identify image file <_io.BytesIO object at 0x7f062b55c540> | cannot identify image file <_io.BytesIO object at 0x7f0618f6cdb0>",
+    "13GDYFEigp9d9hj8-P3KhBgF3wipj7Ag-": "cannot identify image file <_io.BytesIO object at 0x7f062bbe3e70> | cannot identify image file <_io.BytesIO object at 0x7f0618feee30> | cannot identify image file <_io.BytesIO object at 0x7f062b55c540>",
+    "1QkZlDHCQ835d55EeQvBvmhrBl8Jkx7vB": "cannot identify image file <_io.BytesIO object at 0x7f062bbbc4f0> | cannot identify image file <_io.BytesIO object at 0x7f0618f6cdb0> | cannot identify image file <_io.BytesIO object at 0x7f062bbbc9f0>",
+    "1z03DLCpD-AENjtlUGgg9DQJjt6i0zkPY": "cannot identify image file <_io.BytesIO object at 0x7f061822ff10> | cannot identify image file <_io.BytesIO object at 0x7f062bbbcea0> | cannot identify image file <_io.BytesIO object at 0x7f062bbadd50>",
+    "1S9u96vcyG7jw1cWzuINz9d0RxUcnoqI3": "cannot identify image file <_io.BytesIO object at 0x7f062bbe2840> | cannot identify image file <_io.BytesIO object at 0x7f0618feee30> | cannot identify image file <_io.BytesIO object at 0x7f062b55c040>",
+    "1LhHoE5N6EcxmFaS7vqwABxXPUdxcI1zn": "cannot identify image file <_io.BytesIO object at 0x7f062b55eac0> | cannot identify image file <_io.BytesIO object at 0x7f062b5d1ee0> | cannot identify image file <_io.BytesIO object at 0x7f062bbbcbd0>",
+    "1qNDm1_VUP5mI-Oz4rnTw3hK9zDWyTm0X": "cannot identify image file <_io.BytesIO object at 0x7f062bbe17b0> | cannot identify image file <_io.BytesIO object at 0x7f062bbbf5b0> | cannot identify image file <_io.BytesIO object at 0x7f062b5d1ee0>",
+    "1Dd7i0uKzR2HixOevRnEim7G8GRcNRcJ0": "cannot identify image file <_io.BytesIO object at 0x7f062bbbf2e0> | cannot identify image file <_io.BytesIO object at 0x7f0618f6cdb0> | cannot identify image file <_io.BytesIO object at 0x7f062bbbf2e0>",
+    "1jjOoujDCmENtrBVmHKMtu6XejLPn5Jhh": "cannot identify image file <_io.BytesIO object at 0x7f061822f880> | cannot identify image file <_io.BytesIO object at 0x7f062ca0e7a0> | cannot identify image file <_io.BytesIO object at 0x7f062b55c400>",
+    "1RqfYl2qH7m2BzhrDGc5OrL-yql4xDe5_": "cannot identify image file <_io.BytesIO object at 0x7f062bbbede0> | cannot identify image file <_io.BytesIO object at 0x7f0618feee30> | cannot identify image file <_io.BytesIO object at 0x7f062c256b10>"
   },
   "changed_pages": [
     "catalog.html",
+    "organic-flare-vyraznyi-shokolad.html",
     "organic-flare.html"
   ],
-  "files_written": 204,
-  "total_bytes": 21878906
+  "files_written": 219,
+  "total_bytes": 23460578
 }
