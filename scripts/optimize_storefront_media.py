@@ -25,6 +25,12 @@ SIZES=(360,900,1600)
 MAX_ID=175
 HTML=list(ROOT.glob("*.html"))
 URLS={}
+# Preserve the original image IDs already converted by an earlier run.
+# Otherwise replacing HTML URLs would cause cached IDs to disappear from the
+# runtime manifest when this optimizer runs a second time.
+for asset in OUT.glob("drive-*-w900.webp"):
+    m=re.fullmatch(r"drive-([A-Za-z0-9_-]{16,})-w900\.webp",asset.name)
+    if m: URLS[m.group(1)]=True
 for path in HTML:
     body=path.read_text(encoding="utf-8")
     for mid,_ in PAT.findall(body):
