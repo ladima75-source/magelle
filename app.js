@@ -274,8 +274,9 @@
       const previous=media.dataset.previewColor;
       media.dataset.previewColor=code;
       media.getAnimations().forEach(a=>a.cancel());
-      const ready=(variantSrc || (showPhoto ? photoSrc : '')) ? preloadVariantPhoto(variantSrc || photoSrc) : Promise.resolve();
       if(previous && previous!==code && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+        const nextSrc=variantSrc || (showPhoto ? photoSrc : '');
+        const ready=nextSrc ? preloadVariantPhoto(nextSrc) : Promise.resolve();
         ready.then(()=>{
           if(media._colorTurnToken!==token)return;
           const first=media.animate([
@@ -294,7 +295,8 @@
           }).catch(()=>{});
         });
       }else{
-        ready.then(()=>{if(media._colorTurnToken===token)applyVisual()});
+        // Let native image lazy-loading handle the initial catalog render.
+        applyVisual();
       }
     }else applyVisual();
     if(!temporary){
@@ -322,7 +324,7 @@
     document.querySelectorAll('.design-variant-card').forEach(card=>{
       let selected=card.dataset.defaultColor||'GRA';
       card.dataset.sourcePreview='1';
-      Object.keys(card.dataset).filter(key=>key.startsWith('variant') && /^variant[A-Z][a-z]+$/.test(key)).forEach(key=>preloadVariantPhoto(card.dataset[key]));
+      // Do not preload all vase colors on entry. Load other colors on interaction only.
       card.querySelectorAll('.pilot-color').forEach(btn=>{
         btn.addEventListener('mouseenter',()=>renderDesignCard(card,btn.dataset.variantColor,true,false));
         btn.addEventListener('mouseleave',()=>renderDesignCard(card,card.dataset.color||selected,true,card.dataset.sourcePreview==='1'));
@@ -398,6 +400,18 @@
     if(canonical)canonical.href=url.href;
   }
 
+  // Keep the full-resolution main image, but request only 360 px for Drive thumbnails.
+  function galleryThumbSrc(src){
+    try{
+      const u=new URL(src,location.origin);
+      if(u.hostname==='drive.google.com' && u.pathname==='/thumbnail'){
+        u.searchParams.set('sz','w360');
+        return u.href;
+      }
+    }catch(_){}
+    return src;
+  }
+
   function selectDesignPdp(code,updateUrl=true,forceSource=false){
     const info=document.querySelector('.design-variant-pdp');
     if(!info)return;
@@ -433,7 +447,7 @@
       if(main){main.hidden=!photos.length;if(photos.length)main.src=photos[0];}
       if(ph){ph.hidden=!!photos.length;const label=ph.querySelector('strong');if(label)label.textContent=color.label;}
       const thumbs=gallery.querySelector('.thumbs');
-      if(thumbs){thumbs.hidden=false;thumbs.innerHTML=photos.map((src,i)=>`<button type="button" class="photo-thumb ${i===0?'active':''}" data-catalog-photo="${escapeHtml(src)}"><img src="${escapeHtml(src)}" alt="${escapeHtml(color.label)} · фото ${i+1}"></button>`).join('');thumbs.style.display=photos.length>1?'':'none';thumbs.querySelectorAll('[data-catalog-photo]').forEach(b=>b.onclick=()=>{if(main)main.src=b.dataset.catalogPhoto;});}
+      if(thumbs){thumbs.hidden=false;thumbs.innerHTML=photos.map((src,i)=>`<button type="button" class="photo-thumb ${i===0?'active':''}" data-catalog-photo="${escapeHtml(src)}"><img src="${escapeHtml(galleryThumbSrc(src))}" loading="lazy" decoding="async" alt="${escapeHtml(color.label)} · фото ${i+1}"></button>`).join('');thumbs.style.display=photos.length>1?'':'none';thumbs.querySelectorAll('[data-catalog-photo]').forEach(b=>b.onclick=()=>{if(main)main.src=b.dataset.catalogPhoto;});}
       const desc=info.querySelector('.product-description');if(desc)desc.textContent=variant?.description_ua||d?.description_ua||'';
       let specs=document.querySelector('.catalog2-specs');if(!specs){specs=document.createElement('div');specs.className='catalog2-specs';info.append(specs);}
       const values=[['Габарити',variant?.dimensions||d?.dimensions],['Склад',variant?.composition||d?.composition]];
