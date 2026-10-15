@@ -24,7 +24,7 @@ OUT.mkdir(parents=True,exist_ok=True)
 PAT=re.compile(r'https://drive\.google\.com/thumbnail\?id=([A-Za-z0-9_-]{16,})(?:&(?:amp;)?sz=w(\d+))?')
 SIZES=(360,900,1600)
 # Exact color/SKU matches verified against Admin 2.0 on 2026-10-15.
-# Recovered Karamel media is now present in Admin 2.0 and scanned automatically from API/HTML.
+# Recovered Karamel public media is now present in Admin 2.0 and scanned automatically from API/HTML.
 # These three historical catalog Drive preview IDs are not anonymously
 # downloadable; the alternatives are the public media of the SAME variant.
 PUBLIC_EXACT_SOURCE={
