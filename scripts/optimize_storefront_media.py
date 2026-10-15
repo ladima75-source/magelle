@@ -50,31 +50,35 @@ print("Found",len(ids),"unique Drive image IDs")
 session=requests.Session()
 session.headers.update({"User-Agent":"Mozilla/5.0 MaGelle/1.0 ImageOptimization"})
 def fetch_one(mid):
-    url=f"https://drive.google.com/thumbnail?id={mid}&sz=w1600"
-    err=""
-    for attempt in range(2):
+    saved={str(width):f"/media/optimized/drive-{mid}-w{width}.webp" for width in SIZES}
+    if all((OUT/f"drive-{mid}-w{width}.webp").exists() for width in SIZES):
+        return mid,saved,None
+    sources=[
+        f"https://drive.google.com/thumbnail?id={mid}&sz=w1600",
+        f"https://lh3.googleusercontent.com/d/{mid}=w1600",
+        f"https://drive.google.com/uc?export=download&id={mid}",
+    ]
+    errors=[]
+    for url in sources:
         try:
-            response=session.get(url,timeout=(12,45))
+            response=session.get(url,timeout=(12,35))
             response.raise_for_status()
             if len(response.content)>18_000_000: raise RuntimeError("oversized")
             img=Image.open(io.BytesIO(response.content))
             img.load()
             img=ImageOps.exif_transpose(img)
             if img.width<180 or img.height<180: raise RuntimeError("suspiciously small image")
-            img=img.convert("RGBA" if img.mode in ("P","RGBA","LA") and ("A" in img.getbands() or "transparency" in img.info) else "RGB")
-            saved={}
+            img=img.convert("RGBA" if "A" in img.getbands() or "transparency" in img.info else "RGB")
             for width in SIZES:
                 target=OUT/f"drive-{mid}-w{width}.webp"
                 if not target.exists():
                     out=img.copy()
                     if max(out.size)>width: out.thumbnail((width,width),Image.Resampling.LANCZOS)
                     out.save(target,format="WEBP",quality=82,method=4)
-                saved[str(width)]=f"/media/optimized/{target.name}"
             return mid,saved,None
         except Exception as e:
-            err=str(e)
-            time.sleep(.5)
-    return mid,None,err
+            errors.append(str(e)[:100])
+    return mid,None," | ".join(errors)
 
 found={}
 failed={}
@@ -98,6 +102,8 @@ for path in HTML:
     # A small map script must load before deferred app.js, in DOM parse order.
     if 'src="/app.js' in body and 'src="/media/optimized-image-map.js"' not in body:
         body=re.sub(r'(<script src="/app\.js)',r'<script src="/media/optimized-image-map.js" defer></script>\1',body,count=1)
+    if 'src="/app.js' in body:
+        body=body.replace('/app.js?v=4.3','/app.js?v=4.5')
     if path.name in ("catalog.html","organic-flare.html","architectural-step.html","sculptural-fold.html"):
         # The first product image is part of the first screen; don't lazy-load it.
         body=re.sub(r'(<img\b[^>]*\bloading=")lazy(")',r'\1eager\2',body,count=1)
