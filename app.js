@@ -401,6 +401,17 @@
   }
 
   // Keep the full-resolution main image, but request only 360 px for Drive thumbnails.
+  function optimizedImageSrc(src,width=1600){
+    if(!src)return src;
+    try{
+      const u=new URL(src,location.origin);
+      if(u.hostname==='drive.google.com'&&u.pathname==='/thumbnail'){
+        const id=u.searchParams.get('id');
+        return window.MaGelleOptimizedImageMap?.[id]?.[String(width)]||src;
+      }
+    }catch(_){}
+    return src;
+  }
   function galleryThumbSrc(src){
     try{
       const u=new URL(src,location.origin);
