@@ -423,3 +423,9 @@
 @media(max-width:960px){.interior-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.interior-scene,.interior-scene:nth-child(-n+2),.interior-scene:nth-last-child(-n+2){grid-column:auto}}
 @media(max-width:620px){.interior-gallery-intro{grid-template-columns:1fr;gap:12px;margin:40px 0 20px}.interior-gallery-intro>p{font-size:14px}.interior-gallery{grid-template-columns:1fr;gap:12px}.interior-scene{aspect-ratio:1/1}.interior-scene-label{bottom:21px;left:22px;right:22px}.interior-scene-label b{font-size:31px}.interior-gallery-footer{align-items:flex-start;flex-direction:column;gap:20px}.interior-gallery-footer .btn{width:100%;text-align:center}}
 @media(prefers-reduced-motion:reduce){.interior-scene img{transition:none}}
+
+/* Exact-SKU single-photo PDP: let the hero occupy full gallery width without the hidden thumbnail column. */
+.design-gallery-shell.single-photo{grid-template-columns:minmax(0,1fr)}
+.design-gallery-shell.single-photo>.thumbs{display:none!important}
+.design-gallery-shell.single-photo>.product-main-photo{width:100%;min-width:0}
+.design-gallery-shell.single-photo>.product-main-photo img{width:100%;height:100%;object-fit:contain}
