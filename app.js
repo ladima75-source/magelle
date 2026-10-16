@@ -561,6 +561,15 @@
     document.querySelectorAll('.design-variant-card').forEach(card=>{
       if(catalogModel?.enabled && card.dataset.sourcePreview==='1'){
         const d=catalogModel.designs.find(d=>d.family_code===familyCode(card)&&d.code===card.dataset.designCode&&d.size_code===card.dataset.sizeCode);
+        if(d){
+          card.dataset.catalogDesignId=d.id;
+          // Existing catalog cards are static HTML. Hydrate exact color photos from Admin 2.0
+          // without overwriting already-approved static images for other designs.
+          catalogModel.products.filter(p=>p.design_id===d.id).forEach(p=>{
+            const key='variant'+p.color_code[0]+p.color_code.slice(1).toLowerCase();
+            if(!card.dataset[key]&&p.photo_urls?.[0])card.dataset[key]=p.photo_urls[0];
+          });
+        }
         const preferred=preferredGalleryColor(d);
         if(preferred && card.querySelector('.pilot-color[data-variant-color="'+preferred+'"]')){
           card.dataset.defaultColor=preferred;
