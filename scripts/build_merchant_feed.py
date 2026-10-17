@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Build the existing MaGelle Google Merchant RSS using Admin 2.0 exact SKU data.
 
-The approved three-SKU pilot is an immutable identity contract (SKU, name,
-size, vase color, canonical PDP). Image, price and availability come from
-live Admin 2.0. A mismatch FAILS publishing instead of silently swapping
-compositions, colors or dropping a product from the feed.
+The Merchant set is a controlled exact-SKU identity contract (SKU, name,
+size, vase color, canonical PDP). The original three approved pilot items
+remain unchanged; additional items are admitted only after exact-photo/PDP
+preflight. Image, price and availability come from live Admin 2.0. Any
+mismatch FAILS publishing instead of silently swapping compositions, colors
+or dropping a product from the feed.
 """
 import html
 import json
@@ -36,6 +38,51 @@ APPROVED = {
         'path': '/organic-flare-delikatnyi-shokolad.html',
         'title_ua': 'Organic Flare «Олива» — Делікатний, Шоколад',
         'color': 'Шоколад', 'color_code': 'CHO', 'design_id': 'design-OF-OLI-DEL',
+    },
+    'MG-OF-DIM-VYR-GRA': {
+        'path': '/organic-flare-dym-vyraznyi-hrafit.html',
+        'title_ua': 'Organic Flare «Дим» — Виразний, Графіт',
+        'color': 'Графіт', 'color_code': 'GRA', 'design_id': 'design-OF-DIM-VYR',
+    },
+    'MG-OF-BOR-DEL-CHO': {
+        'path': '/organic-flare-bordo-delikatnyi-shokolad.html',
+        'title_ua': 'Organic Flare «Бордо» — Делікатний, Шоколад',
+        'color': 'Шоколад', 'color_code': 'CHO', 'design_id': 'design-OF-BOR-DEL',
+    },
+    'MG-OF-TER-DEL-GRA': {
+        'path': '/organic-flare-tera-delikatnyi-hrafit.html',
+        'title_ua': 'Organic Flare «Тера» — Делікатний, Графіт',
+        'color': 'Графіт', 'color_code': 'GRA', 'design_id': 'design-OF-TER-DEL',
+    },
+    'MG-OF-LON-DEL-GRA': {
+        'path': '/organic-flare-lon-delikatnyi-hrafit.html',
+        'title_ua': 'Organic Flare «Льон» — Делікатний, Графіт',
+        'color': 'Графіт', 'color_code': 'GRA', 'design_id': 'design-OF-LON-DEL',
+    },
+    'MG-OF-PUD-DEL-GRA': {
+        'path': '/organic-flare-pudra-delikatnyi-hrafit.html',
+        'title_ua': 'Organic Flare «Пудра» — Делікатний, Графіт',
+        'color': 'Графіт', 'color_code': 'GRA', 'design_id': 'design-OF-PUD-DEL',
+    },
+    'MG-AS-VRT-VYR-CHO': {
+        'path': '/architectural-step-vertikal-vyraznyi-shokolad.html',
+        'title_ua': 'Architectural Step «Вертикаль» — Виразний, Шоколад',
+        'color': 'Шоколад', 'color_code': 'CHO', 'design_id': 'design-AS-VRT-VYR',
+    },
+    'MG-AS-MON-VYR-CHO': {
+        'path': '/architectural-step-monolit-vyraznyi-shokolad.html',
+        'title_ua': 'Architectural Step «Моноліт» — Виразний, Шоколад',
+        'color': 'Шоколад', 'color_code': 'CHO', 'design_id': 'design-AS-MON-VYR',
+    },
+    'MG-AS-CNT-DEL-CHO': {
+        'path': '/architectural-step-kontur-delikatnyi-shokolad.html',
+        'title_ua': 'Architectural Step «Контур» — Делікатний, Шоколад',
+        'color': 'Шоколад', 'color_code': 'CHO', 'design_id': 'design-AS-CNT-DEL',
+    },
+    'MG-AS-RIT-DEL-GRA': {
+        'path': '/architectural-step-ritm-delikatnyi-hrafit.html',
+        'title_ua': 'Architectural Step «Ритм» — Делікатний, Графіт',
+        'color': 'Графіт', 'color_code': 'GRA', 'design_id': 'design-AS-RIT-DEL',
     },
 }
 
@@ -137,8 +184,11 @@ def sync_pdp_schema(products):
         body = path.read_text(encoding='utf-8')
         url = SITE + spec['path']
         schema_pattern = r'<script id="merchant-static-schema" type="application/ld\+json">[\s\S]*?</script>'
-        if len(re.findall(schema_pattern, body)) != 1:
-            raise RuntimeError(sku + ': missing/duplicate static Product JSON-LD')
+        schema_matches = re.findall(schema_pattern, body)
+        if len(schema_matches) > 1:
+            raise RuntimeError(sku + ': duplicate static Product JSON-LD')
+        if not schema_matches:
+            body = body.replace('</head>', '<script id="merchant-static-schema" type="application/ld+json">{}</script></head>', 1)
         for pattern, reason in [
             (r'<link rel="canonical" href="' + re.escape(url) + r'">', 'canonical'),
             (r'data-selected-sku="' + re.escape(sku) + r'"', 'selected SKU'),
@@ -195,6 +245,6 @@ if __name__ == '__main__':
     xml, count = build(source)
     sync_pdp_schema(source)
     if count != len(APPROVED):
-        raise AssertionError('Incomplete three-SKU pilot')
+        raise AssertionError('Incomplete Merchant exact-SKU set')
     OUTPUT.write_text(xml + '\n', encoding='utf-8')
     print(f'Merchant feed: validated exact identity of all {count} Admin 2.0 SKU')

@@ -9,6 +9,15 @@ on:
       - 'organic-flare-med-vyraznyi-hrafit.html'
       - 'organic-flare-vyraznyi-molochnyi.html'
       - 'organic-flare-delikatnyi-shokolad.html'
+      - 'organic-flare-dym-vyraznyi-hrafit.html'
+      - 'organic-flare-bordo-delikatnyi-shokolad.html'
+      - 'organic-flare-tera-delikatnyi-hrafit.html'
+      - 'organic-flare-lon-delikatnyi-hrafit.html'
+      - 'organic-flare-pudra-delikatnyi-hrafit.html'
+      - 'architectural-step-vertikal-vyraznyi-shokolad.html'
+      - 'architectural-step-monolit-vyraznyi-shokolad.html'
+      - 'architectural-step-kontur-delikatnyi-shokolad.html'
+      - 'architectural-step-ritm-delikatnyi-hrafit.html'
       - '.github/workflows/merchant-feed.yml'
   schedule:
     - cron: '7 * * * *'
@@ -30,20 +39,20 @@ jobs:
       - name: Browser code syntax
         run: node --check app.js
       - name: Python feed syntax
-        run: python -m py_compile scripts/build_merchant_feed.py
+        run: python -m py_compile scripts/build_merchant_feed.py scripts/verify_merchant_feed.py
       - name: Build feed from Admin 2.0
         run: python scripts/build_merchant_feed.py
       - name: Check XML, canonical, Product/Offer against price and photos
         run: python scripts/verify_merchant_feed.py
-      - name: Commit only changed feed
+      - name: Commit only changed feed and Merchant PDP metadata
         run: |
-          if git diff --quiet -- merchant.xml organic-flare-med-vyraznyi-hrafit.html organic-flare-vyraznyi-molochnyi.html organic-flare-delikatnyi-shokolad.html; then
-            echo "No change in stock or price"
+          if git diff --quiet -- merchant.xml organic-flare-med-vyraznyi-hrafit.html organic-flare-vyraznyi-molochnyi.html organic-flare-delikatnyi-shokolad.html organic-flare-dym-vyraznyi-hrafit.html organic-flare-bordo-delikatnyi-shokolad.html organic-flare-tera-delikatnyi-hrafit.html organic-flare-lon-delikatnyi-hrafit.html organic-flare-pudra-delikatnyi-hrafit.html architectural-step-vertikal-vyraznyi-shokolad.html architectural-step-monolit-vyraznyi-shokolad.html architectural-step-kontur-delikatnyi-shokolad.html architectural-step-ritm-delikatnyi-hrafit.html; then
+            echo "No change in Merchant feed/PDP state"
             exit 0
           fi
           git config user.name "MaGelle feed bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add merchant.xml organic-flare-med-vyraznyi-hrafit.html organic-flare-vyraznyi-molochnyi.html organic-flare-delikatnyi-shokolad.html
-          git commit -m "chore: sync Merchant price and stock from Admin 2.0 [skip ci]"
+          git add merchant.xml organic-flare-med-vyraznyi-hrafit.html organic-flare-vyraznyi-molochnyi.html organic-flare-delikatnyi-shokolad.html organic-flare-dym-vyraznyi-hrafit.html organic-flare-bordo-delikatnyi-shokolad.html organic-flare-tera-delikatnyi-hrafit.html organic-flare-lon-delikatnyi-hrafit.html organic-flare-pudra-delikatnyi-hrafit.html architectural-step-vertikal-vyraznyi-shokolad.html architectural-step-monolit-vyraznyi-shokolad.html architectural-step-kontur-delikatnyi-shokolad.html architectural-step-ritm-delikatnyi-hrafit.html
+          git commit -m "chore: sync Merchant exact-SKU feed from Admin 2.0 [skip ci]"
           git pull --rebase origin main
           git push origin HEAD:main

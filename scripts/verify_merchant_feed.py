@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Block Merchant publication on ANY mismatch among 3 exact SKU feed items,
+"""Block Merchant publication on ANY mismatch among selected exact SKU feed items,
 Admin 2.0 variants, crawlable PDP metadata, visible hero, and Product/Offer.
 """
 import html
