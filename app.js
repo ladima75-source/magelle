@@ -256,7 +256,8 @@
     const backLabel=card.querySelector('.pilot-media-back strong');
     const link=card.querySelector('.pilot-hero-link');
     const exactVariant=catalogModel?.enabled?catalogModel.products.find(p=>p.design_id===card.dataset.catalogDesignId&&p.color_code===code):null;
-    const variantSrc=card.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||exactVariant?.photo_urls?.[0]||'';
+    const rawVariantSrc=card.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||exactVariant?.photo_urls?.[0]||'';
+    const variantSrc=optimizedImageSrc(rawVariantSrc,900);
     const img=card.querySelector('.pilot-media-front img');
     const showPhoto=!!variantSrc || (!!photoSrc && code===photoColor);
     const media=card.querySelector('.pilot-hero-media');
