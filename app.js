@@ -256,7 +256,8 @@
     const backLabel=card.querySelector('.pilot-media-back strong');
     const link=card.querySelector('.pilot-hero-link');
     const exactVariant=catalogModel?.enabled?catalogModel.products.find(p=>p.design_id===card.dataset.catalogDesignId&&p.color_code===code):null;
-    const rawVariantSrc=card.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||exactVariant?.photo_urls?.[0]||'';
+    const isSourceColor=!!photoSrc&&code===photoColor;
+    const rawVariantSrc=isSourceColor?photoSrc:(card.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||exactVariant?.photo_urls?.[0]||'');
     const variantSrc=optimizedImageSrc(rawVariantSrc,900);
     const img=card.querySelector('.pilot-media-front img');
     const showPhoto=!!variantSrc || (!!photoSrc && code===photoColor);
@@ -278,6 +279,9 @@
       media.getAnimations().forEach(a=>a.cancel());
       if(previous && previous!==code && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
         const nextSrc=variantSrc || (showPhoto ? photoSrc : '');
+        if(isSourceColor){
+          applyVisual();
+        }else{
         const ready=nextSrc ? preloadVariantPhoto(nextSrc) : Promise.resolve();
         ready.then(()=>{
           if(media._colorTurnToken!==token)return;
@@ -296,6 +300,7 @@
             second.finished.then(()=>{if(media._colorTurnToken===token)second.cancel()}).catch(()=>{});
           }).catch(()=>{});
         });
+        }
       }else{
         // Let native image lazy-loading handle the initial catalog render.
         applyVisual();
