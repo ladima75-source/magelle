@@ -70,28 +70,6 @@ init_db()
 migration_connection=db()
 try:
     catalog.migrate(migration_connection)
-    approved_variant_media={
-        "MG-OF-PER-VYR-GRA":"https://drive.google.com/thumbnail?id=13Rnl3aT8jY6VhlkCsIl_lCZktnoEmhUH&sz=w1600",
-        "MG-OF-PER-VYR-MLK":"https://drive.google.com/thumbnail?id=1uSBLOH5vbrPvHR1OVQ2iGILlgeHj5Pmq&sz=w1600",
-        "MG-OF-PER-VYR-WHT":"https://drive.google.com/thumbnail?id=19-8B8wT1tbDNOTG_ZPB4FcNARqF5gNB4&sz=w1600",
-        "MG-OF-PER-VYR-SND":"https://drive.google.com/thumbnail?id=19JU0cjqnP-mcvPUbHs-ym3aH8Hm-TaQK&sz=w1600",
-        "MG-OF-PER-VYR-CHO":"https://drive.google.com/thumbnail?id=13GDYFEigp9d9hj8-P3KhBgF3wipj7Ag-&sz=w1600",
-        "MG-OF-GNT-VYR-GRA":"https://drive.google.com/thumbnail?id=1zAPLVcs7yKMhO-b-MYXXnJ1QxifbpWum&sz=w1600",
-        "MG-OF-GNT-VYR-MLK":"https://drive.google.com/thumbnail?id=1QkZlDHCQ835d55EeQvBvmhrBl8Jkx7vB&sz=w1600",
-        "MG-OF-GNT-VYR-WHT":"https://drive.google.com/thumbnail?id=1z03DLCpD-AENjtlUGgg9DQJjt6i0zkPY&sz=w1600",
-        "MG-OF-GNT-VYR-SND":"https://drive.google.com/thumbnail?id=1S9u96vcyG7jw1cWzuINz9d0RxUcnoqI3&sz=w1600",
-        "MG-OF-GNT-VYR-CHO":"https://drive.google.com/thumbnail?id=1LhHoE5N6EcxmFaS7vqwABxXPUdxcI1zn&sz=w1600",
-    }
-    changed=[]
-    for sku,url in approved_variant_media.items():
-        row=migration_connection.execute("SELECT photo_urls FROM products WHERE sku=?",(sku,)).fetchone()
-        if row and json.loads(row["photo_urls"] or "[]") != [url]:
-            migration_connection.execute("UPDATE products SET photo_urls=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE sku=?",(json.dumps([url],ensure_ascii=False),sku))
-            changed.append(sku)
-    if changed:
-        migration_connection.execute("UPDATE catalog_meta SET version=version+1 WHERE id=1")
-        migration_connection.execute("INSERT INTO catalog_audit(actor,action,entity,before_json,after_json) VALUES(?,?,?,?,?)",("deploy","sync_media","approved-organic-flare",None,json.dumps({"skus":changed},ensure_ascii=False)))
-        migration_connection.commit()
 finally:
     migration_connection.close()
 
