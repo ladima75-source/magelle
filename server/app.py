@@ -114,13 +114,55 @@ def product_dict(r):
     except:d["photo_urls"]=[]
     return d
 
+def build_telegram_order_message(order, items):
+    from html import escape
+    e=lambda value: escape(str(value if value is not None else '—'))
+    lines=[f"🌿 <b>MaGelle · Нове замовлення #{e(order['id'])}</b>"]
+    lines += [f"👤 <b>Покупець:</b> {e(order.get('customer_name'))}",
+              f"📞 <b>Телефон:</b> {e(order.get('phone'))}"]
+    if order.get('email'): lines.append(f"✉️ <b>Email:</b> {e(order['email'])}")
+    if order.get('delivery'): lines.append(f"🚚 <b>Доставка:</b> {e(order['delivery'])}")
+    if order.get('comment'): lines.append(f"📝 <b>Коментар:</b> {e(order['comment'])}")
+    lines.append('🛍 <b>Склад замовлення:</b>')
+    for item in items:
+        label=' '.join(str(item.get(k) or '') for k in ('family','design','size','vase_color')).strip()
+        label=label or item.get('sku') or 'Товар'
+        qty=int(item.get('qty') or 1)
+        total=qty*int(item.get('price_uah') or 0)
+        lines.append(f"• {e(label)} × {qty} — {total:,} грн".replace(',',' '))
+    lines.append(f"💰 <b>Разом: {int(order.get('total_uah') or 0):,} грн</b>".replace(',',' '))
+    lines.append(f"📋 <a href='https://api.magelle.com.ua/admin/'>Відкрити замовлення в адмінці</a>")
+    return '\n'.join(lines)
+
 def notify_telegram(order_id):
-    token=os.getenv("TELEGRAM_BOT_TOKEN",""); chat=os.getenv("TELEGRAM_CHAT_ID","")
-    if not token or not chat:return
+    token=os.getenv('TELEGRAM_BOT_TOKEN','')
+    chat=os.getenv('TELEGRAM_CHAT_ID','')
+    if not token or not chat:
+        logging.warning('Telegram order notification not configured')
+        return
     try:
-        data=urllib.parse.urlencode({"chat_id":chat,"text":f"MaGelle: нове замовлення #{order_id}"}).encode()
-        urllib.request.urlopen(f"https://api.telegram.org/bot{token}/sendMessage",data=data,timeout=5)
-    except Exception: pass
+        con=db()
+        try:
+            row=con.execute('SELECT * FROM orders WHERE id=?',(order_id,)).fetchone()
+            if row is None:
+                logging.warning('Telegram order notification: order missing')
+                return
+            order=dict(row)
+            items=[dict(x) for x in con.execute(
+                'SELECT sku,qty,price_uah,family,design,size,vase_color FROM order_items WHERE order_id=?',
+                (order_id,)).fetchall()]
+        finally:
+            con.close()
+        message=build_telegram_order_message(order,items)
+        data=urllib.parse.urlencode({'chat_id':chat,'text':message,
+                                      'parse_mode':'HTML',
+                                      'disable_web_page_preview':'true'}).encode()
+        with urllib.request.urlopen(
+            f'https://api.telegram.org/bot{token}/sendMessage',data=data,timeout=8
+        ) as response:
+            if response.status!=200: raise RuntimeError('Telegram non-200')
+    except Exception:
+        logging.exception('Telegram order notification failed (token and personal data omitted)')
 
 def legacy_application(environ,start_response):
     method=environ["REQUEST_METHOD"]; path=environ.get("PATH_INFO","/")
