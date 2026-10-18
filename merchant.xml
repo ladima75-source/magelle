@@ -3,7 +3,7 @@
   <channel>
     <title>MaGelle — товарний фід</title>
     <link>https://magelle.com.ua/</link>
-    <description>Підтверджені SKU MaGelle з Admin 2.0</description>
+    <description>Підтверджені exact-SKU MaGelle з Catalog Management 2.0</description>
     <item>
       <g:id>MG-OF-MED-VYR-GRA</g:id>
       <title>MaGelle Organic Flare «Мед» — Виразний, Графіт</title>
@@ -171,6 +171,342 @@
       <g:identifier_exists>no</g:identifier_exists>
       <g:color>Графіт</g:color>
       <g:item_group_id>design-AS-RIT-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-MED-VYR-MLK</g:id>
+      <title>MaGelle Organic Flare «Мед» — Виразний, Молочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Мед» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-med-vyraznyi-hrafit.html?color=MLK</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/751f6039d27a4823723258eedd6e2ef70c0ce97e6845146e.png</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>4200.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Молочний</g:color>
+      <g:item_group_id>design-OF-MED-VYR</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-MED-VYR-WHT</g:id>
+      <title>MaGelle Organic Flare «Мед» — Виразний, Білий</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Мед» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-med-vyraznyi-hrafit.html?color=WHT</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/f558f9516bf9554d6402296dbfcfa12df20e913b8d53844c.png</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>4200.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Білий</g:color>
+      <g:item_group_id>design-OF-MED-VYR</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-MED-VYR-CHO</g:id>
+      <title>MaGelle Organic Flare «Мед» — Виразний, Шоколад</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Мед» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-med-vyraznyi-hrafit.html?color=CHO</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/3510dccd0a124d169be6c2b11ce5babde62c707ae3e3674c.png</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>4200.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Шоколад</g:color>
+      <g:item_group_id>design-OF-MED-VYR</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-DIM-VYR-MLK</g:id>
+      <title>MaGelle Organic Flare «Дим» — Виразний, Молочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Дим» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-dym-vyraznyi-hrafit.html?color=MLK</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/04a3f55d43cc7b1e8db640b6b0b5e9d68568c1422fc9d35e.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>4200.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Молочний</g:color>
+      <g:item_group_id>design-OF-DIM-VYR</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-DIM-VYR-SND</g:id>
+      <title>MaGelle Organic Flare «Дим» — Виразний, Пісочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Дим» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-dym-vyraznyi-hrafit.html?color=SND</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/0c037d9e290bcaf8a01cea5a66fffcd495d8d05f5cbde37b.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>4200.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Пісочний</g:color>
+      <g:item_group_id>design-OF-DIM-VYR</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-DIM-VYR-CHO</g:id>
+      <title>MaGelle Organic Flare «Дим» — Виразний, Шоколад</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Дим» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-dym-vyraznyi-hrafit.html?color=CHO</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/d1efe6f6e32e9b47272fa7bcc14631fe5ade6c2279577c2b.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>4200.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Шоколад</g:color>
+      <g:item_group_id>design-OF-DIM-VYR</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-BOR-DEL-MLK</g:id>
+      <title>MaGelle Organic Flare «Бордо» — Делікатний, Молочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Бордо» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-bordo-delikatnyi-shokolad.html?color=MLK</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/38f3fcd53904b8420ac1275de94921fc2eacffa3b9ccf4ad.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Молочний</g:color>
+      <g:item_group_id>design-OF-BOR-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-BOR-DEL-WHT</g:id>
+      <title>MaGelle Organic Flare «Бордо» — Делікатний, Білий</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Бордо» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-bordo-delikatnyi-shokolad.html?color=WHT</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/a849c8e9787e34d00413e84798968b8727ded21b4b6a95fa.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Білий</g:color>
+      <g:item_group_id>design-OF-BOR-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-BOR-DEL-SND</g:id>
+      <title>MaGelle Organic Flare «Бордо» — Делікатний, Пісочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Бордо» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-bordo-delikatnyi-shokolad.html?color=SND</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/b4011e7921e7bae618c39563173a892bb86949c45d0850d4.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Пісочний</g:color>
+      <g:item_group_id>design-OF-BOR-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-TER-DEL-MLK</g:id>
+      <title>MaGelle Organic Flare «Тера» — Делікатний, Молочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Тера» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-tera-delikatnyi-hrafit.html?color=MLK</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/3fcb0bd34d5a88371dd40c4226742beb31992f94e8c6fbf4.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Молочний</g:color>
+      <g:item_group_id>design-OF-TER-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-TER-DEL-WHT</g:id>
+      <title>MaGelle Organic Flare «Тера» — Делікатний, Білий</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Тера» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-tera-delikatnyi-hrafit.html?color=WHT</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/148d416134b0865b94640b79a975d611a9d411f364d67fc6.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Білий</g:color>
+      <g:item_group_id>design-OF-TER-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-TER-DEL-CHO</g:id>
+      <title>MaGelle Organic Flare «Тера» — Делікатний, Шоколад</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Тера» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-tera-delikatnyi-hrafit.html?color=CHO</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/e3e749552af41e18f4f461e66cd6470005c5ba70246e3796.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Шоколад</g:color>
+      <g:item_group_id>design-OF-TER-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-LON-DEL-WHT</g:id>
+      <title>MaGelle Organic Flare «Льон» — Делікатний, Білий</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Льон» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-lon-delikatnyi-hrafit.html?color=WHT</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/c6f8a92472122d87db53578f209c1c64d4280ea55c3b287c.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Білий</g:color>
+      <g:item_group_id>design-OF-LON-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-LON-DEL-SND</g:id>
+      <title>MaGelle Organic Flare «Льон» — Делікатний, Пісочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Льон» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-lon-delikatnyi-hrafit.html?color=SND</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/35def566249d0c65bba1f4536d6b0fcc5791309badf89951.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Пісочний</g:color>
+      <g:item_group_id>design-OF-LON-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-LON-DEL-CHO</g:id>
+      <title>MaGelle Organic Flare «Льон» — Делікатний, Шоколад</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Льон» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-lon-delikatnyi-hrafit.html?color=CHO</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/372bd6adf2018dc31ace479e68e487d078a59af5e0fc68eb.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Шоколад</g:color>
+      <g:item_group_id>design-OF-LON-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-PUD-DEL-MLK</g:id>
+      <title>MaGelle Organic Flare «Пудра» — Делікатний, Молочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Пудра» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-pudra-delikatnyi-hrafit.html?color=MLK</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/7e7dbdd086a9b8ee25a62e48cf5d6a59b046019360245908.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Молочний</g:color>
+      <g:item_group_id>design-OF-PUD-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-PUD-DEL-SND</g:id>
+      <title>MaGelle Organic Flare «Пудра» — Делікатний, Пісочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Пудра» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-pudra-delikatnyi-hrafit.html?color=SND</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/7bc6ee156a87ac9a18486026b61fc120e160583aac30ad26.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Пісочний</g:color>
+      <g:item_group_id>design-OF-PUD-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-PUD-DEL-CHO</g:id>
+      <title>MaGelle Organic Flare «Пудра» — Делікатний, Шоколад</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Пудра» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-pudra-delikatnyi-hrafit.html?color=CHO</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/4170c3893c555f46580cd8d073af5aacc409feded502f96f.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Шоколад</g:color>
+      <g:item_group_id>design-OF-PUD-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-OLI-DEL-GRA</g:id>
+      <title>MaGelle Organic Flare «Олива» — Делікатний, Графіт</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Олива» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-delikatnyi-shokolad.html?color=GRA</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/05e0d2c4094480da15d1f914c513f046b54bd6a54c3e141e.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Графіт</g:color>
+      <g:item_group_id>design-OF-OLI-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-OLI-DEL-MLK</g:id>
+      <title>MaGelle Organic Flare «Олива» — Делікатний, Молочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Олива» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-delikatnyi-shokolad.html?color=MLK</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/90130a697ed294e1bf8a5790a44d613949f2fe123263e518.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Молочний</g:color>
+      <g:item_group_id>design-OF-OLI-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-OLI-DEL-WHT</g:id>
+      <title>MaGelle Organic Flare «Олива» — Делікатний, Білий</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Олива» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-delikatnyi-shokolad.html?color=WHT</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/067f849996afbbd4f0f6e1f1b6560bd14d2d1755668c89cc.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2600.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Білий</g:color>
+      <g:item_group_id>design-OF-OLI-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-OF-OLI-DEL-SND</g:id>
+      <title>MaGelle Organic Flare «Олива» — Делікатний, Пісочний</title>
+      <description>Інтер'єрна композиція MaGelle Organic Flare «Олива» поєднує пластичний органічний силует, природні фактури сухоцвітів і стабілізованих рослин та дизайнерську вазу MaGelle. Оберіть колір вази під ваш інтер'єр. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/organic-flare-delikatnyi-shokolad.html?color=SND</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/4895d93fa1ee2d8a20649cb4ced3b149a1494cd9638dfc65.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>3000.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Пісочний</g:color>
+      <g:item_group_id>design-OF-OLI-DEL</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-SF-KOR-VYR-GRA</g:id>
+      <title>MaGelle Sculptural Fold «Корал» — Виразний, Графіт</title>
+      <description>Sculptural Fold «Корал» — виразна інтер'єрна композиція у теплій коралово-теракотовій палітрі. Об’єм гортензії та протеї поєднується з графічними сухими листками, коробочкою лотоса й світлими фактурними акцентами. Низька скульптурна ваза з м’яким ритмом вертикальних складок формує стійку об’ємну основу й підкреслює природну асиметрію букета. Доступна у вазах Графіт, Шоколад і Пісочний. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/sculptural-fold-koral-vyraznyi.html?color=GRA</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/786ec1e82ffdc433bf75fd56cc890aa44e02b28e3072899f.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2700.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Графіт</g:color>
+      <g:item_group_id>design-SF-KOR-VYR</g:item_group_id>
+    </item>
+    <item>
+      <g:id>MG-SF-KOR-VYR-CHO</g:id>
+      <title>MaGelle Sculptural Fold «Корал» — Виразний, Шоколад</title>
+      <description>Sculptural Fold «Корал» — виразна інтер'єрна композиція у теплій коралово-теракотовій палітрі. Об’єм гортензії та протеї поєднується з графічними сухими листками, коробочкою лотоса й світлими фактурними акцентами. Низька скульптурна ваза з м’яким ритмом вертикальних складок формує стійку об’ємну основу й підкреслює природну асиметрію букета. Доступна у вазах Графіт, Шоколад і Пісочний. Композиція не потребує поливу.</description>
+      <link>https://magelle.com.ua/sculptural-fold-koral-vyraznyi.html?color=CHO</link>
+      <g:image_link>https://api.magelle.com.ua/uploads/fd5c1870d706f196802b80d2411c043f0935008a7bc1039d.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2700.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Шоколад</g:color>
+      <g:item_group_id>design-SF-KOR-VYR</g:item_group_id>
     </item>
   </channel>
 </rss>

@@ -390,7 +390,8 @@
     const images=(p?.photo_urls||[]).filter(u=>/^https:\/\/api\.magelle\.com\.ua\/(media|uploads)\//.test(u));
     if(!p||!images.length||!(Number(p.price_uah)>0)){existing?.remove();return;}
     const url=new URL(location.pathname,location.origin);
-    if(code!==info.dataset.defaultColor)url.searchParams.set('color',code);
+    const requestedColor=new URL(location.href).searchParams.get('color');
+    if((requestedColor&&COLORS[requestedColor])||code!==info.dataset.defaultColor)url.searchParams.set('color',code);
     const data={'@context':'https://schema.org','@type':'Product',
       name:'MaGelle '+p.title_ua,sku:p.sku,
       description:p.description_ua||'Інтер’єрна композиція MaGelle з сухоцвітів та стабілізованих рослин.',
