@@ -5,11 +5,12 @@ import json
 import re
 from pathlib import Path
 from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
 from xml.etree import ElementTree as ET
 
 from build_merchant_feed import (
     COLOR_LABELS,
-    ORIGINAL_PILOT,
+    RETAINED_BASELINE,
     PINNED,
     SITE,
     acceptable_photo,
@@ -35,7 +36,7 @@ assert ids == expected_ids, (
     "Feed must contain every and only currently admissible managed variant. "
     f"expected={expected_ids!r} actual={ids!r}"
 )
-assert all(sku in ids for sku in ORIGINAL_PILOT), "Original approved pilot must remain present"
+assert all(sku in ids for sku in RETAINED_BASELINE), "Retained current baseline must remain present"
 
 by_sku = {p["sku"]: p for p in products if isinstance(p, dict) and p.get("sku")}
 app = Path("app.js").read_text(encoding="utf-8")
@@ -55,7 +56,7 @@ for item in rows:
     landing = landing_spec(sku, product, routes)
     expected_name = "MaGelle " + product["title_ua"]
     expected_price = f"{product['price_uah']:.2f} UAH"
-    image = product["photo_urls"][0]
+    image = product["_merchant_image"]
 
     assert item.findtext("title") == expected_name, sku + ": RSS title != Admin"
     assert item.findtext("link") == landing["url"], sku + ": RSS variant link wrong"
@@ -140,15 +141,21 @@ for item in rows:
         assert "/app.js?" in doc or 'src="/app.js"' in doc, sku + ": app.js missing"
         assert landing["url"].endswith("?color=" + product["color_code"]), sku + ": deep-link query missing"
 
-    with urlopen(
-        Request(image, headers={"User-Agent": "MaGelle-Merchant-Image-QA/3.0"}),
-        timeout=35,
-    ) as response:
-        assert response.status == 200, sku + ": image GET failed"
-        mime = response.headers.get_content_type()
-        magic = response.read(16)
-        assert mime in ("image/png", "image/jpeg", "image/webp"), sku + ": image MIME wrong: " + mime
-        assert magic.startswith((b"\x89PNG", b"\xff\xd8\xff", b"RIFF")), sku + ": image URL not image bytes"
+    image_path = urlsplit(image).path
+    local_image = Path(image_path.lstrip("/")) if urlsplit(image).netloc == "magelle.com.ua" else None
+    if local_image and local_image.is_file():
+        magic = local_image.read_bytes()[:16]
+        assert magic.startswith((b"\x89PNG", b"\xff\xd8\xff", b"RIFF")), sku + ": local image asset invalid"
+    else:
+        with urlopen(
+            Request(image, headers={"User-Agent": "MaGelle-Merchant-Image-QA/3.0"}),
+            timeout=35,
+        ) as response:
+            assert response.status == 200, sku + ": image GET failed"
+            mime = response.headers.get_content_type()
+            magic = response.read(16)
+            assert mime in ("image/png", "image/jpeg", "image/webp"), sku + ": image MIME wrong: " + mime
+            assert magic.startswith((b"\x89PNG", b"\xff\xd8\xff", b"RIFF")), sku + ": image URL not image bytes"
 
     with urlopen(
         Request(landing["url"], headers={"User-Agent": "MaGelle-Merchant-Landing-QA/3.0"}),

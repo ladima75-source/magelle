@@ -387,7 +387,7 @@
       if(n.id==='magelle-product-schema')return;
       try{if(JSON.parse(n.textContent)['@type']==='Product')n.remove()}catch(_){}
     });
-    const images=(p?.photo_urls||[]).filter(u=>/^https:\/\/api\.magelle\.com\.ua\/(media|uploads)\//.test(u));
+    const images=(p?.photo_urls||[]).filter(u=>/^https:\/\/(?:api\.)?magelle\.com\.ua\/(?:media|uploads)\//.test(u));
     if(!p||!images.length||!(Number(p.price_uah)>0)){existing?.remove();return;}
     const url=new URL(location.pathname,location.origin);
     const requestedColor=new URL(location.href).searchParams.get('color');

@@ -32,6 +32,22 @@ SITE = "https://magelle.com.ua"
 G = "http://base.google.com/ns/1.0"
 ET.register_namespace("g", G)
 
+SELLABLE_DESIGNS = {
+    "design-OF-MED-VYR", "design-OF-PER-VYR", "design-OF-KAR-VYR", "design-OF-GNT-VYR", "design-OF-DIM-VYR",
+    "design-AS-VRT-VYR", "design-AS-MON-VYR", "design-AS-CNT-DEL", "design-AS-RIT-DEL",
+    "design-SF-KOR-VYR",
+}
+EXACT_IMAGE_OVERRIDES = {
+    "MG-OF-PER-VYR-GRA": SITE + "/media/exact/MG-OF-PER-VYR-GRA.webp",
+    "MG-OF-PER-VYR-WHT": SITE + "/media/exact/MG-OF-PER-VYR-WHT.webp",
+    "MG-OF-PER-VYR-SND": SITE + "/media/exact/MG-OF-PER-VYR-SND.webp",
+    "MG-OF-PER-VYR-CHO": SITE + "/media/exact/MG-OF-PER-VYR-CHO.webp",
+    "MG-OF-GNT-VYR-MLK": SITE + "/media/exact/MG-OF-GNT-VYR-MLK.webp",
+    "MG-OF-GNT-VYR-WHT": SITE + "/media/exact/MG-OF-GNT-VYR-WHT.webp",
+    "MG-OF-GNT-VYR-SND": SITE + "/media/exact/MG-OF-GNT-VYR-SND.webp",
+    "MG-OF-GNT-VYR-CHO": SITE + "/media/exact/MG-OF-GNT-VYR-CHO.webp",
+}
+
 COLOR_LABELS = {
     "GRA": "Графіт",
     "MLK": "Молочний",
@@ -43,68 +59,15 @@ COLOR_LABELS = {
 # Stable landing contracts already published in Merchant Center.
 # Keep order so the existing 12 remain first and unchanged in the feed.
 PINNED = {
-    "MG-OF-MED-VYR-GRA": {
-        "path": "/organic-flare-med-vyraznyi-hrafit.html",
-        "title_ua": "Organic Flare «Мед» — Виразний, Графіт",
-        "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-MED-VYR",
-    },
-    "MG-OF-PER-VYR-MLK": {
-        "path": "/organic-flare-vyraznyi-molochnyi.html",
-        "title_ua": "Organic Flare «Перлина» — Виразний, Молочний",
-        "color": "Молочний", "color_code": "MLK", "design_id": "design-OF-PER-VYR",
-    },
-    "MG-OF-OLI-DEL-CHO": {
-        "path": "/organic-flare-delikatnyi-shokolad.html",
-        "title_ua": "Organic Flare «Олива» — Делікатний, Шоколад",
-        "color": "Шоколад", "color_code": "CHO", "design_id": "design-OF-OLI-DEL",
-    },
-    "MG-OF-DIM-VYR-GRA": {
-        "path": "/organic-flare-dym-vyraznyi-hrafit.html",
-        "title_ua": "Organic Flare «Дим» — Виразний, Графіт",
-        "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-DIM-VYR",
-    },
-    "MG-OF-BOR-DEL-CHO": {
-        "path": "/organic-flare-bordo-delikatnyi-shokolad.html",
-        "title_ua": "Organic Flare «Бордо» — Делікатний, Шоколад",
-        "color": "Шоколад", "color_code": "CHO", "design_id": "design-OF-BOR-DEL",
-    },
-    "MG-OF-TER-DEL-GRA": {
-        "path": "/organic-flare-tera-delikatnyi-hrafit.html",
-        "title_ua": "Organic Flare «Тера» — Делікатний, Графіт",
-        "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-TER-DEL",
-    },
-    "MG-OF-LON-DEL-GRA": {
-        "path": "/organic-flare-lon-delikatnyi-hrafit.html",
-        "title_ua": "Organic Flare «Льон» — Делікатний, Графіт",
-        "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-LON-DEL",
-    },
-    "MG-OF-PUD-DEL-GRA": {
-        "path": "/organic-flare-pudra-delikatnyi-hrafit.html",
-        "title_ua": "Organic Flare «Пудра» — Делікатний, Графіт",
-        "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-PUD-DEL",
-    },
-    "MG-AS-VRT-VYR-CHO": {
-        "path": "/architectural-step-vertikal-vyraznyi-shokolad.html",
-        "title_ua": "Architectural Step «Вертикаль» — Виразний, Шоколад",
-        "color": "Шоколад", "color_code": "CHO", "design_id": "design-AS-VRT-VYR",
-    },
-    "MG-AS-MON-VYR-CHO": {
-        "path": "/architectural-step-monolit-vyraznyi-shokolad.html",
-        "title_ua": "Architectural Step «Моноліт» — Виразний, Шоколад",
-        "color": "Шоколад", "color_code": "CHO", "design_id": "design-AS-MON-VYR",
-    },
-    "MG-AS-CNT-DEL-CHO": {
-        "path": "/architectural-step-kontur-delikatnyi-shokolad.html",
-        "title_ua": "Architectural Step «Контур» — Делікатний, Шоколад",
-        "color": "Шоколад", "color_code": "CHO", "design_id": "design-AS-CNT-DEL",
-    },
-    "MG-AS-RIT-DEL-GRA": {
-        "path": "/architectural-step-ritm-delikatnyi-hrafit.html",
-        "title_ua": "Architectural Step «Ритм» — Делікатний, Графіт",
-        "color": "Графіт", "color_code": "GRA", "design_id": "design-AS-RIT-DEL",
-    },
+    "MG-OF-MED-VYR-GRA": {"path": "/organic-flare-med-vyraznyi-hrafit.html", "title_ua": "Organic Flare «Мед» — Виразний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-MED-VYR"},
+    "MG-OF-PER-VYR-MLK": {"path": "/organic-flare-vyraznyi-molochnyi.html", "title_ua": "Organic Flare «Перлина» — Виразний, Молочний", "color": "Молочний", "color_code": "MLK", "design_id": "design-OF-PER-VYR"},
+    "MG-OF-DIM-VYR-GRA": {"path": "/organic-flare-dym-vyraznyi-hrafit.html", "title_ua": "Organic Flare «Дим» — Виразний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-DIM-VYR"},
+    "MG-AS-VRT-VYR-CHO": {"path": "/architectural-step-vertikal-vyraznyi-shokolad.html", "title_ua": "Architectural Step «Вертикаль» — Виразний, Шоколад", "color": "Шоколад", "color_code": "CHO", "design_id": "design-AS-VRT-VYR"},
+    "MG-AS-MON-VYR-CHO": {"path": "/architectural-step-monolit-vyraznyi-shokolad.html", "title_ua": "Architectural Step «Моноліт» — Виразний, Шоколад", "color": "Шоколад", "color_code": "CHO", "design_id": "design-AS-MON-VYR"},
+    "MG-AS-CNT-DEL-CHO": {"path": "/architectural-step-kontur-delikatnyi-shokolad.html", "title_ua": "Architectural Step «Контур» — Делікатний, Шоколад", "color": "Шоколад", "color_code": "CHO", "design_id": "design-AS-CNT-DEL"},
+    "MG-AS-RIT-DEL-GRA": {"path": "/architectural-step-ritm-delikatnyi-hrafit.html", "title_ua": "Architectural Step «Ритм» — Делікатний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-AS-RIT-DEL"},
 }
-ORIGINAL_PILOT = tuple(list(PINNED)[:3])
+RETAINED_BASELINE = ("MG-OF-MED-VYR-GRA", "MG-OF-PER-VYR-MLK")
 PINNED_DESIGN_PATH = {spec["design_id"]: spec["path"] for spec in PINNED.values()}
 
 
@@ -137,12 +100,33 @@ def acceptable_photo(url):
     if not isinstance(url, str) or not url:
         return False
     p = urlsplit(url)
-    return (
-        p.scheme == "https"
-        and p.netloc == "api.magelle.com.ua"
-        and (p.path.startswith("/uploads/") or p.path.startswith("/media/"))
-        and p.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
-    )
+    return (p.scheme == "https" and p.netloc in ("api.magelle.com.ua", "magelle.com.ua")
+            and p.path.startswith(("/uploads/", "/media/"))
+            and p.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp")))
+
+def optimized_drive_map():
+    path = Path("media/optimized-image-map.js")
+    if not path.is_file(): return {}
+    m = re.search(r"=\s*(\{.*\})\s*;?\s*$", path.read_text(encoding="utf-8"), re.S)
+    return json.loads(m.group(1)) if m else {}
+
+OPTIMIZED_DRIVE = optimized_drive_map()
+
+def merchant_image(product):
+    sku = product.get("sku")
+    if sku in EXACT_IMAGE_OVERRIDES:
+        url = EXACT_IMAGE_OVERRIDES[sku]
+        return url if Path(urlsplit(url).path.lstrip("/")).is_file() else None
+    for url in product.get("photo_urls") or []:
+        if acceptable_photo(url): return url
+        parsed=urlsplit(url)
+        if parsed.netloc=="drive.google.com":
+            from urllib.parse import parse_qs
+            fid=parse_qs(parsed.query).get("id",[""])[0]
+            rel=(OPTIMIZED_DRIVE.get(fid) or {}).get("1600")
+            if rel and Path(rel.lstrip("/")).is_file(): return SITE+rel
+        if isinstance(url,str) and url.startswith("/media/") and Path(url.lstrip("/")).is_file(): return SITE+url
+    return None
 
 
 def safe_pdp_path(value):
@@ -183,6 +167,8 @@ def index_products(products):
 def rejection_reason(product, routes):
     if not product.get("design_id"):
         return "legacy_without_design_id"
+    if product.get("design_id") not in SELLABLE_DESIGNS:
+        return "design_not_sellable"
     if product.get("lifecycle") != "active":
         return "lifecycle_not_active"
     if product.get("status") != "stock":
@@ -196,10 +182,9 @@ def rejection_reason(product, routes):
     if product.get("color") != COLOR_LABELS[code]:
         return "color_label_mismatch"
     photos = product.get("photo_urls")
-    if not isinstance(photos, list) or not photos:
-        return "exact_photo_missing"
-    if not acceptable_photo(photos[0]):
-        return "first_party_photo_missing"
+    image = merchant_image(product)
+    if not image:
+        return "exact_photo_missing" if not photos and product.get("sku") not in EXACT_IMAGE_OVERRIDES else "first_party_photo_missing"
     route = routes.get(product["design_id"])
     if not route:
         return "design_pdp_route_missing"
@@ -220,7 +205,8 @@ def admitted_products(products, catalog):
         if reason:
             excluded[sku] = reason
         else:
-            selected[sku] = product
+            selected[sku] = dict(product)
+            selected[sku]["_merchant_image"] = merchant_image(product)
 
     for sku, spec in PINNED.items():
         product = by_sku.get(sku)
@@ -298,7 +284,7 @@ def build(products, catalog):
             or "Інтер’єрна композиція із сухоцвітів та стабілізованих рослин у дизайнерській вазі MaGelle.",
         )
         add_text(item, "link", landing["url"])
-        add_google(item, "image_link", p["photo_urls"][0])
+        add_google(item, "image_link", p["_merchant_image"])
         add_google(item, "availability", availability(p))
         add_google(item, "price", f"{p['price_uah']:.2f} UAH")
         add_google(item, "condition", "new")
@@ -346,7 +332,7 @@ def sync_pinned_pdp_schema(products, catalog):
             if not re.search(pattern, body):
                 raise RuntimeError(sku + ": landing page has wrong/missing " + reason)
 
-        pic = p["photo_urls"][0]
+        pic = p["_merchant_image"]
         data = {
             "@context": "https://schema.org",
             "@type": "Product",

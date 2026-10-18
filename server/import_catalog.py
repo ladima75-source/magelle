@@ -1,4 +1,4 @@
-"""One-time, repeatable import of reviewed storefront metadata. No old row updates."""
+"""Repeatable storefront import with retirement of managed designs no longer published."""
 import argparse
 import hashlib
 import json
@@ -8,6 +8,7 @@ import sqlite3
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urlsplit, parse_qs
 import catalog
 
 class Markup(HTMLParser):
@@ -51,17 +52,33 @@ def legacy_fingerprint(con):
 
 def import_rows(con, root):
     parser=Markup((root/'catalog.html').read_text('utf-8'))
-    inserted_designs=inserted_variants=0
+    optimized={}
+    map_file=root/'media'/'optimized-image-map.js'
+    if map_file.is_file():
+        match=re.search(r'=\s*(\{.*\})\s*;?\s*$',map_file.read_text('utf-8'),re.S)
+        if match: optimized=json.loads(match.group(1))
+    def public_media(url):
+        url=html.unescape(url or '')
+        if url.startswith('/media/'): return 'https://magelle.com.ua'+url
+        parsed=urlsplit(url)
+        if parsed.hostname=='drive.google.com' and parsed.path=='/thumbnail':
+            fid=parse_qs(parsed.query).get('id',[''])[0]
+            rel=(optimized.get(fid) or {}).get('1600')
+            if rel and (root/rel.lstrip('/')).is_file(): return 'https://magelle.com.ua'+rel
+        return url
+    inserted_designs=inserted_variants=updated_variants=0
+    source_design_ids=set(); source_skus=set()
     for position,c in enumerate(parser.cards):
         family=c.get('family_code') or ('AS' if c['family']=='Architectural Step' else 'OF')
         did='design-'+family+'-'+c['design_code']+'-'+c['size_code']
+        source_design_ids.add(did)
         pdp=root/c['pdp_url'].lstrip('/')
         content=pdp.read_text('utf-8') if pdp.exists() else ''
         pd=Markup(content) if content else None
         specs=page_specs(content)
         info=pd.info if pd and pd.info else {}
-        photo_urls=list(dict.fromkeys(pd.photos if pd else []))
-        if not photo_urls and c.get('photo_src'): photo_urls=[c['photo_src']]
+        photo_urls=[public_media(u) for u in dict.fromkeys(pd.photos if pd else [])]
+        if not photo_urls and c.get('photo_src'): photo_urls=[public_media(c['photo_src'])]
         source_color=pd.gallery_color if pd and pd.gallery_color else c.get('photo_color','')
         if pd:
             for code,label in [('SND','Пісочний'),('GRA','Графіт'),('MLK','Молочний'),('WHT','Білий'),('CHO','Шоколад')]:
@@ -77,11 +94,21 @@ def import_rows(con, root):
             inserted_designs+=1
         for index,color in enumerate(colors):
             sku=f"MG-{family}-{c['design_code']}-{c['size_code']}-{color}"
-            if con.execute('SELECT 1 FROM products WHERE sku=?',(sku,)).fetchone(): continue
+            source_skus.add(sku)
+            existing=con.execute('SELECT * FROM products WHERE sku=?',(sku,)).fetchone()
             base=f"MG-{family}-{c['size_code']}-{color}"
-            old=con.execute('SELECT * FROM products WHERE sku=?',(base,)).fetchone()
+            old=existing or con.execute('SELECT * FROM products WHERE sku=?',(base,)).fetchone()
             label=con.execute('SELECT title_ua FROM colors WHERE code=?',(color,)).fetchone()
             exact=info.get('variant_'+color.lower()) or c.get('variant_'+color.lower())
+            exact=public_media(exact) if exact else exact
+            if existing and exact:
+                existing_photos=catalog.decoded(existing).get('photo_urls') or []
+                parsed_exact=urlsplit(exact)
+                exact_first_party=parsed_exact.hostname in ('magelle.com.ua','api.magelle.com.ua') and parsed_exact.path.startswith(('/media/','/uploads/'))
+                if not exact_first_party and existing_photos:
+                    parsed_old=urlsplit(existing_photos[0])
+                    if parsed_old.hostname in ('magelle.com.ua','api.magelle.com.ua') and parsed_old.path.startswith(('/media/','/uploads/')):
+                        exact=existing_photos[0]
             # Keep source gallery separate: never assign another color's photo as exact media.
             photos=photo_urls if color==source_color else []
             # The reviewed PDP gallery is authoritative. A catalog thumbnail
@@ -111,9 +138,22 @@ def import_rows(con, root):
                 'photo_urls':photos,'sort_order':position*100+index,
                 'lifecycle':'active' if old and old['status']!='hidden' and old['price_uah'] else 'draft',
             }
-            catalog.write_record(con,'products','product_id','variant-'+sku,fields,True)
-            inserted_variants+=1
-    return {'designs_added':inserted_designs,'variants_added':inserted_variants,'source_cards':len(parser.cards)}
+            if existing:
+                catalog.write_record(con,'products','product_id',existing['product_id'],fields)
+                updated_variants+=1
+            else:
+                catalog.write_record(con,'products','product_id','variant-'+sku,fields,True)
+                inserted_variants+=1
+    archived_variants=archived_designs=0
+    for row in con.execute("SELECT product_id,sku,lifecycle FROM products WHERE design_id IS NOT NULL").fetchall():
+        if row['sku'] not in source_skus and row['lifecycle'] not in ('archived','deleted'):
+            con.execute("UPDATE products SET lifecycle='archived',status='hidden',version=version+1,updated_at=CURRENT_TIMESTAMP WHERE product_id=?",(row['product_id'],))
+            archived_variants+=1
+    for row in con.execute("SELECT id,lifecycle FROM designs").fetchall():
+        if row['id'] not in source_design_ids and row['lifecycle'] not in ('archived','deleted'):
+            con.execute("UPDATE designs SET lifecycle='archived',version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?",(row['id'],))
+            archived_designs+=1
+    return {'designs_added':inserted_designs,'variants_added':inserted_variants,'variants_updated':updated_variants,'variants_archived':archived_variants,'designs_archived':archived_designs,'source_cards':len(parser.cards)}
 
 def main():
     p=argparse.ArgumentParser(); p.add_argument('--db',required=True); p.add_argument('--apply',action='store_true'); p.add_argument('--enable',action='store_true'); p.add_argument('--backup')

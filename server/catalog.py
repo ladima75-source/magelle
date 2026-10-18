@@ -180,7 +180,7 @@ def validate_product(con, data, current=None):
         p[key] = integer(p.get(key),key,nullable=True)
     p['lead_time_days'] = integer(p.get('lead_time_days'),'lead_time_days',365,True)
     p['sort_order'] = integer(p.get('sort_order',0),'sort_order')
-    p['photo_urls'] = media(p.get('photo_urls',[]))
+    p['photo_urls'] = media(p.get('photo_urls',[])) if (not current or 'photo_urls' in data) else p.get('photo_urls',[])
     if p['old_price_uah'] is not None and (p['price_uah'] is None or p['old_price_uah'] < p['price_uah']):
         raise ApiError('old_price_below_price')
     if p['lifecycle'] == 'active' and p['status'] != 'hidden' and not p['price_uah']:
@@ -219,7 +219,7 @@ def validate_design(con, data, current=None):
         p[key] = text(p,key,12)
         if p[key] and not con.execute('SELECT 1 FROM colors WHERE code=?',(p[key],)).fetchone():
             raise ApiError('invalid_color')
-    p['source_photo_urls'] = media(p.get('source_photo_urls',[]))
+    p['source_photo_urls'] = media(p.get('source_photo_urls',[])) if (not current or 'source_photo_urls' in data) else p.get('source_photo_urls',[])
     p['lifecycle'] = p.get('lifecycle','draft')
     if p['lifecycle'] not in STATES:
         raise ApiError('invalid_status')

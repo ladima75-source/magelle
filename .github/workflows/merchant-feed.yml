@@ -7,6 +7,7 @@ on:
       - 'scripts/build_merchant_feed.py'
       - 'scripts/verify_merchant_feed.py'
       - 'app.js'
+      - 'media/exact/**'
       - 'organic-flare-*.html'
       - 'architectural-step-*.html'
       - 'sculptural-fold-*.html'
