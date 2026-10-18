@@ -114,7 +114,7 @@ def import_rows(con, root):
             # Static markup may omit an exact color that is already approved in Admin.
             # Never erase existing reviewed SKU media just because the storefront card is incomplete.
             if existing and not photos and not exact:
-                photos=catalog.decoded(existing).get('photo_urls') or []
+                photos=[public_media(u) for u in (catalog.decoded(existing).get('photo_urls') or [])]
             # The reviewed PDP gallery is authoritative. A catalog thumbnail
             # may be a different encoding of the same photograph and must not
             # become a second SKU photo or leak across vase colors.
