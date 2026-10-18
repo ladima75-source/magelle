@@ -111,6 +111,10 @@ def import_rows(con, root):
                         exact=existing_photos[0]
             # Keep source gallery separate: never assign another color's photo as exact media.
             photos=photo_urls if color==source_color else []
+            # Static markup may omit an exact color that is already approved in Admin.
+            # Never erase existing reviewed SKU media just because the storefront card is incomplete.
+            if existing and not photos and not exact:
+                photos=catalog.decoded(existing).get('photo_urls') or []
             # The reviewed PDP gallery is authoritative. A catalog thumbnail
             # may be a different encoding of the same photograph and must not
             # become a second SKU photo or leak across vase colors.
