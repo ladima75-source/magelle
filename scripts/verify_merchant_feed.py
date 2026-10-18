@@ -45,6 +45,7 @@ for required in (
     "updateExactSchema(variant,code,info)",
     "canonical.href=url.href",
     "requestedColor&&COLORS[requestedColor]",
+    "merchant-static-schema')?(info.dataset.defaultColor||d.default_color)",
 ):
     assert required in app, "Variant deep-link runtime contract missing: " + required
 

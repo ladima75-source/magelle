@@ -674,7 +674,7 @@
       const requested=new URL(location.href).searchParams.get('design');
       const d=model.designs.find(d=>requested?d.id===requested:d.code===info.dataset.designCode&&d.family_code===familyCode(info)&&d.size_code===info.dataset.sizeCode);
       if(d){
-        Object.assign(info.dataset,{catalogDesignId:d.id,family:d.series,familyCode:d.family_code,design:d.title_ua,designCode:d.code,sizeCode:d.size_code,variantSize:d.size_name,defaultColor:document.getElementById('merchant-static-schema')?d.default_color:preferredGalleryColor(d)});
+        Object.assign(info.dataset,{catalogDesignId:d.id,family:d.series,familyCode:d.family_code,design:d.title_ua,designCode:d.code,sizeCode:d.size_code,variantSize:d.size_name,defaultColor:document.getElementById('merchant-static-schema')?(info.dataset.defaultColor||d.default_color):preferredGalleryColor(d)});
         const h1=info.querySelector('h1');if(h1)h1.textContent=d.series+' «'+d.title_ua+'» — '+d.size_name;
         document.title=d.series+' «'+d.title_ua+'» — MaGelle';
         const picker=info.querySelector('.design-pdp-colors .color-options');if(picker)picker.innerHTML=variantButtons(variantsFor(d),'color-option design-pdp-color');
