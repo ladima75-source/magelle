@@ -8,7 +8,7 @@ Admission is catalog-driven and fail-closed:
 - valid design PDP route from /api/catalog.
 
 The existing 12 published Merchant items keep their established landing URLs.
-The original three approved pilot items therefore remain byte-for-byte stable
+The original three approved pilot items therefore remain identity/link stable
 at the identity/link level while newly eligible variants use ?color=CODE deep
 links on the design PDP.
 """
@@ -34,6 +34,7 @@ ET.register_namespace("g", G)
 
 SELLABLE_DESIGNS = {
     "design-OF-MED-VYR", "design-OF-PER-VYR", "design-OF-KAR-VYR", "design-OF-GNT-VYR", "design-OF-DIM-VYR",
+    "design-OF-BOR-DEL", "design-OF-TER-DEL", "design-OF-LON-DEL", "design-OF-PUD-DEL", "design-OF-OLI-DEL",
     "design-AS-VRT-VYR", "design-AS-MON-VYR", "design-AS-CNT-DEL", "design-AS-RIT-DEL",
     "design-SF-KOR-VYR",
 }
@@ -61,13 +62,18 @@ COLOR_LABELS = {
 PINNED = {
     "MG-OF-MED-VYR-GRA": {"path": "/organic-flare-med-vyraznyi-hrafit.html", "title_ua": "Organic Flare «Мед» — Виразний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-MED-VYR"},
     "MG-OF-PER-VYR-MLK": {"path": "/organic-flare-vyraznyi-molochnyi.html", "title_ua": "Organic Flare «Перлина» — Виразний, Молочний", "color": "Молочний", "color_code": "MLK", "design_id": "design-OF-PER-VYR"},
+    "MG-OF-OLI-DEL-CHO": {"path": "/organic-flare-delikatnyi-shokolad.html", "title_ua": "Organic Flare «Олива» — Делікатний, Шоколад", "color": "Шоколад", "color_code": "CHO", "design_id": "design-OF-OLI-DEL"},
     "MG-OF-DIM-VYR-GRA": {"path": "/organic-flare-dym-vyraznyi-hrafit.html", "title_ua": "Organic Flare «Дим» — Виразний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-DIM-VYR"},
+    "MG-OF-BOR-DEL-CHO": {"path": "/organic-flare-bordo-delikatnyi-shokolad.html", "title_ua": "Organic Flare «Бордо» — Делікатний, Шоколад", "color": "Шоколад", "color_code": "CHO", "design_id": "design-OF-BOR-DEL"},
+    "MG-OF-TER-DEL-GRA": {"path": "/organic-flare-tera-delikatnyi-hrafit.html", "title_ua": "Organic Flare «Тера» — Делікатний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-TER-DEL"},
+    "MG-OF-LON-DEL-GRA": {"path": "/organic-flare-lon-delikatnyi-hrafit.html", "title_ua": "Organic Flare «Льон» — Делікатний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-LON-DEL"},
+    "MG-OF-PUD-DEL-GRA": {"path": "/organic-flare-pudra-delikatnyi-hrafit.html", "title_ua": "Organic Flare «Пудра» — Делікатний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-PUD-DEL"},
     "MG-AS-VRT-VYR-CHO": {"path": "/architectural-step-vertikal-vyraznyi-shokolad.html", "title_ua": "Architectural Step «Вертикаль» — Виразний, Шоколад", "color": "Шоколад", "color_code": "CHO", "design_id": "design-AS-VRT-VYR"},
     "MG-AS-MON-VYR-CHO": {"path": "/architectural-step-monolit-vyraznyi-shokolad.html", "title_ua": "Architectural Step «Моноліт» — Виразний, Шоколад", "color": "Шоколад", "color_code": "CHO", "design_id": "design-AS-MON-VYR"},
     "MG-AS-CNT-DEL-CHO": {"path": "/architectural-step-kontur-delikatnyi-shokolad.html", "title_ua": "Architectural Step «Контур» — Делікатний, Шоколад", "color": "Шоколад", "color_code": "CHO", "design_id": "design-AS-CNT-DEL"},
     "MG-AS-RIT-DEL-GRA": {"path": "/architectural-step-ritm-delikatnyi-hrafit.html", "title_ua": "Architectural Step «Ритм» — Делікатний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-AS-RIT-DEL"},
 }
-RETAINED_BASELINE = ("MG-OF-MED-VYR-GRA", "MG-OF-PER-VYR-MLK")
+ORIGINAL_PILOT = ("MG-OF-MED-VYR-GRA", "MG-OF-PER-VYR-MLK", "MG-OF-OLI-DEL-CHO")
 PINNED_DESIGN_PATH = {spec["design_id"]: spec["path"] for spec in PINNED.values()}
 
 

@@ -146,11 +146,11 @@ def import_rows(con, root):
                 inserted_variants+=1
     archived_variants=archived_designs=0
     for row in con.execute("SELECT product_id,sku,lifecycle FROM products WHERE design_id IS NOT NULL").fetchall():
-        if row['sku'] not in source_skus and row['lifecycle'] not in ('archived','deleted'):
+        if row['sku'] not in source_skus and row['lifecycle'] == 'active':
             con.execute("UPDATE products SET lifecycle='archived',status='hidden',version=version+1,updated_at=CURRENT_TIMESTAMP WHERE product_id=?",(row['product_id'],))
             archived_variants+=1
     for row in con.execute("SELECT id,lifecycle FROM designs").fetchall():
-        if row['id'] not in source_design_ids and row['lifecycle'] not in ('archived','deleted'):
+        if row['id'] not in source_design_ids and row['lifecycle'] == 'active':
             con.execute("UPDATE designs SET lifecycle='archived',version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?",(row['id'],))
             archived_designs+=1
     return {'designs_added':inserted_designs,'variants_added':inserted_variants,'variants_updated':updated_variants,'variants_archived':archived_variants,'designs_archived':archived_designs,'source_cards':len(parser.cards)}

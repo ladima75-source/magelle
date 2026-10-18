@@ -10,7 +10,7 @@ from xml.etree import ElementTree as ET
 
 from build_merchant_feed import (
     COLOR_LABELS,
-    RETAINED_BASELINE,
+    ORIGINAL_PILOT,
     PINNED,
     SITE,
     acceptable_photo,
@@ -36,7 +36,7 @@ assert ids == expected_ids, (
     "Feed must contain every and only currently admissible managed variant. "
     f"expected={expected_ids!r} actual={ids!r}"
 )
-assert all(sku in ids for sku in RETAINED_BASELINE), "Retained current baseline must remain present"
+assert all(sku in ids for sku in ORIGINAL_PILOT), "Original approved pilot must remain present"
 
 by_sku = {p["sku"]: p for p in products if isinstance(p, dict) and p.get("sku")}
 app = Path("app.js").read_text(encoding="utf-8")
