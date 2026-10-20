@@ -4,7 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'index.html'
+      - '*.html'
+      - 'styles.css'
+      - 'app.js'
+      - 'site-menu.css'
       - 'scripts/sync_global_navigation.py'
 permissions:
   contents: write
