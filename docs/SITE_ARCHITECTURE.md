@@ -32,7 +32,7 @@ Counts are audit snapshots, not hard-coded business rules. Admission is defined 
 ## Shared frontend contract
 
 All normal storefront pages use:
-- `styles.css?v=4.4`
+- `styles.css?v=4.5`
 - `app.js?v=5.3`
 - exactly one `site-menu.css?v=2`
 - one global header/navigation.
@@ -66,6 +66,9 @@ Mappings live in `scripts/site_contract.py`.
 Media audit closure:
 - Sculptural Fold Koral base SND gallery is fully first-party. The four historical Drive URLs were mapped against the already-existing Admin uploads and replaced with exact matching api.magelle.com.ua copies; base gallery count and identity remain unchanged.
 - Storefront HTML is CI-blocked if a Google Drive URL reappears.
+
+CSS maintenance:
+- 2026-10-20 removed cascade-dead mobile header/PDP/color-control overrides while preserving computed mobile layout; shared stylesheet version advanced to 4.5.
 
 ## CI / regression protection
 

@@ -1,5 +1,5 @@
 SITE_URL = "https://magelle.com.ua"
-STYLE_VERSION = "4.4"
+STYLE_VERSION = "4.5"
 APP_VERSION = "5.3"
 MENU_VERSION = "2"
 
