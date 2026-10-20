@@ -63,8 +63,9 @@ Mappings live in `scripts/site_contract.py`.
 - A design's approved base/source-color gallery must never be deleted, shortened, or replaced by a single image.
 - Exact-color images for other colors are separate SKU media.
 
-Known open media debt from this audit:
-- Sculptural Fold Koral base SND gallery still contains four historical Google Drive source images without optimized first-party copies. Do not substitute them. Migrate the exact files when authorized bytes are available.
+Media audit closure:
+- Sculptural Fold Koral base SND gallery is fully first-party. The four historical Drive URLs were mapped against the already-existing Admin uploads and replaced with exact matching api.magelle.com.ua copies; base gallery count and identity remain unchanged.
+- Storefront HTML is CI-blocked if a Google Drive URL reappears.
 
 ## CI / regression protection
 
