@@ -623,6 +623,38 @@
     return variants.find(p=>count(p.color_code)>=2)?.color_code||d.default_color||'GRA';
   }
 
+  function annotateGalleryChoices(){
+    if(!catalogModel?.enabled)return;
+    const designFor=el=>{
+      const id=el?.dataset?.catalogDesignId;
+      return (id&&catalogModel.designs.find(d=>d.id===id))
+        ||catalogModel.designs.find(d=>d.family_code===familyCode(el)&&d.code===el?.dataset?.designCode&&d.size_code===el?.dataset?.sizeCode);
+    };
+    const mark=(btn,count)=>{
+      if(!btn||count<2)return;
+      btn.classList.add('gallery-source-color');
+      btn.dataset.galleryCount=String(count);
+      let badge=btn.querySelector('.gallery-photo-count');
+      if(!badge){badge=document.createElement('small');badge.className='gallery-photo-count';btn.appendChild(badge);}
+      badge.innerHTML='<span class="gallery-photo-label">Галерея · </span>'+count+' фото';
+      const colorLabel=btn.querySelector(':scope > span')?.textContent?.trim()||btn.getAttribute('aria-label')||'';
+      btn.setAttribute('aria-label',colorLabel+' · Галерея, '+count+' фото');
+      btn.title='Базовий колір · Галерея · '+count+' фото';
+    };
+    document.querySelectorAll('.design-variant-card').forEach(card=>{
+      const d=designFor(card),count=[...new Set(d?.source_photo_urls||[])].length;
+      if(!d?.source_color||count<2)return;
+      mark(card.querySelector('.pilot-color[data-variant-color="'+d.source_color+'"]'),count);
+    });
+    const info=document.querySelector('.design-variant-pdp');
+    if(info){
+      const d=designFor(info),count=[...new Set(d?.source_photo_urls||[])].length;
+      if(d?.source_color&&count>=2){
+        mark(info.querySelector('.design-pdp-color[data-variant-color="'+d.source_color+'"]'),count);
+        mark(document.querySelector('.mobile-photo-colors button[data-mobile-color="'+d.source_color+'"]'),count);
+      }
+    }
+  }
   function applyProductData(products){
     activeProducts=new Map(products.map(p=>[p.sku,p]));
     products.forEach(p=>(p.aliases||[]).forEach(alias=>activeProducts.set(alias,p)));
@@ -684,7 +716,7 @@
       const modelResponse=await fetch(API_BASE+'/api/catalog',{headers:{Accept:'application/json'}});
       if(modelResponse.ok){
         const model=await modelResponse.json();
-        if(model.enabled){catalogModel=model;hydrateCatalog(model);applyProductData(model.products);document.dispatchEvent(new CustomEvent('magelle:cart-change'));return;}
+        if(model.enabled){catalogModel=model;hydrateCatalog(model);annotateGalleryChoices();applyProductData(model.products);document.dispatchEvent(new CustomEvent('magelle:cart-change'));return;}
       }
       const r=await fetch(API_BASE+'/api/products',{headers:{Accept:'application/json'}});
       if(!r.ok)return;
