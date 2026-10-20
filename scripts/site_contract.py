@@ -1,6 +1,6 @@
 SITE_URL = "https://magelle.com.ua"
-STYLE_VERSION = "4.5"
-APP_VERSION = "5.3"
+STYLE_VERSION = "4.6"
+APP_VERSION = "5.4"
 MENU_VERSION = "2"
 
 # Historical URLs kept only so old external links do not hard-404.
