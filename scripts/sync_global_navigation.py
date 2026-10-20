@@ -2,9 +2,7 @@
 from pathlib import Path
 import re
 
-STYLE_VERSION = "4.4"
-APP_VERSION = "5.3"
-MENU_VERSION = "2"
+from site_contract import STYLE_VERSION, APP_VERSION, MENU_VERSION
 
 nav_pattern = re.compile(r'<nav class="site-nav" id="nav">[\s\S]*?</nav>')
 master = nav_pattern.search(Path("index.html").read_text(encoding="utf-8"))
