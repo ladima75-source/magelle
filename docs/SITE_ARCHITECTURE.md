@@ -80,3 +80,7 @@ CSS maintenance:
 `Merchant feed sync` independently rebuilds and verifies the production feed against live Admin 2.0.
 
 `Keep MaGelle navigation identical` synchronizes global nav and shared frontend asset versions after storefront changes.
+
+## Base-color gallery marker
+
+Storefront color selectors automatically mark the design source/base color when its approved source gallery has 2+ photos. The marker is derived only from Admin `source_color` + unique `source_photo_urls`: PDP shows “Галерея · N фото”; compact catalog/mobile controls show “N фото”. No per-product manual labels are allowed.
