@@ -438,6 +438,7 @@
 .gallery-prev{left:12px}.gallery-next{right:12px}
 @media(max-width:640px){
   html,body{max-width:100%;overflow-x:hidden}
+  .site-header{position:sticky!important;top:0!important;z-index:80;backdrop-filter:blur(15px)!important;-webkit-backdrop-filter:blur(15px)!important}
   .header-inner{min-width:0}
   .header-inner .brand{min-width:0;flex:1 1 auto}
   .mobile-catalog-link{flex:0 0 auto}
@@ -447,9 +448,9 @@
   .product-page .gallery{gap:8px;min-width:0}
   .product-page .product-main-photo{
     width:100%;
-    height:clamp(320px,calc(100svh - 180px),520px);
+    height:clamp(300px,calc(100svh - 260px),420px);
     min-height:0!important;
-    max-height:520px;
+    max-height:420px;
     position:relative;
     display:flex;
     align-items:center;
