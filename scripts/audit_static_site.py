@@ -10,6 +10,7 @@ from site_contract import (
     APP_VERSION,
     EXPECTED_CATALOG_DESIGNS,
     LEGACY_PATHS,
+    LEGACY_REDIRECTS,
     MENU_VERSION,
     SITE_URL,
     STYLE_VERSION,
@@ -84,6 +85,18 @@ for name in ("index.html", "catalog.html", "organic-flare.html", "architectural-
     for legacy in sorted(LEGACY_PATHS):
         if f'/{legacy}' in raw:
             fail(f"{name}: primary page links to legacy URL /{legacy}")
+
+# Legacy URLs are compatibility redirects only, never duplicate PDP implementations.
+for legacy, spec in LEGACY_REDIRECTS.items():
+    raw = (ROOT / legacy).read_text(encoding="utf-8")
+    if "noindex" not in robots_of(raw):
+        fail(f"{legacy}: legacy page must be noindex")
+    refresh = re.search(r'<meta http-equiv="refresh" content="0;url=([^"]+)">', raw, re.I)
+    if not refresh or refresh.group(1) != spec["target"]:
+        fail(f"{legacy}: redirect target mismatch")
+    canonical, count = canonical_of(raw)
+    if count != 1 or canonical != spec["canonical"]:
+        fail(f"{legacy}: canonical mismatch {canonical!r}")
 
 # Generic dynamic product template must stay out of search.
 product = (ROOT / "product.html").read_text(encoding="utf-8")
