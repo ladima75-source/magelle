@@ -527,8 +527,8 @@
     if(gallery&&catalogModel?.enabled){
       const d=catalogModel.designs.find(d=>d.id===info.dataset.catalogDesignId);
       const staticVariantSrc=info.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
-      const apiPhotos=variant?.photo_urls?.length?variant.photo_urls:(d?.source_color===code?d.source_photo_urls:[]);
-      // Keep exact SKU/gallery identity; only substitute a cached exact source.
+      const sourcePhotos=(d?.source_color===code&&d?.source_photo_urls?.length)?d.source_photo_urls:[];
+      const apiPhotos=sourcePhotos.length?sourcePhotos:(variant?.photo_urls?.length?variant.photo_urls:[]);
       const rawPhotos=apiPhotos.length?[...apiPhotos]:staticVariantSrc?[staticVariantSrc]:[];
       const photos=[...new Set(rawPhotos.map(u=>optimizedImageSrc(u,1600)))];
       const main=document.getElementById('product-main-image'),ph=document.getElementById('design-photo-placeholder');
