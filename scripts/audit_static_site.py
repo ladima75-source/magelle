@@ -73,7 +73,7 @@ for page in pages:
         fail(f"{page}: duplicate merchant-static-schema id")
 
     if "drive.google.com" in raw:
-        warn(f"{page}: contains Google Drive fallback URL")
+        fail(f"{page}: Google Drive URL is forbidden in storefront HTML")
 
     for href in re.findall(r'href="/([^"#?]+\.html)(?:\?[^"]*)?"', raw):
         if not (ROOT / href).is_file():
