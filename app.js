@@ -55,6 +55,16 @@
   const designSku=(family,designCode,sizeCode,color)=>'MG-'+family+'-'+designCode+'-'+sizeCode+'-'+color;
 
   const menuButton=document.querySelector('.menu-button');
+  if(menuButton && !document.querySelector('.mobile-catalog-link')){
+    const headerInner=menuButton.closest('.header-inner');
+    const catalogLink=document.createElement('a');
+    catalogLink.className='mobile-catalog-link';
+    catalogLink.href='/catalog.html';
+    catalogLink.textContent='Каталог';
+    catalogLink.setAttribute('aria-label','Відкрити каталог');
+    if(location.pathname==='/catalog.html')catalogLink.setAttribute('aria-current','page');
+    headerInner?.insertBefore(catalogLink,menuButton);
+  }
   if(menuButton) menuButton.addEventListener('click',()=>{
     const open=body.classList.toggle('nav-open');
     menuButton.setAttribute('aria-expanded',String(open));
@@ -114,15 +124,67 @@
     apply();
   }
 
+  const allGalleryButtons=gallery=>[...gallery.querySelectorAll('[data-gallery-src],[data-catalog-photo]')];
+  const galleryButtons=gallery=>{
+    const thumbs=gallery.querySelector('.thumbs');
+    if(thumbs&&(thumbs.hidden||thumbs.style.display==='none'))return [];
+    return allGalleryButtons(gallery);
+  };
+  const galleryButtonSrc=btn=>btn?.dataset?.gallerySrc||btn?.dataset?.catalogPhoto||'';
+  const setGalleryButton=(gallery,btn)=>{
+    const main=gallery?.querySelector('#product-main-image')||document.getElementById('product-main-image');
+    const src=galleryButtonSrc(btn);
+    if(!gallery||!btn||!main||!src)return;
+    const buttons=allGalleryButtons(gallery);
+    buttons.forEach(x=>x.classList.toggle('active',x===btn));
+    main.src=src;
+    gallery.dataset.galleryIndex=String(Math.max(0,buttons.indexOf(btn)));
+  };
+  const moveGallery=(gallery,delta)=>{
+    const buttons=galleryButtons(gallery);
+    if(buttons.length<2)return;
+    let current=buttons.findIndex(x=>x.classList.contains('active'));
+    if(current<0)current=Number(gallery.dataset.galleryIndex)||0;
+    setGalleryButton(gallery,buttons[(current+delta+buttons.length)%buttons.length]);
+  };
+  const refreshGalleryNav=gallery=>{
+    const mainPhoto=gallery?.querySelector('.product-main-photo');
+    if(!mainPhoto)return;
+    let nav=mainPhoto.querySelector('.gallery-nav');
+    if(!nav){
+      nav=document.createElement('div');
+      nav.className='gallery-nav';
+      nav.innerHTML='<button type="button" class="gallery-arrow gallery-prev" aria-label="Попереднє фото">‹</button><button type="button" class="gallery-arrow gallery-next" aria-label="Наступне фото">›</button>';
+      mainPhoto.appendChild(nav);
+      nav.querySelector('.gallery-prev')?.addEventListener('click',event=>{event.stopPropagation();moveGallery(gallery,-1)});
+      nav.querySelector('.gallery-next')?.addEventListener('click',event=>{event.stopPropagation();moveGallery(gallery,1)});
+      let startX=null,startY=null;
+      mainPhoto.addEventListener('touchstart',event=>{
+        if(event.touches.length!==1)return;
+        startX=event.touches[0].clientX;
+        startY=event.touches[0].clientY;
+      },{passive:true});
+      mainPhoto.addEventListener('touchend',event=>{
+        if(startX===null||startY===null||event.changedTouches.length!==1)return;
+        const dx=event.changedTouches[0].clientX-startX;
+        const dy=event.changedTouches[0].clientY-startY;
+        startX=null;startY=null;
+        if(Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)*1.25)moveGallery(gallery,dx<0?1:-1);
+      },{passive:true});
+    }
+    const multi=galleryButtons(gallery).length>1;
+    nav.hidden=!multi;
+    gallery.classList.toggle('has-multiple-photos',multi);
+  };
+
   document.querySelectorAll('[data-gallery]').forEach(gallery=>{
-    const main=gallery.querySelector('#product-main-image')||document.getElementById('product-main-image');
-    gallery.querySelectorAll('[data-gallery-src]').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        gallery.querySelectorAll('[data-gallery-src]').forEach(x=>x.classList.remove('active'));
-        btn.classList.add('active');
-        if(main) main.src=btn.dataset.gallerySrc;
-      });
+    gallery.addEventListener('click',event=>{
+      const target=event.target instanceof Element?event.target.closest('[data-gallery-src],[data-catalog-photo]'):null;
+      if(target&&gallery.contains(target))setGalleryButton(gallery,target);
     });
+    const first=allGalleryButtons(gallery).find(x=>x.classList.contains('active'))||allGalleryButtons(gallery)[0];
+    if(first)setGalleryButton(gallery,first);
+    refreshGalleryNav(gallery);
   });
 
   const getCart=()=>{
@@ -474,7 +536,14 @@
       if(ph){ph.hidden=!!photos.length;const label=ph.querySelector('strong');if(label)label.textContent=color.label;}
       const thumbs=gallery.querySelector('.thumbs');
       gallery.classList.toggle('single-photo',photos.length<=1);
-      if(thumbs){thumbs.hidden=false;thumbs.innerHTML=photos.map((src,i)=>`<button type="button" class="photo-thumb ${i===0?'active':''}" data-catalog-photo="${escapeHtml(src)}"><img src="${escapeHtml(galleryThumbSrc(src))}" loading="lazy" decoding="async" alt="${escapeHtml(color.label)} · фото ${i+1}"></button>`).join('');thumbs.style.display=photos.length>1?'':'none';thumbs.querySelectorAll('[data-catalog-photo]').forEach(b=>b.onclick=()=>{if(main)main.src=b.dataset.catalogPhoto;});}
+      if(thumbs){
+        thumbs.hidden=false;
+        thumbs.innerHTML=photos.map((src,i)=>`<button type="button" class="photo-thumb ${i===0?'active':''}" data-catalog-photo="${escapeHtml(src)}"><img src="${escapeHtml(galleryThumbSrc(src))}" loading="lazy" decoding="async" alt="${escapeHtml(color.label)} · фото ${i+1}"></button>`).join('');
+        thumbs.style.display=photos.length>1?'':'none';
+        const first=thumbs.querySelector('[data-catalog-photo]');
+        if(first)setGalleryButton(gallery,first);
+      }
+      refreshGalleryNav(gallery);
       const desc=info.querySelector('.product-description');if(desc)desc.textContent=variant?.description_ua||d?.description_ua||'';
       let specs=document.querySelector('.catalog2-specs');if(!specs){specs=document.createElement('div');specs.className='catalog2-specs';info.append(specs);}
       const values=[['Габарити',variant?.dimensions||d?.dimensions],['Склад',variant?.composition||d?.composition]];
@@ -524,7 +593,7 @@
         btn.addEventListener('click',()=>original.click());
         panel.appendChild(btn);
       });
-      gallery.appendChild(panel);
+      mainPhoto.appendChild(panel);
     }
     info.querySelectorAll('.design-pdp-color').forEach(btn=>btn.addEventListener('click',()=>{
       info.dataset.sourcePreview='0';
