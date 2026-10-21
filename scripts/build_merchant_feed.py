@@ -36,7 +36,7 @@ SELLABLE_DESIGNS = {
     "design-OF-MED-VYR", "design-OF-PER-VYR", "design-OF-KAR-VYR", "design-OF-GNT-VYR", "design-OF-DIM-VYR",
     "design-OF-BOR-DEL", "design-OF-TER-DEL", "design-OF-LON-DEL", "design-OF-PUD-DEL", "design-OF-OLI-DEL",
     "design-AS-VRT-VYR", "design-AS-MON-VYR", "design-AS-CNT-DEL", "design-AS-RIT-DEL",
-    "design-SF-KOR-VYR",
+    "design-SF-KOR-VYR", "design-SF-BUR-VYR",
 }
 EXACT_IMAGE_OVERRIDES = {
     "MG-OF-PER-VYR-GRA": SITE + "/media/exact/MG-OF-PER-VYR-GRA.webp",
@@ -47,6 +47,7 @@ EXACT_IMAGE_OVERRIDES = {
     "MG-OF-GNT-VYR-WHT": SITE + "/media/exact/MG-OF-GNT-VYR-WHT.webp",
     "MG-OF-GNT-VYR-SND": SITE + "/media/exact/MG-OF-GNT-VYR-SND.webp",
     "MG-OF-GNT-VYR-CHO": SITE + "/media/exact/MG-OF-GNT-VYR-CHO.webp",
+    "MG-SF-BUR-VYR-CHO": SITE + "/media/burshtyn-cho/MG-SF-BUR-VYR-CHO_01_MAIN-w1600.webp",
 }
 
 COLOR_LABELS = {

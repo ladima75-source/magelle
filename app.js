@@ -524,11 +524,15 @@
     });
 
     const gallery=document.querySelector('[data-design-gallery]');
+    if(gallery&&!gallery._staticSourcePhotos){
+      gallery._staticSourcePhotos=[...gallery.querySelectorAll('[data-gallery-src]')].map(n=>n.dataset.gallerySrc).filter(Boolean);
+    }
     const modelDesign=gallery&&catalogModel?.enabled?catalogModel.designs.find(d=>d.id===info.dataset.catalogDesignId):null;
     if(gallery&&catalogModel?.enabled&&modelDesign){
       const d=modelDesign;
       const staticVariantSrc=info.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
-      const sourcePhotos=(d?.source_color===code&&d?.source_photo_urls?.length)?d.source_photo_urls:[];
+      const staticSourcePhotos=(code===gallery.dataset.photoColor)?(gallery._staticSourcePhotos||[]):[];
+      const sourcePhotos=(d?.source_color===code&&d?.source_photo_urls?.length)?d.source_photo_urls:staticSourcePhotos;
       const apiPhotos=sourcePhotos.length?sourcePhotos:(variant?.photo_urls?.length?variant.photo_urls:[]);
       const rawPhotos=apiPhotos.length?[...apiPhotos]:staticVariantSrc?[staticVariantSrc]:[];
       const photos=[...new Set(rawPhotos.map(u=>optimizedImageSrc(u,1600)))];

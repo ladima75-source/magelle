@@ -802,5 +802,19 @@
       <g:color>Пісочний</g:color>
       <g:item_group_id>design-SF-KOR-VYR</g:item_group_id>
     </item>
+    <item>
+      <g:id>MG-SF-BUR-VYR-CHO</g:id>
+      <title>MaGelle Sculptural Fold «Бурштин» — Виразний, Шоколад</title>
+      <description>Sculptural Fold «Бурштин» — другий авторський дизайн сімейства з тією самою низькою скульптурною вазою та новим букетом. Виразний формат розрахований на помітний інтер'єрний акцент, а колір вази можна обрати під простір: графіт, шоколад або пісочний. Композиція створюється вручну з природних сухоцвітів і стабілізованих рослин та не потребує поливу.</description>
+      <link>https://magelle.com.ua/sculptural-fold-burshtyn-vyraznyi.html</link>
+      <g:image_link>https://magelle.com.ua/media/burshtyn-cho/MG-SF-BUR-VYR-CHO_01_MAIN-w1600.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>2700.00 UAH</g:price>
+      <g:condition>new</g:condition>
+      <g:brand>MaGelle</g:brand>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:color>Шоколад</g:color>
+      <g:item_group_id>design-SF-BUR-VYR</g:item_group_id>
+    </item>
   </channel>
 </rss>
