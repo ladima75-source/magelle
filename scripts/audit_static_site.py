@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 
 from site_contract import (
     APP_VERSION,
+    CANONICAL_DESIGNS,
     EXPECTED_CATALOG_DESIGNS,
     LEGACY_PATHS,
     LEGACY_REDIRECTS,
@@ -116,12 +117,62 @@ if len(cards) != EXPECTED_CATALOG_DESIGNS:
 if len(set(codes)) != EXPECTED_CATALOG_DESIGNS:
     fail(f"catalog.html: design codes are not {EXPECTED_CATALOG_DESIGNS} unique values: {codes!r}")
 
+# Every public design has exactly one base-color canonical PDP.
+catalog_design_ids = set()
+for card in cards:
+    def attr(name):
+        m = re.search(r'data-' + re.escape(name) + r'="([^"]*)"', card)
+        return m.group(1) if m else ""
+    family_code = attr("family-code") or ("AS" if attr("family") == "Architectural Step" else "SF" if attr("family") == "Sculptural Fold" else "OF")
+    design_id = "design-" + family_code + "-" + attr("design-code") + "-" + attr("size-code")
+    catalog_design_ids.add(design_id)
+    spec = CANONICAL_DESIGNS.get(design_id)
+    if not spec:
+        fail(f"catalog.html: missing canonical contract for {design_id}")
+        continue
+    if attr("pdp-url") != spec["path"]:
+        fail(f"catalog.html: {design_id} pdp {attr('pdp-url')!r}, expected {spec['path']!r}")
+    if attr("default-color") != spec["base_color"]:
+        fail(f"catalog.html: {design_id} default {attr('default-color')!r}, expected {spec['base_color']!r}")
+
+if catalog_design_ids != set(CANONICAL_DESIGNS):
+    fail("catalog.html: canonical design set differs from public catalog")
+
+for design_id, spec in CANONICAL_DESIGNS.items():
+    page = ROOT / spec["path"].lstrip("/")
+    if not page.is_file():
+        fail(f"{design_id}: canonical PDP file missing {spec['path']}")
+        continue
+    raw = page.read_text(encoding="utf-8")
+    if "noindex" in robots_of(raw):
+        fail(f"{design_id}: canonical PDP must be indexable")
+    canonical, count = canonical_of(raw)
+    expected = SITE_URL + spec["path"]
+    if count != 1 or canonical != expected:
+        fail(f"{design_id}: canonical {canonical!r}, expected {expected!r}")
+    info = re.search(r'<div class="product-info[^>]*design-variant-pdp[^>]*>', raw)
+    if not info:
+        fail(f"{design_id}: missing design-variant-pdp")
+    else:
+        tag = info.group(0)
+        if f'data-default-color="{spec["base_color"]}"' not in tag:
+            fail(f"{design_id}: base/default color mismatch on canonical PDP")
+
 # Sitemap may contain only canonical, indexable, non-legacy HTML.
 tree = ET.parse(ROOT / "sitemap.xml")
 ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 locs = [n.text.strip() for n in tree.findall(".//s:loc", ns) if n.text]
 if len(locs) != len(set(locs)):
     fail("sitemap.xml: duplicate URLs")
+
+sitemap_product_paths = {
+    urlsplit(loc).path
+    for loc in locs
+    if urlsplit(loc).path in {spec["path"] for spec in CANONICAL_DESIGNS.values()}
+}
+expected_product_paths = {spec["path"] for spec in CANONICAL_DESIGNS.values()}
+if sitemap_product_paths != expected_product_paths:
+    fail(f"sitemap.xml: canonical product set mismatch expected={sorted(expected_product_paths)!r} actual={sorted(sitemap_product_paths)!r}")
 
 for loc in locs:
     parsed = urlsplit(loc)
