@@ -449,9 +449,12 @@
       if(n.id==='magelle-product-schema')return;
       try{if(JSON.parse(n.textContent)['@type']==='Product')n.remove()}catch(_){}
     });
-    const images=(p?.photo_urls||[]).filter(u=>/^https:\/\/(?:api\.)?magelle\.com\.ua\/(?:media|uploads)\//.test(u));
+    const apiImages=(p?.photo_urls||[]).filter(u=>/^https:\/\/(?:api\.)?magelle\.com\.ua\/(?:media|uploads)\//.test(u));
     const staticExact=info?.dataset?.['variant'+code[0]+code.slice(1).toLowerCase()]||'';
-    if(!images.length&&/^https:\/\/(?:api\.)?magelle\.com\.ua\/(?:media|uploads)\//.test(staticExact))images.push(staticExact);
+    const validStaticExact=/^https:\/\/(?:api\.)?magelle\.com\.ua\/(?:media|uploads)\//.test(staticExact);
+    // The exact first-party image wired into the storefront is authoritative for the selected variant.
+    // This prevents stale Admin media from reappearing only in structured data after hydration.
+    const images=validStaticExact?[staticExact]:apiImages;
     if(!p||!images.length||!(Number(p.price_uah)>0)){existing?.remove();return;}
     const url=new URL(location.pathname,location.origin);
     const requestedColor=new URL(location.href).searchParams.get('color');
