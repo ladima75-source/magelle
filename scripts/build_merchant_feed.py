@@ -409,12 +409,17 @@ def sync_canonical_pdp_schema(products, catalog):
         if count != 1:
             raise RuntimeError(sku + ": hero image missing")
 
-        og_image = '<meta property="og:image" content="' + html.escape(pic, quote=True) + '">'
-        body = re.sub(r'<meta property="og:image" content="[^"]+">', '', body)
-        body = body.replace("</head>", og_image + "</head>", 1)
-        og_url = '<meta property="og:url" content="' + url + '">'
-        body = re.sub(r'<meta property="og:url" content="[^"]+">', '', body)
-        body = body.replace("</head>", og_url + "</head>", 1)
+        def set_og(prop, value):
+            nonlocal body
+            pattern = r'<meta property="' + re.escape(prop) + r'" content="[^"]+">'
+            tag = '<meta property="' + prop + '" content="' + html.escape(value, quote=True) + '">'
+            if re.search(pattern, body):
+                body = re.sub(pattern, lambda _: tag, body, count=1)
+            else:
+                body = body.replace("</head>", tag + "</head>", 1)
+
+        set_og("og:image", pic)
+        set_og("og:url", url)
 
         body = re.sub(
             r'(<span id="design-pdp-color-label">)[^<]*(</span>)',
