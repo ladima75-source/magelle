@@ -524,8 +524,9 @@
     });
 
     const gallery=document.querySelector('[data-design-gallery]');
-    if(gallery&&catalogModel?.enabled){
-      const d=catalogModel.designs.find(d=>d.id===info.dataset.catalogDesignId);
+    const modelDesign=gallery&&catalogModel?.enabled?catalogModel.designs.find(d=>d.id===info.dataset.catalogDesignId):null;
+    if(gallery&&catalogModel?.enabled&&modelDesign){
+      const d=modelDesign;
       const staticVariantSrc=info.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
       const sourcePhotos=(d?.source_color===code&&d?.source_photo_urls?.length)?d.source_photo_urls:[];
       const apiPhotos=sourcePhotos.length?sourcePhotos:(variant?.photo_urls?.length?variant.photo_urls:[]);
