@@ -7,10 +7,8 @@ Admission is catalog-driven and fail-closed:
 - exact first-party image served by api.magelle.com.ua;
 - valid design PDP route from /api/catalog.
 
-The existing 12 published Merchant items keep their established landing URLs.
-The original three approved pilot items therefore remain identity/link stable
-at the identity/link level while newly eligible variants use ?color=CODE deep
-links on the design PDP.
+Every design lands on its single base-color canonical PDP. Non-base variants use
+?color=CODE deep links on that PDP. Merchant generation never rewrites storefront HTML.
 """
 import html
 import json
@@ -436,7 +434,8 @@ if __name__ == "__main__":
     source = get_products()
     catalog = get_catalog()
     xml, selected, excluded, _ = build(source, catalog)
-    sync_canonical_pdp_schema(source, catalog)
+    # Merchant sync is read-only with respect to storefront HTML.
+    # Canonical PDP identity is owned by site_contract + static CI.
     OUTPUT.write_text(xml + "\n", encoding="utf-8")
     reasons = {}
     for reason in excluded.values():
