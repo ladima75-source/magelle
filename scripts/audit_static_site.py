@@ -43,6 +43,7 @@ def robots_of(raw):
 
 
 pages = [p for p in ROOT.glob("*.html") if not p.name.startswith("google")]
+responsive_refs = set()
 for page in pages:
     raw = page.read_text(encoding="utf-8")
 
@@ -76,9 +77,26 @@ for page in pages:
     if "drive.google.com" in raw:
         fail(f"{page}: Google Drive URL is forbidden in storefront HTML")
 
+    responsive_refs.update(re.findall(
+        r'(?:https://magelle\.com\.ua)?/(media/[A-Za-z0-9_./-]+-w(?:360|900|1600)\.webp)',
+        raw,
+    ))
+
     for href in re.findall(r'href="/([^"#?]+\.html)(?:\?[^"]*)?"', raw):
         if not (ROOT / href).is_file():
             fail(f"{page}: broken local HTML link -> /{href}")
+
+# Every referenced first-party responsive WebP must have the complete 360/900/1600 family.
+responsive_families = set()
+for rel in responsive_refs:
+    match = re.match(r'^(.*-w)(360|900|1600)(\.webp)$', rel)
+    if match:
+        responsive_families.add((match.group(1), match.group(3)))
+for prefix, suffix in sorted(responsive_families):
+    for width in (360, 900, 1600):
+        sibling = ROOT / f"{prefix}{width}{suffix}"
+        if not sibling.is_file():
+            fail(f"responsive media family incomplete: missing {sibling.as_posix()}")
 
 # Primary navigation/content must never point buyers back to legacy PDPs.
 for name in ("index.html", "catalog.html", "organic-flare.html", "architectural-step.html", "sculptural-fold.html"):

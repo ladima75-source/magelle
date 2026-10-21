@@ -137,7 +137,7 @@
     if(!gallery||!btn||!main||!src)return;
     const buttons=allGalleryButtons(gallery);
     buttons.forEach(x=>x.classList.toggle('active',x===btn));
-    main.src=src;
+    applyResponsiveImage(main,src,pdpImageSizes());
     gallery.dataset.galleryIndex=String(Math.max(0,buttons.indexOf(btn)));
   };
   const moveGallery=(gallery,delta)=>{
@@ -327,7 +327,7 @@
     const applyVisual=()=>{
       if(img){
         const targetSrc=variantSrc || (showPhoto ? photoSrc : '');
-        if(targetSrc && img.getAttribute('src')!==targetSrc)img.src=targetSrc;
+        if(targetSrc)applyResponsiveImage(img,targetSrc,cardImageSizes());
         img.hidden=!showPhoto;
       }
       if(backLabel)backLabel.textContent=color.label;
@@ -472,7 +472,34 @@
     if(canonical)canonical.href=url.href;
   }
 
-  // Keep the full-resolution main image, but request only 360 px for Drive thumbnails.
+  function pdpImageSizes(){return '(max-width: 980px) calc(100vw - 28px), 58vw'}
+  function cardImageSizes(){return '(max-width: 640px) calc(100vw - 28px), (max-width: 980px) calc(50vw - 24px), 30vw'}
+
+  // Use one first-party WebP family for desktop/mobile instead of downloading w1600 everywhere.
+  function localResponsiveSources(src){
+    if(!src)return null;
+    const local=src.match(/^(.*-w)(1600|900|360)(\.webp)$/);
+    if(!local)return null;
+    return {
+      w360:local[1]+'360'+local[3],
+      w900:local[1]+'900'+local[3],
+      w1600:local[1]+'1600'+local[3]
+    };
+  }
+  function applyResponsiveImage(img,src,sizes=pdpImageSizes()){
+    if(!img||!src)return;
+    const local=localResponsiveSources(src);
+    if(local){
+      img.srcset=local.w360+' 360w, '+local.w900+' 900w, '+local.w1600+' 1600w';
+      img.sizes=sizes;
+    }else{
+      img.removeAttribute('srcset');
+      img.removeAttribute('sizes');
+    }
+    if(img.getAttribute('src')!==src)img.src=src;
+  }
+
+  // Keep the full-resolution identity, but request only the rendition the browser actually needs.
   function optimizedImageSrc(src,width=1600){
     if(!src)return src;
     try{
@@ -486,9 +513,8 @@
   }
   function galleryThumbSrc(src){
     if(!src)return src;
-    // Full and preview WebP versions share exact Drive photo identity.
-    const local=src.match(/^(.*-w)(1600|900|360)(\.webp)$/);
-    if(local)return local[1]+'360'+local[3];
+    const local=localResponsiveSources(src);
+    if(local)return local.w360;
     const cached=optimizedImageSrc(src,360);
     if(cached!==src)return cached;
     try{
@@ -539,7 +565,7 @@
       const rawPhotos=apiPhotos.length?[...apiPhotos]:staticVariantSrc?[staticVariantSrc]:[];
       const photos=[...new Set(rawPhotos.map(u=>optimizedImageSrc(u,1600)))];
       const main=document.getElementById('product-main-image'),ph=document.getElementById('design-photo-placeholder');
-      if(main){main.hidden=!photos.length;if(photos.length)main.src=photos[0];}
+      if(main){main.hidden=!photos.length;if(photos.length)applyResponsiveImage(main,photos[0],pdpImageSizes());}
       if(ph){ph.hidden=!!photos.length;const label=ph.querySelector('strong');if(label)label.textContent=color.label;}
       const thumbs=gallery.querySelector('.thumbs');
       gallery.classList.toggle('single-photo',photos.length<=1);
@@ -564,7 +590,7 @@
       const thumbs=gallery.querySelector('.thumbs');
       const variantSrc=info.dataset['variant'+code[0]+code.slice(1).toLowerCase()]||'';
       const showPhoto=!!main && (!!variantSrc || (forceSource && code===photoColor) || code===photoColor);
-      if(main && variantSrc)main.src=variantSrc;
+      if(main && variantSrc)applyResponsiveImage(main,variantSrc,pdpImageSizes());
       if(main)main.hidden=!showPhoto;
       if(ph){ph.hidden=showPhoto;if(phLabel)phLabel.textContent=color.label}
       if(thumbs)thumbs.style.display=(showPhoto&&code===photoColor)?'':'none';
