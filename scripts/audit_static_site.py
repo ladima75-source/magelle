@@ -157,6 +157,17 @@ for design_id, spec in CANONICAL_DESIGNS.items():
         tag = info.group(0)
         if f'data-default-color="{spec["base_color"]}"' not in tag:
             fail(f"{design_id}: base/default color mismatch on canonical PDP")
+        def data_attr(name):
+            m = re.search(r'data-' + re.escape(name) + r'="([^"]*)"', tag)
+            return m.group(1) if m else ""
+        expected_title = f'{data_attr("family")} «{data_attr("design")}» — {data_attr("variant-size")} — MaGelle'
+        title_match = re.search(r'<title>([\s\S]*?)</title>', raw)
+        title = title_match.group(1) if title_match else ""
+        if title != expected_title:
+            fail(f"{design_id}: SEO title {title!r}, expected {expected_title!r}")
+        og_title = re.search(r'<meta property="og:title" content="([^"]*)">', raw)
+        if not og_title or og_title.group(1) != expected_title:
+            fail(f"{design_id}: og:title does not match canonical design title")
 
 # Sitemap may contain only canonical, indexable, non-legacy HTML.
 tree = ET.parse(ROOT / "sitemap.xml")
