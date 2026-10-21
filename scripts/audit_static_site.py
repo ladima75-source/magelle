@@ -160,6 +160,16 @@ for design_id, spec in CANONICAL_DESIGNS.items():
         def data_attr(name):
             m = re.search(r'data-' + re.escape(name) + r'="([^"]*)"', tag)
             return m.group(1) if m else ""
+        selected_sku = data_attr("selected-sku")
+        selected_base_sku = data_attr("selected-base-sku")
+        selected_color = data_attr("selected-color")
+        if selected_sku and not selected_sku.endswith("-" + spec["base_color"]):
+            fail(f"{design_id}: selected SKU does not match base color")
+        if selected_base_sku and selected_sku and selected_base_sku != selected_sku:
+            fail(f"{design_id}: selected base SKU differs from canonical selected SKU")
+        spec_color = re.search(r'<dd id="design-spec-color">([^<]*)</dd>', raw)
+        if spec_color and selected_color and spec_color.group(1) != selected_color:
+            fail(f"{design_id}: static specs color {spec_color.group(1)!r} != selected color {selected_color!r}")
         expected_title = f'{data_attr("family")} «{data_attr("design")}» — {data_attr("variant-size")} — MaGelle'
         title_match = re.search(r'<title>([\s\S]*?)</title>', raw)
         title = title_match.group(1) if title_match else ""
