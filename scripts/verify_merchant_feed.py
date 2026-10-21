@@ -105,10 +105,15 @@ for item in rows:
         assert offer.get("availability") == "https://schema.org/InStock", sku + ": Offer stock mismatch"
         assert offer.get("itemCondition") == "https://schema.org/NewCondition", sku + ": Offer condition missing"
 
-        hero = re.search(r'<img id="product-main-image" src="([^"]+)" alt="([^"]*)"', doc)
+        hero = re.search(r'<img\b[^>]*\bid="product-main-image"[^>]*>', doc)
         assert hero, sku + ": canonical hero missing"
-        assert html.unescape(hero.group(1)) == image, sku + ": canonical hero != image_link"
-        assert product["color"] in html.unescape(hero.group(2)), sku + ": canonical hero alt color mismatch"
+        hero_tag = hero.group(0)
+        hero_src = re.search(r'\bsrc="([^"]+)"', hero_tag)
+        hero_alt = re.search(r'\balt="([^"]*)"', hero_tag)
+        assert hero_src, sku + ": canonical hero src missing"
+        assert hero_alt, sku + ": canonical hero alt missing"
+        assert html.unescape(hero_src.group(1)) == image, sku + ": canonical hero != image_link"
+        assert product["color"] in html.unescape(hero_alt.group(1)), sku + ": canonical hero alt color mismatch"
 
         og = re.search(r'<meta property="og:image" content="([^"]+)">', doc)
         assert og and html.unescape(og.group(1)) == image, sku + ": canonical OG image mismatch"
