@@ -47,6 +47,11 @@ EXACT_IMAGE_OVERRIDES = {
     "MG-OF-GNT-VYR-WHT": SITE + "/media/exact/MG-OF-GNT-VYR-WHT.webp",
     "MG-OF-GNT-VYR-SND": SITE + "/media/exact/MG-OF-GNT-VYR-SND.webp",
     "MG-OF-GNT-VYR-CHO": SITE + "/media/exact/MG-OF-GNT-VYR-CHO.webp",
+    "MG-OF-KAR-VYR-GRA": SITE + "/media/karamel/MG-OF-KAR-VYR-GRA_01_MAIN-w1600.webp",
+    "MG-OF-KAR-VYR-MLK": SITE + "/media/karamel/MG-OF-KAR-VYR-MLK_01_MAIN-w1600.webp",
+    "MG-OF-KAR-VYR-WHT": SITE + "/media/karamel/MG-OF-KAR-VYR-WHT_01_MAIN-w1600.webp",
+    "MG-OF-KAR-VYR-SND": SITE + "/media/karamel/MG-OF-KAR-VYR-SND_01_MAIN-w1600.webp",
+    "MG-OF-KAR-VYR-CHO": SITE + "/media/karamel/MG-OF-KAR-VYR-CHO_01_MAIN-w1600.webp",
     "MG-SF-BUR-VYR-CHO": SITE + "/media/burshtyn-cho/MG-SF-BUR-VYR-CHO_01_MAIN-w1600.webp",
 }
 
