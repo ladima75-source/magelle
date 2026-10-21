@@ -57,10 +57,10 @@ class CatalogTests(unittest.TestCase):
             self.assertEqual(before,import_catalog.legacy_fingerprint(con))
     def test_import_preserves_orders_and_old_products(self):
         with self.db() as con: before=import_catalog.legacy_fingerprint(con)
-        self.assertEqual(self.import_data()['variants_added'],61)
+        self.assertEqual(self.import_data()['variants_added'],64)
         self.assertEqual(self.import_data()['variants_added'],0)
         with self.db() as con:
-            self.assertEqual(before,import_catalog.legacy_fingerprint(con));self.assertEqual(con.execute('SELECT count(*) FROM products').fetchone()[0],77)
+            self.assertEqual(before,import_catalog.legacy_fingerprint(con));self.assertEqual(con.execute('SELECT count(*) FROM products').fetchone()[0],80)
     def test_source_gallery_not_mapped_to_other_color(self):
         self.import_data()
         with self.db() as con:

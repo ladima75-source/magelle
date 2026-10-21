@@ -19,6 +19,7 @@ CANONICAL_DESIGNS = {
     "design-AS-CNT-DEL": {"path": "/architectural-step-kontur-delikatnyi-hrafit.html", "base_color": "GRA"},
     "design-AS-RIT-DEL": {"path": "/architectural-step-ritm-delikatnyi-shokolad.html", "base_color": "CHO"},
     "design-SF-KOR-VYR": {"path": "/sculptural-fold-koral-vyraznyi.html", "base_color": "SND"},
+    "design-SF-BUR-VYR": {"path": "/sculptural-fold-burshtyn-vyraznyi.html", "base_color": "CHO"},
 }
 
 # Historical URLs kept only so old external links do not hard-404.
@@ -45,4 +46,4 @@ LEGACY_REDIRECTS = {
 }
 LEGACY_PATHS = set(LEGACY_REDIRECTS)
 
-EXPECTED_CATALOG_DESIGNS = 15
+EXPECTED_CATALOG_DESIGNS = 16
