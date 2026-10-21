@@ -11,7 +11,6 @@ from xml.etree import ElementTree as ET
 from build_merchant_feed import (
     COLOR_LABELS,
     ORIGINAL_PILOT,
-    PINNED,
     SITE,
     acceptable_photo,
     admitted_products,
@@ -75,18 +74,19 @@ for item in rows:
     assert not re.search(r'<meta name="robots" content="noindex', doc), sku + ": PDP noindex"
 
     if not landing["dynamic"]:
-        spec = PINNED[sku]
         canonical = landing["url"]
-        assert f'<link rel="canonical" href="{canonical}">' in doc, sku + ": pinned canonical wrong"
-        assert f'data-selected-sku="{sku}"' in doc, sku + ": pinned initial SKU mismatch"
-        assert f'data-default-color="{spec["color_code"]}"' in doc, sku + ": pinned default color mismatch"
-        assert f'data-selected-color="{spec["color"]}"' in doc, sku + ": pinned selected color mismatch"
+        base_color = landing["design"]["base_color"]
+        assert product["color_code"] == base_color, sku + ": clean landing must be the base color"
+        assert f'<link rel="canonical" href="{canonical}">' in doc, sku + ": canonical wrong"
+        assert f'data-selected-sku="{sku}"' in doc, sku + ": canonical initial SKU mismatch"
+        assert f'data-default-color="{base_color}"' in doc, sku + ": canonical default color mismatch"
+        assert f'data-selected-color="{product["color"]}"' in doc, sku + ": canonical selected color mismatch"
 
         marker = re.search(
             r'<script id="merchant-static-schema" type="application/ld\+json">([\s\S]*?)</script>',
             doc,
         )
-        assert marker, sku + ": pinned Product schema missing"
+        assert marker, sku + ": canonical Product schema missing"
         schema = json.loads(marker.group(1))
         assert schema.get("@context") == "https://schema.org", sku + ": bad schema context"
         assert schema.get("@type") == "Product", sku + ": not Product schema"
@@ -106,18 +106,18 @@ for item in rows:
         assert offer.get("itemCondition") == "https://schema.org/NewCondition", sku + ": Offer condition missing"
 
         hero = re.search(r'<img id="product-main-image" src="([^"]+)" alt="([^"]*)"', doc)
-        assert hero, sku + ": pinned hero missing"
-        assert html.unescape(hero.group(1)) == image, sku + ": pinned hero != image_link"
-        assert product["color"] in html.unescape(hero.group(2)), sku + ": pinned hero alt color mismatch"
+        assert hero, sku + ": canonical hero missing"
+        assert html.unescape(hero.group(1)) == image, sku + ": canonical hero != image_link"
+        assert product["color"] in html.unescape(hero.group(2)), sku + ": canonical hero alt color mismatch"
 
         og = re.search(r'<meta property="og:image" content="([^"]+)">', doc)
-        assert og and html.unescape(og.group(1)) == image, sku + ": pinned OG image mismatch"
+        assert og and html.unescape(og.group(1)) == image, sku + ": canonical OG image mismatch"
 
         src = re.search(
             r'data-variant-' + product["color_code"].lower() + r'="([^"]+)"',
             doc,
         )
-        assert src and html.unescape(src.group(1)) == image, sku + ": pinned picker image mismatch"
+        assert src and html.unescape(src.group(1)) == image, sku + ": canonical picker image mismatch"
 
         spec_color = re.search(r'<dd id="design-spec-color">([^<]*)</dd>', doc)
         if spec_color:
@@ -173,7 +173,7 @@ for item in rows:
         "UAH |",
         landing["url"],
         "|",
-        "dynamic" if landing["dynamic"] else "pinned",
+        "dynamic" if landing["dynamic"] else "canonical",
     )
 
 reason_counts = {}
