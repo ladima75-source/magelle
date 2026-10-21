@@ -21,6 +21,8 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree as ET
 
+from site_contract import CANONICAL_DESIGNS
+
 PRODUCTS_SOURCE = os.environ.get(
     "MAGELLE_PRODUCTS_API", "https://api.magelle.com.ua/api/products"
 )
@@ -57,8 +59,9 @@ COLOR_LABELS = {
     "CHO": "Шоколад",
 }
 
-# Stable landing contracts already published in Merchant Center.
-# Keep order so the existing 12 remain first and unchanged in the feed.
+# Historical pilot SKU order is kept stable in the feed.
+# URL routing no longer comes from these historical pins: every design uses
+# its single canonical base-color PDP from site_contract.CANONICAL_DESIGNS.
 PINNED = {
     "MG-OF-MED-VYR-GRA": {"path": "/organic-flare-med-vyraznyi-hrafit.html", "title_ua": "Organic Flare «Мед» — Виразний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-OF-MED-VYR"},
     "MG-OF-PER-VYR-MLK": {"path": "/organic-flare-vyraznyi-molochnyi.html", "title_ua": "Organic Flare «Перлина» — Виразний, Молочний", "color": "Молочний", "color_code": "MLK", "design_id": "design-OF-PER-VYR"},
@@ -74,7 +77,6 @@ PINNED = {
     "MG-AS-RIT-DEL-GRA": {"path": "/architectural-step-ritm-delikatnyi-hrafit.html", "title_ua": "Architectural Step «Ритм» — Делікатний, Графіт", "color": "Графіт", "color_code": "GRA", "design_id": "design-AS-RIT-DEL"},
 }
 ORIGINAL_PILOT = ("MG-OF-MED-VYR-GRA", "MG-OF-PER-VYR-MLK", "MG-OF-OLI-DEL-CHO")
-PINNED_DESIGN_PATH = {spec["design_id"]: spec["path"] for spec in PINNED.values()}
 
 
 def get_json(url, agent):
@@ -152,10 +154,17 @@ def design_routes(catalog):
     for design in catalog["designs"]:
         if not isinstance(design, dict) or not design.get("id"):
             continue
-        path = safe_pdp_path(design.get("pdp_url"))
+        contract = CANONICAL_DESIGNS.get(design["id"])
+        if not contract:
+            continue
+        path = safe_pdp_path(contract.get("path"))
         if not path:
             continue
-        routes[design["id"]] = {**design, "pdp_path": path}
+        routes[design["id"]] = {
+            **design,
+            "pdp_path": path,
+            "base_color": contract["base_color"],
+        }
     return routes
 
 
@@ -229,21 +238,14 @@ def admitted_products(products, catalog):
 
 
 def landing_spec(sku, product, routes):
-    if sku in PINNED:
-        spec = PINNED[sku]
-        return {
-            "path": spec["path"],
-            "url": SITE + spec["path"],
-            "dynamic": False,
-            "design": routes[product["design_id"]],
-        }
     route = routes[product["design_id"]]
-    path = PINNED_DESIGN_PATH.get(product["design_id"], route["pdp_path"])
+    path = route["pdp_path"]
     code = product["color_code"]
+    dynamic = code != route["base_color"]
     return {
         "path": path,
-        "url": SITE + path + "?color=" + code,
-        "dynamic": True,
+        "url": SITE + path + (("?color=" + code) if dynamic else ""),
+        "dynamic": dynamic,
         "design": route,
     }
 
@@ -308,35 +310,66 @@ def build(products, catalog):
     )
 
 
-def sync_pinned_pdp_schema(products, catalog):
+def sync_canonical_pdp_schema(products, catalog):
     selected, _, routes = admitted_products(products, catalog)
-    for sku, spec in PINNED.items():
-        p = selected[sku]
-        path = Path(spec["path"].lstrip("/"))
+    for design_id, route in routes.items():
+        base_color = route["base_color"]
+        candidates = [
+            p for p in selected.values()
+            if p.get("design_id") == design_id and p.get("color_code") == base_color
+        ]
+        if not candidates:
+            # Media-gap designs (currently Karamel) intentionally have no Product schema.
+            continue
+        if len(candidates) != 1:
+            raise RuntimeError(design_id + ": expected one canonical base variant")
+        p = candidates[0]
+        sku = p["sku"]
+        path = Path(route["pdp_path"].lstrip("/"))
         if not path.is_file():
-            raise RuntimeError("Pinned landing page missing: " + spec["path"])
+            raise RuntimeError("Canonical landing page missing: " + route["pdp_path"])
         original = path.read_text(encoding="utf-8")
         body = original
-        url = SITE + spec["path"]
-        schema_pattern = r'<script id="merchant-static-schema" type="application/ld\+json">[\s\S]*?</script>'
-        matches = re.findall(schema_pattern, body)
-        if len(matches) > 1:
-            raise RuntimeError(sku + ": duplicate static Product JSON-LD")
-        if not matches:
-            body = body.replace(
-                "</head>",
-                '<script id="merchant-static-schema" type="application/ld+json">{}</script></head>',
-                1,
-            )
+        url = SITE + route["pdp_path"]
+        color = p["color"]
 
-        for pattern, reason in [
-            (r'<link rel="canonical" href="' + re.escape(url) + r'">', "canonical"),
-            (r'data-selected-sku="' + re.escape(sku) + r'"', "selected SKU"),
-            (r'data-default-color="' + spec["color_code"] + r'"', "default vase color"),
-            (r'data-design-gallery', "gallery"),
-        ]:
-            if not re.search(pattern, body):
-                raise RuntimeError(sku + ": landing page has wrong/missing " + reason)
+        if re.search(r'<meta name="robots" content="noindex', body):
+            raise RuntimeError(sku + ": canonical PDP is noindex")
+        body, count = re.subn(
+            r'<link rel="canonical" href="[^"]+">',
+            '<link rel="canonical" href="' + url + '">',
+            body,
+            count=1,
+        )
+        if count != 1:
+            raise RuntimeError(sku + ": canonical tag missing")
+        if 'data-design-gallery' not in body:
+            raise RuntimeError(sku + ": gallery missing")
+
+        def set_data(name, value):
+            nonlocal body
+            pattern = r'data-' + re.escape(name) + r'="[^"]*"'
+            repl = 'data-' + name + '="' + html.escape(str(value), quote=True) + '"'
+            if re.search(pattern, body):
+                body = re.sub(pattern, lambda _: repl, body, count=1)
+            else:
+                marker = '<div class="product-info sku-pdp design-variant-pdp"'
+                if marker not in body:
+                    raise RuntimeError(sku + ": PDP info block missing")
+                body = body.replace(marker, marker + ' ' + repl, 1)
+
+        set_data("default-color", base_color)
+        set_data("selected-sku", sku)
+        set_data("selected-base-sku", sku)
+        set_data("selected-color", color)
+        set_data("catalog-design-id", design_id)
+        set_data("variant-" + base_color.lower(), p["_merchant_image"])
+        body = re.sub(
+            r'(data-design-gallery[^>]*data-photo-color=")[^"]*(")',
+            lambda m: m.group(1) + base_color + m.group(2),
+            body,
+            count=1,
+        )
 
         pic = p["_merchant_image"]
         data = {
@@ -347,7 +380,7 @@ def sync_pinned_pdp_schema(products, catalog):
             "description": p.get("description_ua")
             or "Інтер’єрна композиція MaGelle із сухоцвітів та стабілізованих рослин.",
             "brand": {"@type": "Brand", "name": "MaGelle"},
-            "color": p["color"],
+            "color": color,
             "image": [pic],
             "url": url,
             "offers": {
@@ -360,64 +393,40 @@ def sync_pinned_pdp_schema(products, catalog):
             },
         }
         encoded = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
-        schema = (
-            '<script id="merchant-static-schema" type="application/ld+json">'
-            + encoded
-            + "</script>"
-        )
-        body = re.sub(schema_pattern, lambda _: schema, body, count=1)
+        schema = '<script id="merchant-static-schema" type="application/ld+json">' + encoded + "</script>"
+        schema_pattern = r'<script id="merchant-static-schema" type="application/ld\+json">[\s\S]*?</script>'
+        if re.search(schema_pattern, body):
+            body = re.sub(schema_pattern, lambda _: schema, body, count=1)
+        else:
+            body = body.replace("</head>", schema + "</head>", 1)
 
         hero_pattern = r'(<img id="product-main-image" src=")[^"]+(" alt=")[^"]*(")'
         body, count = re.subn(
             hero_pattern,
-            lambda m: m.group(1)
-            + html.escape(pic, quote=True)
-            + m.group(2)
-            + html.escape(p["title_ua"] + " — MaGelle", quote=True)
-            + m.group(3),
+            lambda m: m.group(1) + html.escape(pic, quote=True) + m.group(2)
+            + html.escape(p["title_ua"] + " — MaGelle", quote=True) + m.group(3),
             body,
             count=1,
         )
         if count != 1:
             raise RuntimeError(sku + ": hero image missing")
 
-        attr = "data-variant-" + spec["color_code"].lower()
-        if not re.search(attr + r'="[^"]*"', body):
-            raise RuntimeError(sku + ": default vase photo map missing")
-        body = re.sub(
-            attr + r'="[^"]*"',
-            lambda _: attr + '="' + html.escape(pic, quote=True) + '"',
-            body,
-            count=1,
-        )
+        og_image = '<meta property="og:image" content="' + html.escape(pic, quote=True) + '">'
+        body = re.sub(r'<meta property="og:image" content="[^"]+">', '', body)
+        body = body.replace("</head>", og_image + "</head>", 1)
+        og_url = '<meta property="og:url" content="' + url + '">'
+        body = re.sub(r'<meta property="og:url" content="[^"]+">', '', body)
+        body = body.replace("</head>", og_url + "</head>", 1)
 
-        og_pattern = r'<meta property="og:image" content="[^"]*">'
-        og_tag = '<meta property="og:image" content="' + html.escape(pic, quote=True) + '">'
-        body = (
-            re.sub(og_pattern, lambda _: og_tag, body, count=1)
-            if re.search(og_pattern, body)
-            else body.replace("</head>", og_tag + "</head>", 1)
-        )
-
-        # Keep the non-JS first paint consistent with the pinned Merchant variant.
         body = re.sub(
             r'(<span id="design-pdp-color-label">)[^<]*(</span>)',
-            lambda m: m.group(1) + spec["color"] + m.group(2),
-            body,
-            count=1,
-        )
+            lambda m: m.group(1) + color + m.group(2), body, count=1)
         body = re.sub(
             r'(<dd id="design-spec-color">)[^<]*(</dd>)',
-            lambda m: m.group(1) + spec["color"] + m.group(2),
-            body,
-            count=1,
-        )
+            lambda m: m.group(1) + color + m.group(2), body, count=1)
         body = re.sub(
             r'(<strong id="design-selected-sku">)[^<]*(</strong>)',
-            lambda m: m.group(1) + sku + m.group(2),
-            body,
-            count=1,
-        )
+            lambda m: m.group(1) + sku + m.group(2), body, count=1)
 
         if body != original:
             path.write_text(body, encoding="utf-8")
@@ -427,7 +436,7 @@ if __name__ == "__main__":
     source = get_products()
     catalog = get_catalog()
     xml, selected, excluded, _ = build(source, catalog)
-    sync_pinned_pdp_schema(source, catalog)
+    sync_canonical_pdp_schema(source, catalog)
     OUTPUT.write_text(xml + "\n", encoding="utf-8")
     reasons = {}
     for reason in excluded.values():
