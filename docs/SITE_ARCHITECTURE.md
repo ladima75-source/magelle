@@ -84,3 +84,17 @@ CSS maintenance:
 ## Base-color gallery marker
 
 Storefront color selectors automatically mark the design source/base color when its approved source gallery has 2+ photos. The marker is derived only from Admin `source_color` + unique `source_photo_urls`: PDP shows “Галерея · N фото”; compact catalog/mobile controls show “N фото”. No per-product manual labels are allowed.
+
+## Canonical PDP rule — 2026-10-21
+
+Each public design has exactly one indexable PDP, anchored to its approved base/source vase color. The contract lives in `scripts/site_contract.py::CANONICAL_DESIGNS`.
+
+- Catalog cards and collection pages link to that one clean base PDP.
+- The base color loads without a query string.
+- Other vase colors use the same PDP with `?color=CODE`.
+- Historical color-named PDP URLs remain only as `noindex` compatibility redirects; they are not second product pages.
+- `sitemap.xml` contains exactly 15 product PDPs and 27 URLs total.
+- Merchant keeps 56 admitted exact SKUs, but every SKU for a design lands on the same canonical PDP; only non-base colors add `?color=CODE`.
+- Static CI verifies catalog route/default color, canonical PDP identity, legacy redirects, and sitemap canonical product set.
+
+This replaces the former historical Merchant pinning behavior that could make the visible base color differ from the static PDP/schema identity.
