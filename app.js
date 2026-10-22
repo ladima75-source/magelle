@@ -565,7 +565,7 @@
       const staticSourcePhotos=(code===gallery.dataset.photoColor)?(gallery._staticSourcePhotos||[]):[];
       const sourcePhotos=(d?.source_color===code&&d?.source_photo_urls?.length)?d.source_photo_urls:staticSourcePhotos;
       const apiPhotos=sourcePhotos.length?sourcePhotos:(variant?.photo_urls?.length?variant.photo_urls:[]);
-      const rawPhotos=(info.dataset.designCode==="KAR" && staticVariantSrc && code!=="CHO")?[staticVariantSrc]:(apiPhotos.length?[...apiPhotos]:staticVariantSrc?[staticVariantSrc]:[]);
+      const rawPhotos=((info.dataset.designCode==="KAR" || (info.dataset.family==="Sculptural Fold" && info.dataset.designCode==="BUR")) && staticVariantSrc && code!=="CHO")?[staticVariantSrc]:(apiPhotos.length?[...apiPhotos]:staticVariantSrc?[staticVariantSrc]:[]);
       const photos=[...new Set(rawPhotos.map(u=>optimizedImageSrc(u,1600)))];
       const main=document.getElementById('product-main-image'),ph=document.getElementById('design-photo-placeholder');
       if(main){main.hidden=!photos.length;if(photos.length)applyResponsiveImage(main,photos[0],pdpImageSizes());}
