@@ -1,6 +1,6 @@
 SITE_URL = "https://magelle.com.ua"
 STYLE_VERSION = "4.7"
-APP_VERSION = "6.1"
+APP_VERSION = "6.2"
 MENU_VERSION = "2"
 
 CANONICAL_DESIGNS = {

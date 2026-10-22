@@ -710,7 +710,10 @@
       const d=designFor(info);
       const gallery=document.querySelector('[data-design-gallery]');
       const staticColor=gallery?.dataset.photoColor||'';
-      const staticCount=[...new Set([...gallery?.querySelectorAll('[data-gallery-src]')||[]].map(n=>n.dataset.gallerySrc).filter(Boolean))].length;
+      const staticSources=(gallery?._staticSourcePhotos?.length)
+        ?gallery._staticSourcePhotos
+        :[...gallery?.querySelectorAll('[data-gallery-src]')||[]].map(n=>n.dataset.gallerySrc).filter(Boolean);
+      const staticCount=[...new Set(staticSources)].length;
       if(staticColor&&staticCount>=2){
         mark(info.querySelector('.design-pdp-color[data-variant-color="'+staticColor+'"]'),staticCount);
         mark(document.querySelector('.mobile-photo-colors button[data-mobile-color="'+staticColor+'"]'),staticCount);
