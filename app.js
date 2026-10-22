@@ -50,7 +50,7 @@
   let catalogModel=null;
   const body=document.body;
 
-  const familyCode=el=>el?.dataset?.familyCode||(el?.dataset?.family==='Architectural Step'?'AS':'OF');
+  const familyCode=el=>el?.dataset?.familyCode||(el?.dataset?.family==='Architectural Step'?'AS':el?.dataset?.family==='Sculptural Fold'?'SF':'OF');
   const canonicalSku=(family,sizeCode,color)=>'MG-'+family+'-'+sizeCode+'-'+color;
   const designSku=(family,designCode,sizeCode,color)=>'MG-'+family+'-'+designCode+'-'+sizeCode+'-'+color;
 
