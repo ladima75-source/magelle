@@ -1,100 +1,69 @@
 # MaGelle storefront architecture
 
-Audit snapshot: 2026-10-20.
+Audit snapshot: 2026-10-22. Counts are snapshots; the catalog API and admission pipeline determine current availability.
 
 ## Sources of truth
 
-- Product/design/price/availability/media state: Admin 2.0 / Catalog API.
+- Product/design/price/availability state: Admin 2.0 / Catalog API.
+- Reviewed exact-color storefront media: the static first-party media mapping; approved base galleries are preserved.
 - Public catalog entry point: `catalog.html`.
 - Production Google Merchant feed: `merchant.xml`.
-- Global frontend versions and legacy URL contracts: `scripts/site_contract.py`.
-- Global navigation and shared asset normalization: `scripts/sync_global_navigation.py`.
-
-Static HTML must not become a second independent catalog database.
+- Canonical routes, frontend versions, and legacy redirects: `scripts/site_contract.py`.
+- Global navigation and asset normalization: `scripts/sync_global_navigation.py`.
+- ProductGroup generation: `scripts/sync_product_seo.py` reads the production Merchant feed, without editing catalog data, galleries, or product identities.
 
 ## Public catalog
 
-Current storefront architecture:
-- 15 public design cards.
-- Organic Flare: 10 designs.
-- Architectural Step: 4 designs.
-- Sculptural Fold: 1 public design (Koral).
+The current public catalog has 16 designs and 64 managed color variants:
+- Organic Flare: 10 designs × 5 colors = 50 variants.
+- Architectural Step: 4 designs × 2 colors = 8 variants.
+- Sculptural Fold: Koral and Rubin, 3 colors each = 6 variants.
 
-Audit snapshot of Merchant:
-- 56 admitted exact-SKU items.
-- 45 Organic Flare.
-- 8 Architectural Step.
-- 3 Sculptural Fold.
-- Karamel is not admitted while exact Merchant media requirements remain unmet.
+Rubin retains internal design code `BUR`, SKU prefix `MG-SF-BUR-VYR-`, and the existing `burshtyn` URL/media paths for compatibility. These identifiers do not change the public name «Рубін».
 
-Counts are audit snapshots, not hard-coded business rules. Admission is defined by the Merchant generator.
+Merchant admission requires an active managed SKU, positive UAH price, stock status, an exact first-party image, and a valid canonical design route. Explicit reviewed media overrides admit the additional Karamel and Rubin colors even when older Admin photo fields lag behind the published storefront. Feed counts are verified from generated output, never inferred from past project notes.
 
-## Shared frontend contract
+## Single-page color variants and canonical URLs
 
-All normal storefront pages use:
-- `styles.css?v=4.5`
-- `app.js?v=5.3`
-- exactly one `site-menu.css?v=2`
-- one global header/navigation.
+Each design has one indexable product page, anchored to its approved base/source vase color. This is the single-page variant model:
+- Catalog cards and collection pages use the canonical design route.
+- The base color opens on the clean URL.
+- Other colors use the same page with `?color=CODE`; these deep links preselect the exact SKU, photo, price, and cart item.
+- Every color variant keeps the same clean base canonical, before and after JavaScript hydration.
+- Product and Offer URLs retain the exact color deep link. Canonical consolidation does not remove a SKU or prevent a direct Merchant landing.
+- Historical color-named pages are lightweight `noindex` redirects and never re-enter the sitemap.
+- Generic `product.html` remains `noindex`.
 
-The sync workflow repairs drift automatically. Catalog safety runs `scripts/audit_static_site.py` and fails on contract violations.
+This follows Google's [URL guidance for ecommerce variants](https://developers.google.com/search/docs/specialty/ecommerce/designing-a-url-structure-for-ecommerce-sites) and [single-page ProductGroup examples](https://developers.google.com/search/docs/appearance/structured-data/product-variants).
 
-## Legacy URLs
+## Sitemap and Merchant serve different purposes
 
-Historical PDP URLs are preserved only as lightweight `noindex` redirect stubs. They must:
-- never re-enter sitemap;
-- never be linked from primary storefront pages;
-- never contain a second copy of live PDP logic.
+`sitemap.xml` lists 28 clean canonical pages: 16 product pages and 12 other public pages. Color query URLs are excluded because they canonicalize to their design page. The static audit rejects query strings, fragments, duplicate URLs, legacy redirects, missing files, and noncanonical or noindex pages.
 
-Mappings live in `scripts/site_contract.py`.
+`merchant.xml` lists every admitted exact SKU, including non-base color deep links. It is not a search sitemap. All 64 current variants can therefore be represented in Merchant and ProductGroup while the sitemap contains 16 product pages. Sitemap inclusion is not evidence of Google indexing or approval.
 
-## SEO contract
+## ProductGroup structured data
 
-- Sitemap contains only canonical, indexable public pages.
-- Every sitemap URL has one self-canonical.
-- Generic `product.html` is `noindex`.
-- Draft/hidden Burshtyn remains `noindex` and outside sitemap.
-- Product/Offer JSON-LD is normalized at runtime from selected Admin SKU data.
+Each canonical product page contains exactly one `merchant-static-schema` script with:
+- `ProductGroup`, a stable `@id`, clean canonical `url`, `productGroupID`, and `variesBy: ["https://schema.org/color"]`.
+- A full `Product` entry in `hasVariant` for every admitted exact SKU, with unique URL-based `@id`, exact name, color, reviewed image, and `isVariantOf` group reference.
+- One exact `Offer` per variant, with its landing URL, UAH price, condition, and availability.
 
-## Media contract
+The generator removes obsolete standalone Product scripts, including the historical duplicate Ritm SKU, and escapes `<` in JSON-LD. Runtime updates the same group rather than replacing it with an unrelated single Product or changing the canonical. Live SKU status and price remain authoritative at runtime.
 
-- Google Drive may be a source archive, not the preferred storefront/Merchant delivery layer.
-- Merchant images must be first-party `magelle.com.ua` or `api.magelle.com.ua`.
-- A design's approved base/source-color gallery must never be deleted, shortened, or replaced by a single image.
-- Exact-color images for other colors are separate SKU media.
+`python scripts/sync_product_seo.py` regenerates markup after Merchant changes. `--check` validates freshness without writing files. The static audit compares every SKU/color/image/price/stock field against the feed. The Merchant verifier separately compares the feed and every embedded variant with live Admin admission results.
 
-Media audit closure:
-- Sculptural Fold Koral base SND gallery is fully first-party. The four historical Drive URLs were mapped against the already-existing Admin uploads and replaced with exact matching api.magelle.com.ua copies; base gallery count and identity remain unchanged.
-- Storefront HTML is CI-blocked if a Google Drive URL reappears.
+## Media and frontend contracts
 
-CSS maintenance:
-- 2026-10-20 removed cascade-dead mobile header/PDP/color-control overrides while preserving computed mobile layout; shared stylesheet version advanced to 4.5.
+- Google Drive is a source archive, not a storefront delivery URL.
+- Exact Merchant images use `magelle.com.ua` or `api.magelle.com.ua`.
+- A design's approved base/source gallery must not be deleted, shortened, or replaced with a single alternate-color image.
+- First-party responsive WebP references require complete w360/w900/w1600 families.
+- `scripts/site_contract.py` defines the current styles/app/menu versions; shared navigation sync normalizes every root storefront page.
+- Base colors with 2+ source photos receive the gallery marker from the catalog's source color and unique source photo URLs.
 
-## CI / regression protection
+## CI and deployment
 
-`Catalog safety` checks:
-- backend Catalog tests;
-- static storefront architecture audit;
-- JavaScript syntax.
+Catalog safety runs backend catalog tests, the static storefront audit, generated-schema freshness checks, variant runtime regressions, and JavaScript syntax checks. Runtime regressions exercise supported and unsupported colors while preserving canonical URLs and exact variant data. Merchant feed sync rebuilds the feed, regenerates ProductGroup markup, verifies exact-SKU admission, then commits only reviewed generated outputs. GitHub Pages publishes the storefront; successful workflow status and public HTML/browser checks are required before reporting a deployment verified.
 
-`Merchant feed sync` independently rebuilds and verifies the production feed against live Admin 2.0.
-
-`Keep MaGelle navigation identical` synchronizes global nav and shared frontend asset versions after storefront changes.
-
-## Base-color gallery marker
-
-Storefront color selectors automatically mark the design source/base color when its approved source gallery has 2+ photos. The marker is derived only from Admin `source_color` + unique `source_photo_urls`: PDP shows “Галерея · N фото”; compact catalog/mobile controls show “N фото”. No per-product manual labels are allowed.
-
-## Canonical PDP rule — 2026-10-21
-
-Each public design has exactly one indexable PDP, anchored to its approved base/source vase color. The contract lives in `scripts/site_contract.py::CANONICAL_DESIGNS`.
-
-- Catalog cards and collection pages link to that one clean base PDP.
-- The base color loads without a query string.
-- Other vase colors use the same PDP with `?color=CODE`.
-- Historical color-named PDP URLs remain only as `noindex` compatibility redirects; they are not second product pages.
-- `sitemap.xml` contains exactly 15 product PDPs and 27 URLs total.
-- Merchant keeps 56 admitted exact SKUs, but every SKU for a design lands on the same canonical PDP; only non-base colors add `?color=CODE`.
-- Static CI verifies catalog route/default color, canonical PDP identity, legacy redirects, and sitemap canonical product set.
-
-This replaces the former historical Merchant pinning behavior that could make the visible base color differ from the static PDP/schema identity.
+Search Console metrics, Google-selected canonical URLs, indexing status, and Merchant approvals require access to the corresponding MaGelle property. Local/static/browser checks cannot establish those Google-side states.

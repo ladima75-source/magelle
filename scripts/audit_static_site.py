@@ -6,6 +6,8 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 
+from sync_product_seo import build_group, feed_groups, product_schema_nodes
+
 from site_contract import (
     APP_VERSION,
     CANONICAL_DESIGNS,
@@ -156,6 +158,7 @@ for card in cards:
 if catalog_design_ids != set(CANONICAL_DESIGNS):
     fail("catalog.html: canonical design set differs from public catalog")
 
+merchant_groups = feed_groups()
 for design_id, spec in CANONICAL_DESIGNS.items():
     page = ROOT / spec["path"].lstrip("/")
     if not page.is_file():
@@ -168,6 +171,7 @@ for design_id, spec in CANONICAL_DESIGNS.items():
     expected = SITE_URL + spec["path"]
     if count != 1 or canonical != expected:
         fail(f"{design_id}: canonical {canonical!r}, expected {expected!r}")
+    selected_sku = ""
     info = re.search(r'<div class="product-info[^>]*design-variant-pdp[^>]*>', raw)
     if not info:
         fail(f"{design_id}: missing design-variant-pdp")
@@ -197,6 +201,25 @@ for design_id, spec in CANONICAL_DESIGNS.items():
         if not og_title or og_title.group(1) != expected_title:
             fail(f"{design_id}: og:title does not match canonical design title")
 
+    schemas = product_schema_nodes(raw)
+    admitted_variants = merchant_groups.get(design_id, [])
+    if not admitted_variants:
+        if schemas:
+            fail(f"{design_id}: no admitted feed variants; stale Product/ProductGroup offers must be removed")
+        continue
+    if len(schemas) != 1 or schemas[0][1].get("@type") != "ProductGroup":
+        fail(f"{design_id}: expected exactly one ProductGroup and no obsolete Product schemas")
+    else:
+        group = schemas[0][1]
+        expected_group = build_group(design_id, raw, merchant_groups.get(design_id, []))
+        if group != expected_group:
+            fail(f"{design_id}: ProductGroup differs from exact feed SKU/color/image/price/stock")
+        if not group.get("hasVariant"):
+            fail(f"{design_id}: ProductGroup has no admitted variants")
+        base_skus = [p.get("sku") for p in group.get("hasVariant", []) if p.get("url") == expected]
+        if selected_sku in {p.get("sku") for p in admitted_variants} and base_skus != [selected_sku]:
+            fail(f"{design_id}: ProductGroup base URL must identify the selected base SKU")
+
 # Sitemap may contain only canonical, indexable, non-legacy HTML.
 tree = ET.parse(ROOT / "sitemap.xml")
 ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
@@ -215,6 +238,8 @@ if sitemap_product_paths != expected_product_paths:
 
 for loc in locs:
     parsed = urlsplit(loc)
+    if parsed.query or parsed.fragment:
+        fail(f"sitemap.xml: only clean canonical URLs are allowed, not variant/query/fragment URLs: {loc}")
     if parsed.scheme != "https" or parsed.netloc != "magelle.com.ua":
         fail(f"sitemap.xml: unexpected host/scheme {loc}")
         continue

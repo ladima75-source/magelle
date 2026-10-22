@@ -13,4 +13,6 @@ jobs:
           node-version: '22'
       - run: python -m unittest discover -s server -p test_catalog.py -v
       - run: python scripts/audit_static_site.py
+      - run: python scripts/sync_product_seo.py --check
+      - run: node scripts/test_product_seo_runtime.cjs
       - run: node --check app.js && node --check server/static/admin2.js

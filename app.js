@@ -442,37 +442,57 @@
     }
   }
 
-  // Use the exact Admin 2.0 SKU, image, stock and price in Google Product/Offer.
+  // Color URLs select a real variant on one canonical product-group page.
+  function pdpColor(info,requested){
+    const allowed=[...info.querySelectorAll('.design-pdp-color')].map(b=>b.dataset.variantColor);
+    return allowed.includes(requested)?requested:(allowed.includes(info.dataset.defaultColor)?info.dataset.defaultColor:allowed[0]);
+  }
+
+  // Keep every real variant in one ProductGroup, using reviewed media and live prices.
   function updateExactSchema(p,code,info){
-    const existing=document.getElementById('magelle-product-schema');
-    document.querySelectorAll('script[type="application/ld+json"]').forEach(n=>{
-      if(n.id==='magelle-product-schema')return;
-      try{if(JSON.parse(n.textContent)['@type']==='Product')n.remove()}catch(_){}
+    const existing=document.getElementById('merchant-static-schema')||document.getElementById('magelle-product-schema');
+    if(!info._reviewedSchema){
+      try{info._reviewedSchema=JSON.parse(existing?.textContent||'{}')}catch(_){info._reviewedSchema={}}
+    }
+    const reviewed=info._reviewedSchema;
+    const canonical=document.querySelector('link[rel="canonical"]');
+    const groupUrl=new URL(canonical?.href||location.pathname,location.origin);
+    groupUrl.search='';groupUrl.hash='';
+    const groupId=groupUrl.href+'#product-group';
+    const reviewedVariants=reviewed.hasVariant||[];
+    const products=catalogModel.products.filter(v=>v.design_id===info.dataset.catalogDesignId);
+    const variants=products.flatMap(v=>{
+      const colorCode=v.color_code;
+      const staticExact=info.dataset['variant'+colorCode[0]+colorCode.slice(1).toLowerCase()]||'';
+      const saved=reviewedVariants.find(item=>item.sku===v.sku);
+      const validImage=u=>/^https:\/\/(?:api\.)?magelle\.com\.ua\/(?:media|uploads)\//.test(u);
+      const images=validImage(staticExact)?[staticExact]:(saved?.image||v.photo_urls||[]).filter(validImage);
+      if(!images.length||!(Number(v.price_uah)>0)||!['stock','preorder','hidden'].includes(v.status))return [];
+      const url=new URL(groupUrl);
+      if(colorCode!==info.dataset.defaultColor)url.searchParams.set('color',colorCode);
+      return [{'@type':'Product','@id':url.href+'#product',
+        name:'MaGelle '+v.title_ua,sku:v.sku,
+        description:v.description_ua||saved?.description||'Інтер’єрна композиція MaGelle з сухоцвітів та стабілізованих рослин.',
+        image:images,brand:{'@type':'Brand',name:'MaGelle'},color:v.color,url:url.href,
+        isVariantOf:{'@id':groupId},
+        offers:{'@type':'Offer',price:v.price_uah,priceCurrency:'UAH',
+          availability:'https://schema.org/'+({stock:'InStock',preorder:'PreOrder',hidden:'OutOfStock'}[v.status]),
+          itemCondition:'https://schema.org/NewCondition',url:url.href}}];
     });
-    const apiImages=(p?.photo_urls||[]).filter(u=>/^https:\/\/(?:api\.)?magelle\.com\.ua\/(?:media|uploads)\//.test(u));
-    const staticExact=info?.dataset?.['variant'+code[0]+code.slice(1).toLowerCase()]||'';
-    const validStaticExact=/^https:\/\/(?:api\.)?magelle\.com\.ua\/(?:media|uploads)\//.test(staticExact);
-    // The exact first-party image wired into the storefront is authoritative for the selected variant.
-    // This prevents stale Admin media from reappearing only in structured data after hydration.
-    const images=validStaticExact?[staticExact]:apiImages;
-    if(!p||!images.length||!(Number(p.price_uah)>0)){existing?.remove();return;}
-    const url=new URL(location.pathname,location.origin);
-    const requestedColor=new URL(location.href).searchParams.get('color');
-    if((requestedColor&&COLORS[requestedColor])||code!==info.dataset.defaultColor)url.searchParams.set('color',code);
-    const data={'@context':'https://schema.org','@type':'Product',
-      name:'MaGelle '+p.title_ua,sku:p.sku,
-      description:p.description_ua||'Інтер’єрна композиція MaGelle з сухоцвітів та стабілізованих рослин.',
-      image:images,brand:{'@type':'Brand',name:'MaGelle'},color:p.color,url:url.href};
-    if(p.status==='stock')data.offers={'@type':'Offer',price:p.price_uah,priceCurrency:'UAH',
-      availability:'https://schema.org/InStock',itemCondition:'https://schema.org/NewCondition',url:url.href};
-    else if(p.status==='hidden')data.offers={'@type':'Offer',price:p.price_uah,priceCurrency:'UAH',
-      availability:'https://schema.org/OutOfStock',itemCondition:'https://schema.org/NewCondition',url:url.href};
+    if(!variants.length){existing?.remove();return;}
+    document.querySelectorAll('script[type="application/ld+json"]').forEach(n=>{
+      if(n===existing)return;
+      try{if(['Product','ProductGroup'].includes(JSON.parse(n.textContent)['@type']))n.remove()}catch(_){}
+    });
+    const data={'@context':'https://schema.org','@type':'ProductGroup','@id':groupId,
+      name:'MaGelle '+info.dataset.family+' «'+info.dataset.design+'» — '+info.dataset.variantSize,
+      description:reviewed.description||info.querySelector('.product-description')?.textContent||'',
+      brand:{'@type':'Brand',name:'MaGelle'},productGroupID:info.dataset.catalogDesignId,
+      variesBy:['https://schema.org/color'],url:groupUrl.href,hasVariant:variants};
     const node=existing||document.createElement('script');
-    node.id='magelle-product-schema';node.type='application/ld+json';
+    node.id='merchant-static-schema';node.type='application/ld+json';
     node.textContent=JSON.stringify(data);
     if(!existing)document.head.appendChild(node);
-    const canonical=document.querySelector('link[rel="canonical"]');
-    if(canonical)canonical.href=url.href;
   }
 
   function pdpImageSizes(){return '(max-width: 980px) calc(100vw - 28px), 58vw'}
@@ -533,6 +553,7 @@
   function selectDesignPdp(code,updateUrl=true,forceSource=false){
     const info=document.querySelector('.design-variant-pdp');
     if(!info)return;
+    code=pdpColor(info,code);if(!code)return;
     const color=COLORS[code]||COLORS.GRA;
     const sizeCode=info.dataset.sizeCode;
     const designCode=info.dataset.designCode;
@@ -548,6 +569,8 @@
     const label=document.getElementById('design-pdp-color-label');if(label)label.textContent=color.label;
     const colorEl=document.getElementById('design-pdp-color');if(colorEl)colorEl.innerHTML='<i class="swatch swatch-'+escapeHtml(color.swatch)+'" '+(color.hex?'style="background:'+escapeHtml(color.hex)+'"':'')+'></i><span>'+escapeHtml(color.label)+'</span>';
     const spec=document.getElementById('design-spec-color');if(spec)spec.textContent=color.label;
+    const mainImage=document.getElementById('product-main-image');
+    if(mainImage)mainImage.alt=info.dataset.family+' «'+info.dataset.design+'» — '+info.dataset.variantSize+', '+color.label+' — MaGelle';
     info.querySelectorAll('.design-pdp-color').forEach(b=>b.classList.toggle('active',b.dataset.variantColor===code));
     document.querySelectorAll('.mobile-photo-colors button').forEach(b=>{
       b.classList.toggle('active',b.dataset.mobileColor===code);
@@ -610,7 +633,7 @@
   function initDesignPdp(){
     const info=document.querySelector('.design-variant-pdp');if(!info)return;
     const requested=new URL(location.href).searchParams.get('color')||info.dataset.defaultColor||'GRA';
-    const initial=COLORS[requested]?requested:(info.dataset.defaultColor||'GRA');
+    const initial=pdpColor(info,requested);
     info.dataset.sourcePreview='1';
     const gallery=document.querySelector('[data-design-gallery]');
     const mainPhoto=gallery?.querySelector('.product-main-photo');
@@ -729,7 +752,7 @@
     const designInfo=document.querySelector('.design-variant-pdp');
     if(designInfo){
       const code=new URL(location.href).searchParams.get('color')||designInfo.dataset.defaultColor||'GRA';
-      selectDesignPdp(COLORS[code]?code:(designInfo.dataset.defaultColor||'GRA'),false,designInfo.dataset.sourcePreview==='1');
+      selectDesignPdp(pdpColor(designInfo,code),false,designInfo.dataset.sourcePreview==='1');
     }else{
       const info=document.querySelector('.sku-pdp'),sku=skuFromPdp();
       if(sku&&info){
@@ -813,7 +836,7 @@
       if(d){
         Object.assign(info.dataset,{catalogDesignId:d.id,family:d.series,familyCode:d.family_code,design:d.title_ua,designCode:d.code,sizeCode:d.size_code,variantSize:d.size_name,defaultColor:document.getElementById('merchant-static-schema')?(info.dataset.defaultColor||d.default_color):preferredGalleryColor(d)});
         const h1=info.querySelector('h1');if(h1)h1.textContent=d.series+' «'+d.title_ua+'» — '+d.size_name;
-        document.title=d.series+' «'+d.title_ua+'» — MaGelle';
+        document.title=d.series+' «'+d.title_ua+'» — '+d.size_name+' — MaGelle';
         const picker=info.querySelector('.design-pdp-colors .color-options');if(picker)picker.innerHTML=variantButtons(variantsFor(d),'color-option design-pdp-color');
         document.querySelector('.mobile-photo-colors')?.remove();initDesignPdp();
       }

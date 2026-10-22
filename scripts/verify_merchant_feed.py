@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Verify scalable Merchant admission and exact variant landing contracts."""
 import html
-import json
 import re
 from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.parse import urlsplit
 from xml.etree import ElementTree as ET
+
+from sync_product_seo import product_schema_nodes
 
 from build_merchant_feed import (
     COLOR_LABELS,
@@ -43,8 +44,6 @@ for required in (
     "searchParams.get('color')",
     "selectDesignPdp(initial,false",
     "updateExactSchema(variant,code,info)",
-    "canonical.href=url.href",
-    "requestedColor&&COLORS[requestedColor]",
     "merchant-static-schema')?(info.dataset.defaultColor||d.default_color)",
 ):
     assert required in app, "Variant deep-link runtime contract missing: " + required
@@ -73,6 +72,37 @@ for item in rows:
     doc = page.read_text(encoding="utf-8")
     assert not re.search(r'<meta name="robots" content="noindex', doc), sku + ": PDP noindex"
 
+    schemas = product_schema_nodes(doc)
+    assert len(schemas) == 1, sku + ": duplicate/missing product schemas"
+    group = schemas[0][1]
+    base_canonical = SITE + landing["path"]
+    assert group.get("@context") == "https://schema.org", sku + ": bad schema context"
+    assert group.get("@type") == "ProductGroup", sku + ": ProductGroup missing"
+    assert group.get("@id") == base_canonical + "#product-group", sku + ": group id wrong"
+    assert group.get("url") == base_canonical, sku + ": group canonical wrong"
+    assert group.get("productGroupID") == product["design_id"], sku + ": group id wrong"
+    assert group.get("variesBy") == ["https://schema.org/color"], sku + ": group variesBy wrong"
+    variants = [p for p in group.get("hasVariant", []) if p.get("sku") == sku]
+    assert len(variants) == 1, sku + ": exact Product variant missing/duplicated"
+    schema = variants[0]
+    assert schema.get("@type") == "Product", sku + ": variant Product missing"
+    assert schema.get("@id") == landing["url"] + "#product", sku + ": variant @id wrong"
+    assert schema.get("isVariantOf") == {"@id": group["@id"]}, sku + ": group relationship wrong"
+    assert schema.get("name") == expected_name, sku + ": schema title mismatch"
+    assert schema.get("color") == product["color"], sku + ": schema color mismatch"
+    assert schema.get("image") == [image], sku + ": schema image mismatch"
+    assert schema.get("url") == landing["url"], sku + ": schema URL mismatch"
+    assert schema.get("brand", {}).get("name") == "MaGelle", sku + ": schema brand mismatch"
+    expected_group_skus = {p["sku"] for p in selected.values() if p["design_id"] == product["design_id"]}
+    assert {p.get("sku") for p in group.get("hasVariant", [])} == expected_group_skus, sku + ": group SKU set differs from feed"
+    offer = schema.get("offers") or {}
+    assert offer.get("@type") == "Offer", sku + ": Offer missing"
+    assert offer.get("url") == landing["url"], sku + ": Offer URL mismatch"
+    assert offer.get("priceCurrency") == "UAH", sku + ": Offer currency mismatch"
+    assert abs(float(offer.get("price") or 0) - float(product["price_uah"])) < 0.005, sku + ": Offer price mismatch"
+    assert offer.get("availability") == "https://schema.org/InStock", sku + ": Offer stock mismatch"
+    assert offer.get("itemCondition") == "https://schema.org/NewCondition", sku + ": Offer condition missing"
+
     if not landing["dynamic"]:
         canonical = landing["url"]
         base_color = landing["design"]["base_color"]
@@ -81,29 +111,6 @@ for item in rows:
         assert f'data-selected-sku="{sku}"' in doc, sku + ": canonical initial SKU mismatch"
         assert f'data-default-color="{base_color}"' in doc, sku + ": canonical default color mismatch"
         assert f'data-selected-color="{product["color"]}"' in doc, sku + ": canonical selected color mismatch"
-
-        marker = re.search(
-            r'<script id="merchant-static-schema" type="application/ld\+json">([\s\S]*?)</script>',
-            doc,
-        )
-        assert marker, sku + ": canonical Product schema missing"
-        schema = json.loads(marker.group(1))
-        assert schema.get("@context") == "https://schema.org", sku + ": bad schema context"
-        assert schema.get("@type") == "Product", sku + ": not Product schema"
-        assert schema.get("sku") == sku, sku + ": schema SKU mismatch"
-        assert schema.get("name") == expected_name, sku + ": schema title mismatch"
-        assert schema.get("color") == product["color"], sku + ": schema color mismatch"
-        assert schema.get("image") == [image], sku + ": schema image mismatch"
-        assert schema.get("url") == canonical, sku + ": schema URL mismatch"
-        assert schema.get("brand", {}).get("name") == "MaGelle", sku + ": schema brand mismatch"
-
-        offer = schema.get("offers") or {}
-        assert offer.get("@type") == "Offer", sku + ": Offer missing"
-        assert offer.get("url") == canonical, sku + ": Offer URL mismatch"
-        assert offer.get("priceCurrency") == "UAH", sku + ": Offer currency mismatch"
-        assert abs(float(offer.get("price") or 0) - float(product["price_uah"])) < 0.005, sku + ": Offer price mismatch"
-        assert offer.get("availability") == "https://schema.org/InStock", sku + ": Offer stock mismatch"
-        assert offer.get("itemCondition") == "https://schema.org/NewCondition", sku + ": Offer condition missing"
 
         hero = re.search(r'<img\b[^>]*\bid="product-main-image"[^>]*>', doc)
         assert hero, sku + ": canonical hero missing"
