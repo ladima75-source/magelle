@@ -16,8 +16,7 @@
     d.head.appendChild(s);
   }
   function schedulePlerdy(){
-    if("requestIdleCallback" in w)w.requestIdleCallback(loadPlerdy,{timeout:3500});
-    else w.setTimeout(loadPlerdy,2500);
+    w.setTimeout(loadPlerdy,8000);
   }
   if(d.readyState==="complete")schedulePlerdy();
   else w.addEventListener("load",schedulePlerdy,{once:true});
