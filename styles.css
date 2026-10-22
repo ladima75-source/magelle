@@ -313,9 +313,9 @@
   .family-heading h2{font-size:29px}
   .family-block{margin-bottom:30px}
   .product-main-photo{position:relative}
-  .mobile-photo-colors{display:flex;position:absolute;left:8px;right:8px;bottom:10px;z-index:8;gap:5px;padding:7px;background:rgba(242,233,222,.96);box-shadow:0 3px 16px rgba(30,24,18,.15);border-radius:5px}
+  .mobile-photo-colors{display:flex;position:static;order:1;grid-column:1;width:100%;box-sizing:border-box;margin:7px 0 2px;z-index:auto;gap:5px;padding:7px;background:#f2e9de;border:1px solid #d7c9b8;box-shadow:0 2px 8px rgba(30,24,18,.08);border-radius:5px}
   .mobile-photo-colors button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:center;border:1px solid transparent;background:transparent;padding:5px 2px;font-size:9px;color:#322b25}
-  .mobile-photo-colors button.active{border-color:#6a5948;background:#fff9f1}
+  .mobile-photo-colors button.active{border-color:#5f4a38;background:#fffaf3;box-shadow:inset 0 -2px 0 #5f4a38;font-weight:700}
   .mobile-photo-colors .swatch{width:14px;height:14px;display:inline-block}
   .design-variant-pdp .design-pdp-colors{display:none}
 }
@@ -454,22 +454,22 @@
   }
   .product-page .thumbs::-webkit-scrollbar{display:none}
   .product-page .photo-thumb{flex:0 0 62px;width:62px}
-  .product-page .design-gallery-shell .product-main-photo>.mobile-photo-colors{
+  .product-page .design-gallery-shell>.mobile-photo-colors{
     display:flex;
-    position:absolute;
-    left:8px!important;
-    right:8px!important;
-    bottom:8px!important;
-    z-index:16;
+    position:static;
+    order:1;
+    grid-column:1;
+    width:100%;
+    box-sizing:border-box;
+    margin:7px 0 2px;
     gap:4px;
     padding:6px;
-    background:rgba(242,233,222,.94);
-    box-shadow:0 3px 16px rgba(30,24,18,.18);
-    border-radius:7px;
-    backdrop-filter:blur(7px);
-    -webkit-backdrop-filter:blur(7px)
+    background:#f2e9de;
+    border:1px solid #d7c9b8;
+    box-shadow:0 2px 8px rgba(30,24,18,.08);
+    border-radius:7px
   }
-  .product-page .design-gallery-shell .product-main-photo>.mobile-photo-colors button{
+  .product-page .design-gallery-shell>.mobile-photo-colors button{
     flex:1 1 0;
     min-width:0;
     min-height:42px;
@@ -520,6 +520,12 @@
   border-color:#8f7457;
   background:rgba(255,249,241,.98);
   box-shadow:inset 0 0 0 1px rgba(143,116,87,.18);
+}
+.mobile-photo-colors button.gallery-source-color.active{
+  border-color:#4f3b2b;
+  background:#fffaf3;
+  box-shadow:inset 0 -3px 0 #4f3b2b;
+  font-weight:700;
 }
 .mobile-photo-colors .gallery-photo-count{
   grid-column:auto;

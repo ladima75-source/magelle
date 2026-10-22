@@ -637,7 +637,7 @@
     info.dataset.sourcePreview='1';
     const gallery=document.querySelector('[data-design-gallery]');
     const mainPhoto=gallery?.querySelector('.product-main-photo');
-    if(mainPhoto && !gallery.querySelector('.mobile-photo-colors')){
+    if(gallery && mainPhoto && !gallery.querySelector('.mobile-photo-colors')){
       const panel=document.createElement('div');
       panel.className='mobile-photo-colors';
       panel.setAttribute('aria-label','Колір вази');
@@ -652,7 +652,7 @@
         btn.addEventListener('click',()=>original.click());
         panel.appendChild(btn);
       });
-      mainPhoto.appendChild(panel);
+      mainPhoto.insertAdjacentElement('afterend',panel);
     }
     info.querySelectorAll('.design-pdp-color').forEach(btn=>btn.addEventListener('click',()=>{
       info.dataset.sourcePreview='0';
@@ -707,10 +707,18 @@
     });
     const info=document.querySelector('.design-variant-pdp');
     if(info){
-      const d=designFor(info),count=[...new Set(d?.source_photo_urls||[])].length;
-      if(d?.source_color&&count>=2){
-        mark(info.querySelector('.design-pdp-color[data-variant-color="'+d.source_color+'"]'),count);
-        mark(document.querySelector('.mobile-photo-colors button[data-mobile-color="'+d.source_color+'"]'),count);
+      const d=designFor(info);
+      const gallery=document.querySelector('[data-design-gallery]');
+      const staticColor=gallery?.dataset.photoColor||'';
+      const staticCount=[...new Set([...gallery?.querySelectorAll('[data-gallery-src]')||[]].map(n=>n.dataset.gallerySrc).filter(Boolean))].length;
+      if(staticColor&&staticCount>=2){
+        mark(info.querySelector('.design-pdp-color[data-variant-color="'+staticColor+'"]'),staticCount);
+        mark(document.querySelector('.mobile-photo-colors button[data-mobile-color="'+staticColor+'"]'),staticCount);
+      }
+      const apiCount=[...new Set(d?.source_photo_urls||[])].length;
+      if(d?.source_color&&apiCount>=2&&d.source_color!==staticColor){
+        mark(info.querySelector('.design-pdp-color[data-variant-color="'+d.source_color+'"]'),apiCount);
+        mark(document.querySelector('.mobile-photo-colors button[data-mobile-color="'+d.source_color+'"]'),apiCount);
       }
     }
   }
