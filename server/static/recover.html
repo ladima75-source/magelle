@@ -19,6 +19,7 @@ button{width:100%;min-height:48px;border:0;border-radius:8px;background:#45583c;
 button:disabled{opacity:.6}
 a{color:#425c33}
 #message{margin-top:14px;min-height:0;font-size:14px}
+.telegram-open{display:block;width:100%;min-height:48px;text-align:center;padding:12px;background:#45583c;color:#fff;border-radius:8px;text-decoration:none;font-weight:600}
 .error{color:#943525!important}
 .success{color:#355f31!important}
 .back{display:block;margin-top:18px;text-align:center;font-size:14px}
@@ -30,8 +31,14 @@ a{color:#425c33}
 <header>MaGelle <small>ADMIN 2.0</small></header>
 <section id="request-panel">
 <h1>Відновлення пароля</h1>
-<p>Ми надішлемо одноразовий код у ваш приватний чат з <strong>MaGelleOrdersBot</strong> у Telegram. Пароль у чаті передавати не потрібно.</p>
-<button type="button" id="request">Отримати код у Telegram</button>
+<p>Для безпечного відновлення відкрийте <strong>MaGelleOrdersBot</strong> у Telegram та натисніть «Start». Після перевірки власника групи замовлень код прийде особистим повідомленням, а не в групу.</p>
+<button type="button" id="request">Почати відновлення через Telegram</button>
+</section>
+<section id="telegram-panel" hidden>
+<h1>Підтвердіть Telegram</h1>
+<p>Натисніть кнопку, відкрийте чат з MaGelleOrdersBot та натисніть <strong>Start</strong>. Потім поверніться на цю сторінку — ми перевіримо повідомлення.</p>
+<a id="bot-link" class="telegram-open" href="https://t.me/MaGelleOrdersBot" rel="noopener noreferrer" target="_blank">Відкрити MaGelleOrdersBot</a>
+<button type="button" id="check" style="background:transparent;color:#45583c;border:1px solid #bbc4b5">Перевірити отримання коду</button>
 </section>
 <section id="reset-panel" hidden>
 <h1>Установити новий пароль</h1>
@@ -51,34 +58,70 @@ a{color:#425c33}
 (() => {
   const $ = id => document.getElementById(id);
   const labels = {
-    retry_later:'Новий код можна запитати трохи пізніше. Перевірте Telegram.',
-    private_orders_bot_required:'Приватний Telegram-чат для відновлення не налаштований. Зверніться до адміністратора.',
-    code_delivery_failed:'Не вдалося доставити код у Telegram. Спробуйте пізніше.',
-    invalid_code:'Невірний код. Перевірте повідомлення Telegram.',
-    code_expired_or_locked:'Термін дії коду минув або вичерпано спроби. Запитайте новий код.',
-    invalid_code_or_password:'Уведіть 8-значний код і пароль від 12 символів.',
-    invalid_origin:'Для відновлення відкрийте сторінку безпосередньо з сайту MaGelle Admin.',
+    retry_later:'Новий запит можна зробити трохи пізніше.',
+    orders_bot_not_configured:'Бот замовлень не налаштований. Зверніться до адміністратора.',
+    telegram_poll_unavailable:'Бот тимчасово не приймає команди. Спробуйте ще раз пізніше.',
+    telegram_owner_verification_unavailable:'Telegram не підтвердив власника групи замовлень.',
+    code_delivery_failed:'Не вдалося надіслати код у приватний Telegram. Переконайтеся, що натиснули Start.',
+    invalid_code:'Невірний код. Перевірте приватне повідомлення Telegram.',
+    code_expired_or_locked:'Код прострочений або перевищено кількість спроб. Почніть відновлення заново.',
+    recovery_request_expired:'Час відновлення вичерпано. Почніть заново.',
+    invalid_code_or_password:'Введіть 8-значний код і пароль довжиною не менше 12 символів.',
+    invalid_origin:'Відкрийте сторінку безпосередньо на сайті MaGelle Admin.',
   };
+  let stateToken='';
+  let timer=null;
+  const statusEl=$('message');
   function message(text,error=false){
-    $('message').textContent=text;
-    $('message').className=error?'error':'success';
+    statusEl.textContent=text;
+    statusEl.className=error?'error':'success';
   }
   async function api(path,payload={}){
-    const r=await fetch(path,{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const r=await fetch(path,{
+      method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+    });
     const j=await r.json();
     if(!r.ok||j.ok!==true)throw Error(j.error||'server_error');
     return j;
   }
-  $('request').onclick=$('resend').onclick=async()=>{
-    $('request').disabled=true;$('resend').disabled=true;message('');
+  function stopPolling(){if(timer!==null){clearInterval(timer);timer=null;}}
+  async function check(){
+    if(!stateToken||$('telegram-panel').hidden)return;
+    $('check').disabled=true;
     try{
-      await api('/api/admin/recovery/request');
-      $('request-panel').hidden=true;$('reset-panel').hidden=false;
-      message('Код надіслано. Перевірте MaGelleOrdersBot у Telegram.');
-    }catch(e){message(labels[e.message]||'Не вдалося надіслати код. Спробуйте пізніше.',true);}
-    finally{$('request').disabled=false;$('resend').disabled=false;}
+      const result=await api('/api/admin/recovery/poll',{request_token:stateToken});
+      if(result.pin_sent){
+        stopPolling();$('telegram-panel').hidden=true;$('reset-panel').hidden=false;
+        message('Код надіслано особисто у Telegram. Введіть його нижче.');
+      }else if(result.not_owner){
+        stopPolling();
+        message('Цей Telegram-акаунт не є власником групи замовлень MaGelle. Відкрийте бота з акаунта власника.',true);
+      }else{
+        message('Після натискання Start у боті поверніться сюди. Перевірка триває.');
+      }
+    }catch(e){
+      stopPolling();
+      message(labels[e.message]||'Не вдалося перевірити Telegram. Спробуйте ще раз.',true);
+    }finally{$('check').disabled=false;}
+  }
+  $('request').onclick=async()=>{
+    $('request').disabled=true;message('');
+    try{
+      const data=await api('/api/admin/recovery/request');
+      if(!data.bot_link||!data.request_token)throw Error('invalid_recovery_request');
+      stateToken=data.request_token;
+      $('bot-link').href=data.bot_link;
+      $('request-panel').hidden=true;$('telegram-panel').hidden=false;
+      message('Відкрийте бота та натисніть Start.');
+      timer=setInterval(check,5000);
+    }catch(e){
+      message(labels[e.message]||'Не вдалося почати відновлення. Спробуйте пізніше.',true);
+    }finally{$('request').disabled=false;}
   };
+  $('check').onclick=check;
+  window.addEventListener('focus',()=>{if(stateToken&&timer!==null)check();});
+  $('resend').onclick=()=>{stopPolling();location.reload();};
   $('reset-form').onsubmit=async e=>{
     e.preventDefault();
     const form=new FormData(e.currentTarget);
@@ -86,11 +129,14 @@ a{color:#425c33}
     if(password!==form.get('confirm')){message('Паролі не збігаються.',true);return;}
     $('finish').disabled=true;message('');
     try{
-      await api('/api/admin/recovery/complete',{code:String(form.get('code')||''),new_password:password});
-      $('reset-panel').hidden=true;
-      message('Пароль успішно змінено. Тепер увійдіть в Admin 2.0 під користувачем owner із новим паролем.');
-    }catch(e){message(labels[e.message]||'Не вдалося змінити пароль. Перевірте код і повторіть.',true);}
-    finally{$('finish').disabled=false;}
+      await api('/api/admin/recovery/complete',{
+        code:String(form.get('code')||''),new_password:password
+      });
+      stopPolling();$('reset-panel').hidden=true;
+      message('Пароль успішно змінено. Увійдіть в Admin 2.0 як owner із новим паролем.');
+    }catch(e){
+      message(labels[e.message]||'Не вдалося змінити пароль. Перевірте код і повторіть.',true);
+    }finally{$('finish').disabled=false;}
   };
 })();
 </script>
