@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#f7f8f4">
+<title>Відновлення доступу — MaGelle Admin</title>
+<style>
+:root{color-scheme:light}*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;background:#f7f8f4;color:#242923;font:16px/1.5 system-ui,sans-serif;display:grid;place-items:center;padding:16px}
+main{width:min(440px,100%);padding:28px;background:white;border:1px solid #dfe3da;border-radius:16px;box-shadow:0 12px 28px #2531220d}
+header{font:29px Georgia,serif;margin-bottom:16px}header small{display:block;font:11px system-ui,sans-serif;letter-spacing:2px;color:#6f786d}
+h1{font:24px Georgia,serif;margin:0 0 9px}
+p{margin:0 0 17px;color:#586150}
+label{display:grid;gap:7px;margin-top:12px;font-size:14px;font-weight:600}
+input{width:100%;min-height:48px;border:1px solid #b3bcad;border-radius:8px;padding:10px 12px;font:16px system-ui,sans-serif}
+button{width:100%;min-height:48px;border:0;border-radius:8px;background:#45583c;color:white;padding:12px;font:600 16px system-ui,sans-serif;cursor:pointer;margin-top:16px}
+button:disabled{opacity:.6}
+a{color:#425c33}
+#message{margin-top:14px;min-height:0;font-size:14px}
+.error{color:#943525!important}
+.success{color:#355f31!important}
+.back{display:block;margin-top:18px;text-align:center;font-size:14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<header>MaGelle <small>ADMIN 2.0</small></header>
+<section id="request-panel">
+<h1>Відновлення пароля</h1>
+<p>Ми надішлемо одноразовий код у ваш приватний чат з <strong>MaGelleOrdersBot</strong> у Telegram. Пароль у чаті передавати не потрібно.</p>
+<button type="button" id="request">Отримати код у Telegram</button>
+</section>
+<section id="reset-panel" hidden>
+<h1>Установити новий пароль</h1>
+<p>Знайдіть 8-значний код у Telegram. Він діє 10 хвилин і може бути використаний лише один раз.</p>
+<form id="reset-form">
+<label>Код із Telegram<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required></label>
+<label>Новий пароль (щонайменше 12 символів)<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label>
+<label>Повторіть пароль<input name="confirm" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label>
+<button type="submit" id="finish">Зберегти новий пароль</button>
+</form>
+<button type="button" id="resend" style="background:transparent;color:#45583c;border:1px solid #bbc4b5;font-size:14px">Отримати інший код</button>
+</section>
+<p id="message" role="status" aria-live="polite"></p>
+<a class="back" href="/admin/">Повернутися до входу</a>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const labels = {
+    retry_later:'Новий код можна запитати трохи пізніше. Перевірте Telegram.',
+    private_orders_bot_required:'Приватний Telegram-чат для відновлення не налаштований. Зверніться до адміністратора.',
+    code_delivery_failed:'Не вдалося доставити код у Telegram. Спробуйте пізніше.',
+    invalid_code:'Невірний код. Перевірте повідомлення Telegram.',
+    code_expired_or_locked:'Термін дії коду минув або вичерпано спроби. Запитайте новий код.',
+    invalid_code_or_password:'Уведіть 8-значний код і пароль від 12 символів.',
+    invalid_origin:'Для відновлення відкрийте сторінку безпосередньо з сайту MaGelle Admin.',
+  };
+  function message(text,error=false){
+    $('message').textContent=text;
+    $('message').className=error?'error':'success';
+  }
+  async function api(path,payload={}){
+    const r=await fetch(path,{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const j=await r.json();
+    if(!r.ok||j.ok!==true)throw Error(j.error||'server_error');
+    return j;
+  }
+  $('request').onclick=$('resend').onclick=async()=>{
+    $('request').disabled=true;$('resend').disabled=true;message('');
+    try{
+      await api('/api/admin/recovery/request');
+      $('request-panel').hidden=true;$('reset-panel').hidden=false;
+      message('Код надіслано. Перевірте MaGelleOrdersBot у Telegram.');
+    }catch(e){message(labels[e.message]||'Не вдалося надіслати код. Спробуйте пізніше.',true);}
+    finally{$('request').disabled=false;$('resend').disabled=false;}
+  };
+  $('reset-form').onsubmit=async e=>{
+    e.preventDefault();
+    const form=new FormData(e.currentTarget);
+    const password=String(form.get('password')||'');
+    if(password!==form.get('confirm')){message('Паролі не збігаються.',true);return;}
+    $('finish').disabled=true;message('');
+    try{
+      await api('/api/admin/recovery/complete',{code:String(form.get('code')||''),new_password:password});
+      $('reset-panel').hidden=true;
+      message('Пароль успішно змінено. Тепер увійдіть в Admin 2.0 під користувачем owner із новим паролем.');
+    }catch(e){message(labels[e.message]||'Не вдалося змінити пароль. Перевірте код і повторіть.',true);}
+    finally{$('finish').disabled=false;}
+  };
+})();
+</script>
+</body>
+</html>
