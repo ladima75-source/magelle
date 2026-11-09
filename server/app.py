@@ -117,7 +117,7 @@ def product_dict(r):
 def build_telegram_order_message(order, items):
     from html import escape
     e=lambda value: escape(str(value if value is not None else '—'))
-    lines=[f"🌿 <b>MaGelle · Нове замовлення #{e(order['id'])}</b>"]
+    lines=[f"🌿 <b>MaGelle · Нове замовлення #{catalog.public_order_number(order['id'])}</b>"]
     lines += [f"👤 <b>Покупець:</b> {e(order.get('customer_name'))}",
               f"📞 <b>Телефон:</b> {e(order.get('phone'))}"]
     if order.get('email'): lines.append(f"✉️ <b>Email:</b> {e(order['email'])}")
@@ -228,7 +228,7 @@ def legacy_application(environ,start_response):
         oid=cur.lastrowid
         con.executemany("INSERT INTO order_items(order_id,sku,qty,price_uah,family,design,size,vase_color,base_sku) VALUES(?,?,?,?,?,?,?,?,?)",[(oid,*x) for x in clean])
         con.commit(); con.close(); notify_telegram(oid)
-        start_response("201 Created",headers(cors(environ))); return [jdump({"ok":True,"order_id":oid,"total_uah":total})]
+        start_response("201 Created",headers(cors(environ))); return [jdump({"ok":True,"order_id":oid,"order_number":catalog.public_order_number(oid),"total_uah":total})]
       if path.startswith("/api/admin/"):
         if not auth_ok(environ):
             start_response("401 Unauthorized",headers(cors(environ))); return [jdump({"ok":False,"error":"unauthorized"})]
