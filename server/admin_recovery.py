@@ -177,7 +177,7 @@ def check_link(db, secret: str, request_token: str) -> dict:
         with closing(db()) as con, con:
             # Atomic update: do not overwrite another later pending reset request.
             cur = con.execute(
-                "UPDATE admin_recovery SET code_hash=?,link_nonce_hash='',verified_user_id=? "
+                "UPDATE admin_recovery SET code_hash=?,verified_user_id=? "
                 "WHERE id=1 AND link_nonce_hash=? AND expires_at>=?",
                 (_digest(secret, code), sender["id"], _digest(secret, request_token), int(time.time())),
             )
