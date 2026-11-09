@@ -42,12 +42,15 @@ def migrate(con):
         additions = {
             'products': {'product_id': 'TEXT', 'design_id': 'TEXT', 'color_code': 'TEXT',
                          'lifecycle': "TEXT NOT NULL DEFAULT 'active'", 'version': 'INTEGER NOT NULL DEFAULT 1'},
-            'order_items': {'product_id': 'TEXT', 'snapshot_json': 'TEXT'},
+            'admin_recovery': {'link_nonce_hash': "TEXT NOT NULL DEFAULT ''", 'verified_user_id': 'INTEGER'},
+        'order_items': {'product_id': 'TEXT', 'snapshot_json': 'TEXT'},
             'orders': {'ga4_client_id': 'TEXT', 'ga4_purchase_sent_at': 'TEXT',
                        'ga4_purchase_claimed_at': 'TEXT'},
         }
         for table, fields in additions.items():
             present = {r['name'] for r in con.execute('PRAGMA table_info(' + table + ')')}
+            if table == 'admin_recovery' and not present:
+                continue  # fresh database receives all columns in CREATE TABLE below
             for name, kind in fields.items():
                 if name not in present:
                     con.execute('ALTER TABLE ' + table + ' ADD COLUMN ' + name + ' ' + kind)
@@ -81,7 +84,8 @@ def migrate(con):
         CREATE TABLE IF NOT EXISTS login_attempts(ip TEXT PRIMARY KEY, count INTEGER NOT NULL, started REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS admin_recovery(
           id INTEGER PRIMARY KEY CHECK(id=1), code_hash TEXT NOT NULL,
-          requested_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0);
+          requested_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
+          link_nonce_hash TEXT NOT NULL DEFAULT '', verified_user_id INTEGER);
         CREATE TABLE IF NOT EXISTS owner_password(
           id INTEGER PRIMARY KEY CHECK(id=1), salt TEXT NOT NULL,
           password_hash TEXT NOT NULL, changed_at INTEGER NOT NULL);
