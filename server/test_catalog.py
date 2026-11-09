@@ -6,6 +6,8 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+import admin_recovery
 import catalog
 import import_catalog
 
@@ -72,6 +74,47 @@ class CatalogTests(unittest.TestCase):
         },[])
         self.assertIn('замовлення #'+str(200+order_id),text)
 
+    def test_recovery_group_owner_receives_private_pin(self):
+        secret=app.SECRET
+        calls=[]
+        def fake_api(token,method,payload):
+            calls.append((method,payload))
+            if method=='getUpdates':
+                return {'ok':True,'result':[{'update_id':27,'message':{
+                    'text':'/start mgreset_'+state['request_token'],
+                    'date':int(time.time()),
+                    'from':{'id':12345},
+                    'chat':{'type':'private','id':12345}}}]}
+            if method=='getChatAdministrators':
+                return {'ok':True,'result':[{'status':'creator','user':{'id':12345,'is_bot':False}}]}
+            return {'ok':True,'result':{}}
+        with patch.dict(os.environ,{'TELEGRAM_BOT_TOKEN':'test-bot','TELEGRAM_CHAT_ID':'-100123456'},clear=False):
+            with patch.object(admin_recovery,'_telegram',side_effect=fake_api):
+                state=admin_recovery.request_link(self.db,secret)
+                self.assertTrue(state['bot_link'].startswith('https://t.me/MaGelleOrdersBot?start=mgreset_'))
+                received=admin_recovery.check_link(self.db,secret,state['request_token'])
+                self.assertTrue(received['pin_sent'])
+                self.assertEqual(admin_recovery.check_link(self.db,secret,state['request_token'])['pin_sent'],True)
+                self.assertEqual([p['chat_id'] for m,p in calls if m=='sendMessage'],['12345'])
+                with self.db() as con:
+                    self.assertTrue(con.execute('SELECT code_hash FROM admin_recovery WHERE id=1').fetchone()[0])
+                with self.assertRaises(admin_recovery.RecoveryError):
+                    admin_recovery.complete_reset(self.db,secret,{'code':'00000000','new_password':'TestPasswordLongEnough1'})
+
+    def test_recovery_rejects_unverified_group_member(self):
+        with patch.dict(os.environ,{'TELEGRAM_BOT_TOKEN':'test-bot','TELEGRAM_CHAT_ID':'-100123456'},clear=False):
+            state=admin_recovery.request_link(self.db,app.SECRET)
+            message={'update_id':31,'message':{
+                'text':'/start mgreset_'+state['request_token'],
+                'date':int(time.time()),
+                'from':{'id':99999},'chat':{'type':'private','id':99999}}}
+            def fake_api(token,method,payload):
+                if method=='getUpdates': return {'ok':True,'result':[message]}
+                if method=='getChatAdministrators':
+                    return {'ok':True,'result':[{'status':'creator','user':{'id':12345,'is_bot':False}}]}
+                raise AssertionError('Unauthorized user must not receive a private PIN')
+            with patch.object(admin_recovery,'_telegram',side_effect=fake_api):
+                self.assertTrue(admin_recovery.check_link(self.db,app.SECRET,state['request_token'])['not_owner'])
     def test_additive_migration_idempotent(self):
         with self.db() as con:
             before=import_catalog.legacy_fingerprint(con);catalog.migrate(con);catalog.migrate(con)
