@@ -85,7 +85,58 @@ $('#editor-form').onsubmit=async e=>{
 };
 const orderValue=v=>v?esc(v):'<span class="muted">Не вказано</span>';
 function orderItem(i){const s=i.snapshot||{},src=i.display_photo_urls?.[0]||s.photo_urls?.[0],title=s.title_ua||[i.family,i.design].filter(Boolean).join(' · ')||i.sku;return `<div class="order-item">${photo(src,title)}<div class="order-item-main"><strong>${esc(title)}</strong><div class="row-meta"><span>${esc(i.sku)}</span><span>${esc(i.size||s.size_name||'')}</span><span>${esc(i.vase_color||s.color||'')}</span></div></div><div class="order-quantity"><small>Кількість</small><b>${esc(i.qty)} шт.</b></div><div class="order-price"><small>Ціна за одиницю</small><b>${money(i.price_uah)}</b><small>Сума</small><b>${money(Number(i.price_uah)*Number(i.qty))}</b></div></div>`;}
-async function loadOrders(){try{orders=await api('/api/admin/orders');$('#orders').innerHTML=orders.map(o=>`<article class="order"><div class="order-title"><div><span class="eyebrow">Замовлення</span><strong>#${o.id}</strong><small>${esc(o.created_at)} UTC</small></div><div class="order-total"><small>Загальна сума</small><strong>${money(o.total_uah)}</strong></div><div class="order-statuses">${orderSelect(o,'status',{new:'Нове',confirmed:'Підтверджено',production:'У виробництві',shipped:'Відправлено',done:'Завершено',cancelled:'Скасовано'})}${orderSelect(o,'payment_status',{unpaid:'Не оплачено',paid:'Оплачено',refunded:'Повернення'})}</div></div><div class="order-customer"><div><small>Покупець</small><strong>${orderValue(o.customer_name)}</strong></div><div><small>Телефон</small><strong>${orderValue(o.phone)}</strong></div><div><small>Email</small><strong>${orderValue(o.email)}</strong></div><div class="wide"><small>Доставка</small><strong>${orderValue(o.delivery)}</strong></div><div class="wide"><small>Коментар</small><strong>${orderValue(o.comment)}</strong></div></div><div class="order-items"><h3>Склад замовлення · ${o.items.reduce((n,i)=>n+Number(i.qty),0)} шт.</h3>${o.items.map(orderItem).join('')}</div></article>`).join('')||'<p class="empty">Замовлень ще немає.</p>';bind();$$('[data-order-field]').forEach(s=>s.onchange=async()=>{const o=orders.find(o=>String(o.id)===s.dataset.id),f=s.dataset.orderField;try{await api('/api/admin/orders/'+o.id,{method:'PUT',body:JSON.stringify({[f]:s.value,expected:{[f]:o[f]}})});await loadOrders();notice('Статус замовлення збережено.');}catch(e){notice(errorText(e),true);await loadOrders();}});}catch(e){notice(errorText(e),true);}}
-function orderSelect(o,k,options){return `<select aria-label="${k==='status'?'Статус замовлення':'Оплата'} #${o.id}" data-order-field="${k}" data-id="${o.id}" ${session.role==='viewer'?'disabled':''}>${Object.entries(options).map(([v,t])=>`<option value="${v}" ${o[k]===v?'selected':''}>${t}</option>`).join('')}</select>`;}
+
+// Customer-facing order numbers are deliberately offset; SQLite IDs are unchanged.
+function customerOrderNumber(o){return Number(o.order_number)||(Number(o.id)+200);}
+function ukrainianPhone(v){
+  let digits=String(v||'').replace(/\D/g,'');
+  if(/^0\d{9}$/.test(digits))digits='38'+digits;
+  return /^380\d{9}$/.test(digits)?digits:'';
+}
+function paymentRequestText(o){
+  const n=customerOrderNumber(o);
+  const lines=['Доброго дня! 🌿','Дякуємо за Ваше замовлення на сайті MaGelle! 🤍',
+    'Підтверджуємо замовлення №'+n+':'];
+  for(const i of o.items||[]){
+    const title=(i.snapshot?.title_ua||[i.family,i.design,i.size,i.vase_color].filter(Boolean).join(' — ')||i.sku).trim();
+    lines.push('Композиція: '+title);
+    lines.push('Кількість: '+i.qty+' шт.');
+    lines.push('Вартість: '+money(Number(i.price_uah)*Number(i.qty)));
+  }
+  lines.push('Разом до сплати: '+money(o.total_uah));
+  if(o.delivery)lines.push('Доставка: '+o.delivery+'. Вартість доставки — за тарифами перевізника.');
+  lines.push('Реквізити для оплати:');
+  lines.push('Отримувач: ФОП Лахно Марина Анатоліївна');
+  lines.push('РНОКПП: 2560502404');
+  lines.push('IBAN: UA763052990000026009050638932');
+  lines.push('Призначення платежу: ОПЛАТА ЗА ТОВАР');
+  lines.push('Передоплата — 100%.');
+  lines.push('Після оплати надішліть, будь ласка, квитанцію.');
+  lines.push('Після підтвердження надходження коштів підготуємо композицію до відправлення. 🌿');
+  return lines.join('\n');
+}
+function orderContactActions(o){
+  const n=ukrainianPhone(o.phone);
+  if(o.payment_status!=='unpaid'||o.status==='cancelled')return '<p class="order-outreach-note">Платіжне повідомлення недоступне: замовлення оплачене або скасоване.</p>';
+  const wa=n?'https://wa.me/'+n+'?text='+encodeURIComponent(paymentRequestText(o)):'';
+  const sms=n?'sms:+'+n+';?&body='+encodeURIComponent(paymentRequestText(o)):'';
+  return '<div class="order-contact-actions"><b>Підтвердження та оплата · №'+customerOrderNumber(o)+'</b><div class="order-contact-buttons">'+
+    '<button type="button" class="secondary" data-order-copy="'+o.id+'">Скопіювати повідомлення</button>'+
+    (n?'<a class="order-contact-link" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">WhatsApp</a><a class="order-contact-link" href="'+esc(sms)+'">SMS</a>':
+      '<span class="order-outreach-note">Телефон потрібно перевірити для відкриття месенджера.</span>')+
+    '</div><small>Чат відкривається з текстом; натисніть «Надіслати» вручну. Додавати номер у контакти не потрібно. Якщо SMS не заповнилося автоматично, скористайтеся копіюванням.</small></div>';
+}
+async function loadOrders(){try{orders=await api('/api/admin/orders');$('#orders').innerHTML=orders.map(o=>`<article class="order"><div class="order-title"><div><span class="eyebrow">Замовлення</span><strong>#${customerOrderNumber(o)}</strong><small>${esc(o.created_at)} UTC</small></div><div class="order-total"><small>Загальна сума</small><strong>${money(o.total_uah)}</strong></div><div class="order-statuses">${orderSelect(o,'status',{new:'Нове',confirmed:'Підтверджено',production:'У виробництві',shipped:'Відправлено',done:'Завершено',cancelled:'Скасовано'})}${orderSelect(o,'payment_status',{unpaid:'Не оплачено',paid:'Оплачено',refunded:'Повернення'})}</div></div><div class="order-customer"><div><small>Покупець</small><strong>${orderValue(o.customer_name)}</strong></div><div><small>Телефон</small><strong>${orderValue(o.phone)}</strong></div><div><small>Email</small><strong>${orderValue(o.email)}</strong></div><div class="wide"><small>Доставка</small><strong>${orderValue(o.delivery)}</strong></div><div class="wide"><small>Коментар</small><strong>${orderValue(o.comment)}</strong></div></div><div class="order-items"><h3>Склад замовлення · ${o.items.reduce((n,i)=>n+Number(i.qty),0)} шт.</h3>${o.items.map(orderItem).join('')}</div>${orderContactActions(o)}</article>`).join('')||'<p class="empty">Замовлень ще немає.</p>';bind();$('[data-order-copy]').forEach(b=>b.onclick=async()=>{
+  const o=orders.find(x=>String(x.id)===b.dataset.orderCopy);
+  if(!o)return;
+  const message=paymentRequestText(o);
+  try{await navigator.clipboard.writeText(message);notice('Повідомлення для замовлення №'+customerOrderNumber(o)+' скопійовано. Не відправлено.');}
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=message;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();
+    const copied=document.execCommand('copy');ta.remove();
+    notice(copied?'Повідомлення скопійовано. Не відправлено.':'Копіювання недоступне. Відкрийте WhatsApp або SMS.',!copied);
+  }
+});$('[data-order-field]').forEach(s=>s.onchange=async()=>{const o=orders.find(o=>String(o.id)===s.dataset.id),f=s.dataset.orderField;try{await api('/api/admin/orders/'+o.id,{method:'PUT',body:JSON.stringify({[f]:s.value,expected:{[f]:o[f]}})});await loadOrders();notice('Статус замовлення збережено.');}catch(e){notice(errorText(e),true);await loadOrders();}});}catch(e){notice(errorText(e),true);}}
+function orderSelect(o,k,options){return `<select aria-label="${k==='status'?'Статус замовлення':'Оплата'} #${customerOrderNumber(o)}" data-order-field="${k}" data-id="${o.id}" ${session.role==='viewer'?'disabled':''}>${Object.entries(options).map(([v,t])=>`<option value="${v}" ${o[k]===v?'selected':''}>${t}</option>`).join('')}</select>`;}
 async function loadAudit(){try{const rows=await api('/api/admin/audit');$('#audit').innerHTML=rows.map(r=>`<article class="audit-entry"><strong>${esc(r.action)} · ${esc(r.entity)}</strong><p class="row-meta">${esc(r.created_at)} UTC · ${esc(r.actor)}</p><details><summary>Порівняти значення</summary><b>До</b><pre>${esc(JSON.stringify(JSON.parse(r.before_json),null,2))}</pre><b>Після</b><pre>${esc(JSON.stringify(JSON.parse(r.after_json),null,2))}</pre></details></article>`).join('')||'<p class="empty">Змін поки немає.</p>';}catch(e){notice(errorText(e),true);}}
 boot();
