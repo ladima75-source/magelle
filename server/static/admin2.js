@@ -118,13 +118,23 @@ function paymentRequestText(o){
 function orderContactActions(o){
   const n=ukrainianPhone(o.phone);
   if(o.payment_status!=='unpaid'||o.status==='cancelled')return '<p class="order-outreach-note">Платіжне повідомлення недоступне: замовлення оплачене або скасоване.</p>';
-  const wa=n?'https://wa.me/'+n+'?text='+encodeURIComponent(paymentRequestText(o)):'';
-  const sms=n?'sms:+'+n+';?&body='+encodeURIComponent(paymentRequestText(o)):'';
+  const draft=encodeURIComponent(paymentRequestText(o));
+  const wa=n?'https://wa.me/'+n+'?text='+draft:'';
+  const sms=n?'sms:+'+n+';?&body='+draft:'';
+  // Telegram's documented phone deep links accept a draft, but may be blocked
+  // by the recipient's "find by phone" privacy setting.
+  const tg=n?'https://t.me/+'+n+'?text='+draft:'';
+  // Viber personal-account links are not equivalent to Business/Chatbot links;
+  // they open the chat without reliably pre-filling the message on iOS.
+  const viber=n?'viber://chat?number=%2B'+n:'';
   return '<div class="order-contact-actions"><b>Підтвердження та оплата · №'+customerOrderNumber(o)+'</b><div class="order-contact-buttons">'+
     '<button type="button" class="secondary" data-order-copy="'+o.id+'">Скопіювати повідомлення</button>'+
-    (n?'<a class="order-contact-link" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">WhatsApp</a><a class="order-contact-link" href="'+esc(sms)+'">SMS</a>':
+    (n?'<a class="order-contact-link" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>'+
+      '<a class="order-contact-link" href="'+esc(tg)+'" target="_blank" rel="noopener noreferrer">Telegram</a>'+
+      '<a class="order-contact-link" href="'+esc(viber)+'">Viber</a>'+
+      '<a class="order-contact-link" href="'+esc(sms)+'">SMS</a>':
       '<span class="order-outreach-note">Телефон потрібно перевірити для відкриття месенджера.</span>')+
-    '</div><small>Чат відкривається з текстом; натисніть «Надіслати» вручну. Додавати номер у контакти не потрібно. Якщо SMS не заповнилося автоматично, скористайтеся копіюванням.</small></div>';
+    '</div><small>WhatsApp і Telegram можуть відкрити чат із чернеткою. Telegram працює лише якщо приватність номера покупця це дозволяє. Для Viber спочатку натисніть «Скопіювати повідомлення», потім «Viber» і вставте текст у чат. SMS може не підставити текст автоматично. Контакти зберігати не потрібно. Жоден канал не надсилає повідомлення автоматично.</small></div>';
 }
 async function loadOrders(){try{orders=await api('/api/admin/orders');$('#orders').innerHTML=orders.map(o=>`<article class="order"><div class="order-title"><div><span class="eyebrow">Замовлення</span><strong>#${customerOrderNumber(o)}</strong><small>${esc(o.created_at)} UTC</small></div><div class="order-total"><small>Загальна сума</small><strong>${money(o.total_uah)}</strong></div><div class="order-statuses">${orderSelect(o,'status',{new:'Нове',confirmed:'Підтверджено',production:'У виробництві',shipped:'Відправлено',done:'Завершено',cancelled:'Скасовано'})}${orderSelect(o,'payment_status',{unpaid:'Не оплачено',paid:'Оплачено',refunded:'Повернення'})}</div></div><div class="order-customer"><div><small>Покупець</small><strong>${orderValue(o.customer_name)}</strong></div><div><small>Телефон</small><strong>${orderValue(o.phone)}</strong></div><div><small>Email</small><strong>${orderValue(o.email)}</strong></div><div class="wide"><small>Доставка</small><strong>${orderValue(o.delivery)}</strong></div><div class="wide"><small>Коментар</small><strong>${orderValue(o.comment)}</strong></div></div><div class="order-items"><h3>Склад замовлення · ${o.items.reduce((n,i)=>n+Number(i.qty),0)} шт.</h3>${o.items.map(orderItem).join('')}</div>${orderContactActions(o)}</article>`).join('')||'<p class="empty">Замовлень ще немає.</p>';bind();$('[data-order-copy]').forEach(b=>b.onclick=async()=>{
   const o=orders.find(x=>String(x.id)===b.dataset.orderCopy);
