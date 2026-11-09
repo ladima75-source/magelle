@@ -1,6 +1,7 @@
 import os, json, sqlite3, hmac, hashlib, time, urllib.request, urllib.parse
 import catalog
 import ga4_orders
+import admin_recovery
 import logging
 from pathlib import Path
 from urllib.parse import parse_qs
@@ -282,7 +283,20 @@ def application(environ,start_response):
             mime={'png':'image/png','jpg':'image/jpeg','webp':'image/webp'}[file.suffix[1:]]
             start_response('200 OK',[('Content-Type',mime),('X-Content-Type-Options','nosniff'),('Cache-Control','public,max-age=31536000,immutable')])
             return [file.read_bytes()]
-        result=catalog.route(environ,db,SECRET,ADMIN_PASSWORD,body_json,notify_telegram)
+        if path in ('/admin/recover', '/admin/recover/') and environ['REQUEST_METHOD']=='GET':
+            data=(STATIC/'recover.html').read_bytes()
+            start_response('200 OK', [
+                ('Content-Type','text/html; charset=utf-8'),
+                ('Cache-Control','no-store'),
+                ('X-Content-Type-Options','nosniff'),
+                ('Referrer-Policy','no-referrer'),
+                ('X-Frame-Options','DENY'),
+            ])
+            return [data]
+        if path.startswith('/api/admin/recovery/'):
+            result=admin_recovery.handle(environ,db,SECRET,body_json)
+        else:
+            result=catalog.route(environ,db,SECRET,ADMIN_PASSWORD,body_json,notify_telegram)
         if result is None:
             return legacy_application(environ,start_response)
         status,data,extra=result
@@ -294,7 +308,7 @@ def application(environ,start_response):
                 ga4_orders.sync_paid_purchase(db,int(path.rsplit('/',1)[-1]))
             except Exception:
                 logging.exception('GA4 confirmed purchase synchronization failed')
-    except catalog.ApiError as error:
+    except (catalog.ApiError, admin_recovery.RecoveryError) as error:
         status,data,extra=error.status,{'ok':False,'error':error.code},[]
     except sqlite3.IntegrityError:
         status,data,extra=409,{'ok':False,'error':'duplicate_sku_or_variant'},[]
@@ -302,6 +316,6 @@ def application(environ,start_response):
         status,data,extra=400,{'ok':False,'error':'invalid_request'},[]
     except Exception:
         status,data,extra=500,{'ok':False,'error':'server_error'},[]
-    reason={200:'OK',201:'Created',400:'Bad Request',401:'Unauthorized',403:'Forbidden',404:'Not Found',409:'Conflict',413:'Payload Too Large',429:'Too Many Requests',500:'Internal Server Error'}[status]
+    reason={200:'OK',201:'Created',400:'Bad Request',401:'Unauthorized',403:'Forbidden',404:'Not Found',405:'Method Not Allowed',409:'Conflict',413:'Payload Too Large',429:'Too Many Requests',500:'Internal Server Error',503:'Service Unavailable'}[status]
     start_response(str(status)+' '+reason,headers(cors(environ)+extra+[('X-Content-Type-Options','nosniff')]))
     return [jdump(data)]
