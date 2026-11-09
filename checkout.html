@@ -52,7 +52,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       // The server just accepted an unpaid REQUEST. GA4 generate_lead, never purchase.
       store.trackOrderRequest(j,submittedCart);
       store.saveCart([]);
-      itemsHost.innerHTML='<div class="order-success"><p class="eyebrow">Готово</p><h2>Замовлення №'+j.order_id+' прийнято</h2><p>Ми зв’яжемося з вами для підтвердження.</p></div>';
+      itemsHost.innerHTML='<div class="order-success"><p class="eyebrow">Готово</p><h2>Замовлення №'+(j.order_number||Number(j.order_id)+200)+' прийнято</h2><p>Ми зв’яжемося з вами для підтвердження.</p></div>';
       form.reset(); form.querySelectorAll('input,textarea,button').forEach(el=>el.disabled=true);
     }catch(e){
       const messages={
