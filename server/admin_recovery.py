@@ -14,6 +14,7 @@ import os
 import re
 import secrets
 import time
+from contextlib import closing
 import urllib.parse
 import urllib.request
 
@@ -80,7 +81,7 @@ def request_code(db, secret: str) -> dict:
     token, chat = _private_bot_chat()
     code = f"{secrets.randbelow(100000000):08d}"
     now = int(time.time())
-    with db() as con:
+    with closing(db()) as con, con:
         row = con.execute(
             "SELECT requested_at FROM admin_recovery WHERE id=1"
         ).fetchone()
@@ -95,7 +96,7 @@ def request_code(db, secret: str) -> dict:
         _send_code(token, chat, code)
     except Exception:
         # Failed delivery must not leave a valid reset code behind.
-        with db() as con:
+        with closing(db()) as con, con:
             con.execute(
                 "UPDATE admin_recovery SET code_hash='' WHERE id=1 AND code_hash=?",
                 (_digest(secret, code),),
@@ -111,25 +112,28 @@ def complete_reset(db, secret: str, data: dict) -> dict:
     if not re.fullmatch(r"[0-9]{8}", code) or not isinstance(password, str) or not 12 <= len(password) <= 128:
         raise RecoveryError("invalid_code_or_password")
     now = int(time.time())
-    with db() as con:
+    with closing(db()) as con, con:
         row = con.execute(
             "SELECT code_hash,expires_at,attempts FROM admin_recovery WHERE id=1"
         ).fetchone()
         if not row or not row["code_hash"] or now > row["expires_at"] or row["attempts"] >= MAX_ATTEMPTS:
             raise RecoveryError("code_expired_or_locked", 403)
-        if not hmac.compare_digest(row["code_hash"], _digest(secret, code)):
+        invalid_code = not hmac.compare_digest(row["code_hash"], _digest(secret, code))
+        if invalid_code:
             con.execute("UPDATE admin_recovery SET attempts=attempts+1 WHERE id=1")
-            raise RecoveryError("invalid_code", 403)
-        salt = secrets.token_bytes(16)
-        password_hash = hashlib.scrypt(
-            password.encode("utf-8"), salt=salt, n=16384, r=8, p=1
-        ).hex()
-        con.execute(
-            "INSERT OR REPLACE INTO owner_password(id,salt,password_hash,changed_at)"
-            " VALUES(1,?,?,?)",
-            (salt.hex(), password_hash, now),
-        )
-        con.execute("DELETE FROM admin_recovery WHERE id=1")
+        else:
+            salt = secrets.token_bytes(16)
+            password_hash = hashlib.scrypt(
+                password.encode("utf-8"), salt=salt, n=16384, r=8, p=1
+            ).hex()
+            con.execute(
+                "INSERT OR REPLACE INTO owner_password(id,salt,password_hash,changed_at)"
+                " VALUES(1,?,?,?)",
+                (salt.hex(), password_hash, now),
+            )
+            con.execute("DELETE FROM admin_recovery WHERE id=1")
+    if invalid_code:
+        raise RecoveryError("invalid_code", 403)
     return {"ok": True, "message": "password_changed"}
 
 
