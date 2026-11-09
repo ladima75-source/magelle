@@ -51,6 +51,27 @@ class CatalogTests(unittest.TestCase):
             return report
     def first_product(self,variant=False):
         with self.db() as con:return catalog.decoded(con.execute('SELECT * FROM products WHERE design_id IS '+('NOT NULL' if variant else 'NULL')+' ORDER BY sku LIMIT 1').fetchone())
+    def test_public_order_numbers_keep_internal_ids_intact(self):
+        self.assertEqual(catalog.public_order_number(6), 206)
+        self.assertEqual(catalog.public_order_number(7), 207)
+        p=self.first_product()
+        result=self.request('/api/orders','POST',{
+            'customer_name':'QA', 'phone':'TEST',
+            'items':[{'sku':p['sku'],'qty':1}]
+        },cookie=False)
+        self.assertEqual(result[0],201)
+        order_id=result[1]['order_id']
+        self.assertEqual(result[1]['order_number'],200+order_id)
+        all_orders=self.request('/api/admin/orders')[1]
+        latest=next(o for o in all_orders if o['id']==order_id)
+        self.assertEqual(latest['order_number'],200+order_id)
+        self.assertEqual(latest['items'][0]['qty'],1)
+        text=app.build_telegram_order_message({
+            'id':order_id,'total_uah':latest['total_uah'],
+            'customer_name':'QA','phone':'TEST'
+        },[])
+        self.assertIn('замовлення #'+str(200+order_id),text)
+
     def test_additive_migration_idempotent(self):
         with self.db() as con:
             before=import_catalog.legacy_fingerprint(con);catalog.migrate(con);catalog.migrate(con)
