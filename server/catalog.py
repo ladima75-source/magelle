@@ -79,6 +79,12 @@ def migrate(con):
           created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, actor TEXT NOT NULL, action TEXT NOT NULL,
           entity TEXT NOT NULL, before_json TEXT, after_json TEXT);
         CREATE TABLE IF NOT EXISTS login_attempts(ip TEXT PRIMARY KEY, count INTEGER NOT NULL, started REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS admin_recovery(
+          id INTEGER PRIMARY KEY CHECK(id=1), code_hash TEXT NOT NULL,
+          requested_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE IF NOT EXISTS owner_password(
+          id INTEGER PRIMARY KEY CHECK(id=1), salt TEXT NOT NULL,
+          password_hash TEXT NOT NULL, changed_at INTEGER NOT NULL);
         CREATE TABLE IF NOT EXISTS media_assets(source_url TEXT PRIMARY KEY, public_url TEXT NOT NULL,
           sha256 TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
         '''
@@ -290,7 +296,7 @@ def users(admin_password):
     # Optional named users, hashes only: {"anna":{"role":"editor","salt":"...","hash":"..."}}.
     return json.loads(os.getenv('MAGELLE_ADMIN_USERS','{}'))
 
-def actor_for(environ, secret, admin_password):
+def actor_for(environ, secret, admin_password, db=None):
     cookies = dict(part.strip().split('=',1) for part in environ.get('HTTP_COOKIE','').split(';') if '=' in part)
     value = cookies.get('magelle_admin','')
     if '.' not in value:
@@ -310,6 +316,14 @@ def actor_for(environ, secret, admin_password):
             return None
     except (ValueError,KeyError,TypeError):
         return None
+    if db and name == 'owner':
+        con = db()
+        try:
+            reset = con.execute("SELECT changed_at FROM owner_password WHERE id=1").fetchone()
+            if reset and ts < reset['changed_at']:
+                return None
+        finally:
+            con.close()
     return {'user':name,'role':role,'csrf':secret_sign(secret,'csrf:'+value)}
 
 def require_write(environ, actor, secret, level=2):
@@ -369,7 +383,15 @@ def route(environ, db, secret, admin_password, body_json, notify):
             attempt=con.execute('SELECT * FROM login_attempts WHERE ip=?',(ip,)).fetchone()
             if attempt and time.time()-attempt['started']<300 and attempt['count']>=10:
                 raise ApiError('try_later',429)
-            role='owner'; valid=bool(name=='owner' and admin_password and hmac.compare_digest(password,admin_password))
+            role='owner'; valid=False
+            if name=='owner':
+                reset=con.execute("SELECT salt,password_hash FROM owner_password WHERE id=1").fetchone()
+                if reset:
+                    digest=hashlib.scrypt(password.encode(),salt=bytes.fromhex(reset['salt']),
+                                         n=16384,r=8,p=1).hex()
+                    valid=hmac.compare_digest(digest,reset['password_hash'])
+                else:
+                    valid=bool(admin_password and hmac.compare_digest(password,admin_password))
             u=users(admin_password).get(name)
             if u:
                 role=u.get('role','viewer')
@@ -386,7 +408,7 @@ def route(environ, db, secret, admin_password, body_json, notify):
         return 200,{'ok':True},[('Set-Cookie',cookie)]
     if not path.startswith('/api/admin/'):
         return None
-    actor=actor_for(environ,secret,admin_password)
+    actor=actor_for(environ,secret,admin_password,db)
     if not actor: raise ApiError('unauthorized',401)
     if path == '/api/admin/session' and method == 'GET': return 200,actor,[]
     if method not in ('GET','HEAD'):
