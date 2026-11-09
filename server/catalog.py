@@ -17,6 +17,16 @@ STATUSES = {'hidden', 'stock', 'preorder'}
 CODE = re.compile(r'^[A-Z0-9]{2,12}$')
 SKU = re.compile(r'^MG(?:-[A-Z0-9]{2,12}){3,5}$')
 ROLES = {'owner': 3, 'editor': 2, 'viewer': 1}
+# Customer-visible numbers are 200 + internal SQLite primary key.
+# Never alter existing IDs: preserve links, order items, and accounting.
+PUBLIC_ORDER_OFFSET = 200
+
+
+def public_order_number(order_id):
+    identity = int(order_id)
+    if identity < 1:
+        raise ValueError('invalid_internal_order_id')
+    return PUBLIC_ORDER_OFFSET + identity
 
 class ApiError(Exception):
     def __init__(self, code, status=400):
@@ -349,7 +359,7 @@ def route(environ, db, secret, admin_password, body_json, notify):
             oid=cur.lastrowid
             con.executemany('INSERT INTO order_items(order_id,sku,qty,price_uah,family,design,size,vase_color,base_sku,product_id,snapshot_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)',[(oid,*x) for x in clean])
         notify(oid)
-        return 201,{'ok':True,'order_id':oid,'total_uah':total},[]
+        return 201,{'ok':True,'order_id':oid,'order_number':public_order_number(oid),'total_uah':total},[]
     if path == '/api/admin/login' and method == 'POST':
         data=body_json(environ); name=data.get('username') or 'owner'; password=data.get('password','')
         if not isinstance(name,str) or not isinstance(password,str) or len(password)>1000: raise ApiError('invalid_credentials',401)
@@ -474,6 +484,7 @@ def route(environ, db, secret, admin_password, body_json, notify):
             orders=[dict(x) for x in con.execute('SELECT * FROM orders ORDER BY id DESC')]
             assets={r['source_url']:r['public_url'] for r in con.execute('SELECT source_url,public_url FROM media_assets')}
             for o in orders:
+                o['order_number']=public_order_number(o['id'])
                 o['items']=[]
                 for row in con.execute('SELECT * FROM order_items WHERE order_id=?',(o['id'],)):
                     item=dict(row)
