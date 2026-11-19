@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 import admin_recovery
+import link_tracking
 import catalog
 import import_catalog
 
@@ -53,6 +54,58 @@ class CatalogTests(unittest.TestCase):
             return report
     def first_product(self,variant=False):
         with self.db() as con:return catalog.decoded(con.execute('SELECT * FROM products WHERE design_id IS '+('NOT NULL' if variant else 'NULL')+' ORDER BY sku LIMIT 1').fetchone())
+    def test_b2b_redirects_are_first_party_and_count_server_hits_not_human_clicks(self):
+        links=link_tracking.list_links(self.db)
+        self.assertEqual(len(links),17)
+        self.assertEqual(len({l['slug'] for l in links}),len(links))
+        row=next(x for x in links if x['message_tracking_id']=='MG-B2B-034' and x['link_key']=='catalog')
+        url=row['destination_url']
+        self.assertTrue(url.startswith('https://magelle.com.ua/catalog.html?'))
+        self.assertIn('utm_content=MG-B2B-034',url)
+        self.assertIn('utm_source=b2b_email',url)
+        self.assertIn('utm_medium=email',url)
+        self.assertNotIn('sicheslav',url)
+        self.assertNotIn('@',url)
+        self.assertEqual(link_tracking.redirect(self.db,row['slug'],method='HEAD'),url)
+        self.assertEqual(link_tracking.redirect(self.db,row['slug'],user_agent='facebookexternalhit/1.1'),url)
+        self.assertEqual(link_tracking.redirect(self.db,row['slug'],user_agent='MobileSafari/21'),url)
+        new=next(x for x in link_tracking.list_links(self.db) if x['slug']==row['slug'])
+        self.assertEqual(new['total_requests'],2)
+        self.assertEqual(new['likely_bot_requests'],1)
+        self.assertEqual(new['unclassified_requests'],1)
+        self.assertNotIn('email',str(new).lower().replace('b2b_email',''))
+        with self.assertRaises(link_tracking.TrackingError):
+            link_tracking.redirect(self.db,'http:example')
+        self.assertEqual(len(link_tracking.list_links(self.db)),17)
+        self.assertEqual(link_tracking.create_link(self.db,'email','MG-B2B-034','catalog')['slug'],row['slug'])
+        with self.assertRaises(link_tracking.TrackingError):
+            link_tracking.create_link(self.db,'email','MG-B2B-034','other')
+        with self.assertRaises(link_tracking.TrackingError):
+            link_tracking.create_link(self.db,'email','MG-B2B-034','__proto__')
+        self.assertEqual(link_tracking.create_link(self.db,'instagram_direct','MG-B2B-010-IG2','catalog')['message_tracking_id'],'MG-B2B-010-IG2')
+
+    def test_b2b_links_admin_auth_and_csrf(self):
+        def call(method, cookie=True, csrf=True):
+            body=json.dumps({'channel':'instagram_direct',
+                             'message_tracking_id':'MG-B2B-044-IG2',
+                             'link_key':'catalog'}).encode()
+            environ={'REQUEST_METHOD':method,'PATH_INFO':'/api/admin/b2b-links',
+                     'HTTP_HOST':'api.magelle.com.ua','HTTP_ORIGIN':'https://api.magelle.com.ua',
+                     'CONTENT_LENGTH':str(len(body)),'wsgi.input':io.BytesIO(body)}
+            if cookie:environ['HTTP_COOKIE']='magelle_admin='+self.cookie
+            if csrf:environ['HTTP_X_CSRF_TOKEN']=self.csrf
+            return link_tracking.route(environ,self.db,app.SECRET,app.ADMIN_PASSWORD,app.body_json,catalog)
+        with self.assertRaises(link_tracking.TrackingError) as unauthorized:
+            call('GET',cookie=False)
+        self.assertEqual(unauthorized.exception.status,401)
+        with self.assertRaises(catalog.ApiError) as invalid_csrf:
+            call('POST',csrf=False)
+        self.assertEqual(invalid_csrf.exception.status,403)
+        response=call('POST')
+        self.assertEqual(response[0],201)
+        self.assertIn('/r/',response[1]['link']['public_url'])
+        self.assertEqual(call('GET')[0],200)
+
     def test_public_order_numbers_keep_internal_ids_intact(self):
         self.assertEqual(catalog.public_order_number(6), 206)
         self.assertEqual(catalog.public_order_number(7), 207)
