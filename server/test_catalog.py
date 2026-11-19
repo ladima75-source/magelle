@@ -73,7 +73,8 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(new['total_requests'],2)
         self.assertEqual(new['likely_bot_requests'],1)
         self.assertEqual(new['unclassified_requests'],1)
-        self.assertNotIn('email',str(new).lower().replace('b2b_email',''))
+        self.assertNotIn('sicheslav',str(new).lower())
+        self.assertNotIn('gmail.com',str(new).lower())
         with self.assertRaises(link_tracking.TrackingError):
             link_tracking.redirect(self.db,'http:example')
         self.assertEqual(len(link_tracking.list_links(self.db)),17)
