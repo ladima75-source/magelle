@@ -57,13 +57,15 @@
     const day=Number(parts.year+parts.month+parts.day);
     return day>=20261123 && day<=20261129;
   };
-  if(blackFridayDay() && document.querySelector('.site-header')){
+  const showBlackFridayBanner=()=>{
+    // Only advertise crossed-out prices after the live API confirms sale prices.
+    if(!blackFridayDay() || !document.querySelector('.site-header') || document.querySelector('.magelle-bf-ribbon'))return;
     const ribbon=document.createElement('aside');
     ribbon.className='magelle-bf-ribbon';
     ribbon.setAttribute('aria-label','Black Friday MaGelle');
     ribbon.innerHTML='<a href="/catalog.html"><span class="magelle-bf-label">BLACK FRIDAY <i>MaGelle</i></span><span class="magelle-bf-offer"><strong>−25%</strong> на одну композицію <b>·</b> <strong>−30%</strong> від двох</span><span class="magelle-bf-end">До 29 листопада</span><span class="magelle-bf-cta">Обрати →</span></a>';
     document.querySelector('.site-header').after(ribbon);
-  }
+  };
 
   const familyCode=el=>el?.dataset?.familyCode||(el?.dataset?.family==='Architectural Step'?'AS':el?.dataset?.family==='Sculptural Fold'?'SF':'OF');
   const canonicalSku=(family,sizeCode,color)=>'MG-'+family+'-'+sizeCode+'-'+color;
@@ -761,6 +763,7 @@
   }
   function applyProductData(products){
     activeProducts=new Map(products.map(p=>[p.sku,p]));
+    if(products.some(p=>p?.bf_promo))showBlackFridayBanner();
     products.forEach(p=>(p.aliases||[]).forEach(alias=>activeProducts.set(alias,p)));
     document.querySelectorAll('.product-card[data-sku]:not(.sku-card)').forEach(card=>{
       showPrice(card.querySelector('.product-meta>b'),activeProducts.get(card.dataset.sku));
