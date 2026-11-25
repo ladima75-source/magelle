@@ -64,7 +64,13 @@
     ribbon.className='magelle-bf-ribbon';
     ribbon.setAttribute('aria-label','Black Friday MaGelle');
     ribbon.innerHTML='<a href="/catalog.html"><span class="magelle-bf-label">BLACK FRIDAY <i>MaGelle</i></span><span class="magelle-bf-offer"><strong>−25%</strong> на одну композицію <b>·</b> <strong>−30%</strong> від двох</span><span class="magelle-bf-end">До 29 листопада</span><span class="magelle-bf-cta">Обрати →</span></a>';
-    document.querySelector('.site-header').after(ribbon);
+    const header=document.querySelector('.site-header');
+    header.appendChild(ribbon);
+    body.classList.add('magelle-bf-fixed');
+    const measure=()=>document.documentElement.style.setProperty('--magelle-bf-header-height',Math.ceil(header.getBoundingClientRect().height)+'px');
+    measure();
+    if(typeof ResizeObserver==='function')new ResizeObserver(measure).observe(header);
+    else window.addEventListener('resize',measure);
   };
 
   const familyCode=el=>el?.dataset?.familyCode||(el?.dataset?.family==='Architectural Step'?'AS':el?.dataset?.family==='Sculptural Fold'?'SF':'OF');

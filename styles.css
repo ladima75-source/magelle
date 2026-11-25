@@ -562,3 +562,16 @@
 .magelle-cart-sale-note{margin:14px 0 0;padding:10px 12px;background:#ebd7cf;color:#5d2937;font-size:12px;font-weight:600}
 @media(max-width:1000px){.magelle-bf-ribbon>a{gap:16px}.magelle-bf-end{display:none}.magelle-bf-offer{font-size:13px}.magelle-bf-offer strong{font-size:24px}}
 @media(max-width:650px){.magelle-bf-ribbon>a{width:calc(100% - 28px);display:grid;grid-template-columns:1fr auto;gap:3px 12px;min-height:80px;padding:10px 0}.magelle-bf-label{font-size:13px;grid-column:1}.magelle-bf-label i{font-size:12px}.magelle-bf-offer{grid-column:1;grid-row:2;font-size:11px;white-space:normal}.magelle-bf-offer strong{font-size:21px}.magelle-bf-offer b{margin:0 4px}.magelle-bf-cta{grid-column:2;grid-row:1 / span 2;font-size:9px;padding:8px 9px}.magelle-price-after{font-size:16px!important}}
+
+/* Keep the promotional ribbon in the persistent site header, without covering content. */
+.site-header>.magelle-bf-ribbon{width:100%;z-index:1}
+html:has(body.magelle-bf-fixed){scroll-padding-top:var(--magelle-bf-header-height,75px)}
+@media(max-width:980px){
+  body.magelle-bf-fixed .site-nav{top:100%;z-index:2;max-height:calc(100dvh - var(--magelle-bf-header-height,75px));overflow-y:auto}
+}
+@media(max-width:640px){
+  body.magelle-bf-fixed{padding-top:var(--magelle-bf-header-height,64px)}
+  body.magelle-bf-fixed .drawer-backdrop{z-index:1001}
+  body.magelle-bf-fixed .cart-drawer{z-index:1002}
+  body.magelle-bf-fixed .skip:focus{z-index:1003}
+}
