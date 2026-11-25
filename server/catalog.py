@@ -8,6 +8,8 @@ import re
 import secrets
 import time
 import uuid
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from contextlib import contextmanager
 from urllib.parse import urlsplit, unquote
 from pathlib import Path
@@ -20,6 +22,18 @@ ROLES = {'owner': 3, 'editor': 2, 'viewer': 1}
 # Customer-visible numbers are 200 + internal SQLite primary key.
 # Never alter existing IDs: preserve links, order items, and accounting.
 PUBLIC_ORDER_OFFSET = 200
+
+# Temporary promo. Stored base prices and historical orders stay untouched.
+BF_ZONE = ZoneInfo('Europe/Kyiv')
+BF_START = datetime(2026, 11, 23, tzinfo=BF_ZONE)
+BF_END = datetime(2026, 11, 30, tzinfo=BF_ZONE)
+
+def black_friday_active(now=None):
+    moment = now if now is not None else datetime.now(BF_ZONE)
+    return BF_START <= moment.astimezone(BF_ZONE) < BF_END
+
+def bf_price(price_uah, percent):
+    return (int(price_uah) * (100 - percent) + 50) // 100
 
 
 def public_order_number(order_id):
@@ -290,7 +304,16 @@ def catalog(con, public=False):
         # Original links stay in storage/audit; public clients receive stable identical media.
         for p in products: p['photo_urls']=p.pop('display_photo_urls')
         for d in designs: d['source_photo_urls']=d.pop('display_source_photo_urls')
+        if black_friday_active():
+            for p in products:
+                if p['status']=='stock' and p.get('price_uah') and p['lifecycle']=='active':
+                    regular=int(p['price_uah'])
+                    p['old_price_uah']=regular
+                    p['price_uah']=bf_price(regular,25)
+                    p['bf_promo']=True
     return {'enabled':bool(meta['enabled']), 'version':meta['version'],'designs':designs,'products':products,
+            'promotion':{'id':'black-friday-2026','active':bool(public and black_friday_active()),
+                         'single_percent':25,'two_plus_percent':30,'ends_at':'2026-11-29T23:59:59+02:00'},
             'colors':[dict(x) for x in con.execute('SELECT * FROM colors ORDER BY rowid')]}
 
 def secret_sign(secret, value):
@@ -359,7 +382,7 @@ def route(environ, db, secret, admin_password, body_json, notify):
         if not isinstance(items,list) or not 1<=len(items)<=20:
             raise ApiError('empty_or_too_large_order')
         with transaction(db) as con:
-            total=0; clean=[]
+            total=0; clean=[]; selected=[]; ready_qty=0
             for it in items:
                 if not isinstance(it,dict): raise ApiError('invalid_item')
                 item_sku=text(it,'sku',80,True)
@@ -368,10 +391,20 @@ def route(environ, db, secret, admin_password, body_json, notify):
                 qty=integer(it.get('qty',1),'quantity',20)
                 if qty<1: raise ApiError('invalid_quantity')
                 d=con.execute('SELECT * FROM designs WHERE id=?',(p['design_id'],)).fetchone() if p['design_id'] else None
+                selected.append((item_sku,qty,p,d))
+                if p['status']=='stock': ready_qty+=qty
+            sale=black_friday_active()
+            rate=30 if ready_qty>=2 else 25
+            for item_sku,qty,p,d in selected:
+                regular=int(p['price_uah'])
+                price=bf_price(regular,rate) if sale and p['status']=='stock' else regular
                 snapshot={'sku':item_sku,'title_ua':p['title_ua'],'series':p['series'],'design':d['title_ua'] if d else '',
-                          'size_name':p['size_name'],'color':p['color'],'price_uah':p['price_uah'],'photo_urls':json.loads(p['photo_urls'])}
-                clean.append((item_sku,qty,p['price_uah'],p['series'],snapshot['design'],p['size_name'],p['color'],p['sku'],p['product_id'],dumps(snapshot)))
-                total+=qty*p['price_uah']
+                          'size_name':p['size_name'],'color':p['color'],'price_uah':price,
+                          'old_price_uah':regular if price!=regular else None,
+                          'promotion_id':'black-friday-2026' if price!=regular else None,
+                          'photo_urls':json.loads(p['photo_urls'])}
+                clean.append((item_sku,qty,price,p['series'],snapshot['design'],p['size_name'],p['color'],p['sku'],p['product_id'],dumps(snapshot)))
+                total+=qty*price
             cur=con.execute('INSERT INTO orders(customer_name,phone,email,delivery,comment,total_uah,ga4_client_id) VALUES(?,?,?,?,?,?,?)',
                             (name,phone,text(data,'email',300),text(data,'delivery',3000),text(data,'comment',3000),total,client_id))
             oid=cur.lastrowid
