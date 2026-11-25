@@ -36,6 +36,11 @@ class CatalogTests(unittest.TestCase):
             con.execute("INSERT INTO order_items(order_id,sku,qty,price_uah,base_sku) VALUES(1,'MG-OF-VYR-GRA',1,4200,'MG-OF-VYR-GRA')")
         ts=str(int(time.time())); self.cookie=ts+'.'+catalog.secret_sign(app.SECRET,ts)
         self.csrf=catalog.secret_sign(app.SECRET,'csrf:'+self.cookie)
+        # Existing order-history tests use immutable catalog prices, even during
+        # a real Black Friday window. Promotion has dedicated tests below.
+        self._baseline_promotion=patch.object(catalog,'black_friday_active',return_value=False)
+        self._baseline_promotion.start()
+        self.addCleanup(self._baseline_promotion.stop)
     def tearDown(self): self.directory.cleanup()
     def db(self):
         con=sqlite3.connect(self.path,factory=ClosingConnection); con.row_factory=sqlite3.Row; con.execute('PRAGMA foreign_keys=ON');return con
@@ -54,6 +59,47 @@ class CatalogTests(unittest.TestCase):
             return report
     def first_product(self,variant=False):
         with self.db() as con:return catalog.decoded(con.execute('SELECT * FROM products WHERE design_id IS '+('NOT NULL' if variant else 'NULL')+' ORDER BY sku LIMIT 1').fetchone())
+    def test_black_friday_discounted_catalog_and_server_orders(self):
+        sku=self.first_product()['sku']
+        with patch.object(catalog,'black_friday_active',return_value=True):
+            status,model,_=self.request('/api/catalog')
+            self.assertEqual(status,200)
+            item=next(p for p in model['products'] if p['sku']==sku)
+            self.assertEqual(item['price_uah'],3150)
+            self.assertEqual(item['old_price_uah'],4200)
+            self.assertTrue(item['bf_promo'])
+            self.assertTrue(model['promotion']['active'])
+            def order(qty):
+                return self.request('/api/orders','POST',{
+                    'customer_name':'QA', 'phone':'TEST',
+                    'items':[{'sku':sku,'qty':qty}]
+                },cookie=False)
+            single=order(1)
+            self.assertEqual(single[0],201)
+            self.assertEqual(single[1]['total_uah'],3150)
+            pair=order(2)
+            self.assertEqual(pair[0],201)
+            self.assertEqual(pair[1]['total_uah'],5880)
+            row=self.request('/api/admin/orders')[1]
+            latest=next(x for x in row if x['id']==pair[1]['order_id'])
+            self.assertEqual(latest['items'][0]['price_uah'],2940)
+            self.assertEqual(latest['total_uah'],5880)
+        regular=self.request('/api/catalog')[1]
+        item=next(p for p in regular['products'] if p['sku']==sku)
+        self.assertEqual(item['price_uah'],4200)
+        self.assertNotIn('bf_promo',item)
+
+    def test_black_friday_kyiv_midnight_boundaries(self):
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        # Inspect the real function, not the usual mocked-out test baseline.
+        original=self._baseline_promotion.temp_original
+        k=ZoneInfo('Europe/Kyiv')
+        self.assertFalse(original(datetime(2026,11,22,23,59,tzinfo=k)))
+        self.assertTrue(original(datetime(2026,11,23,0,0,tzinfo=k)))
+        self.assertTrue(original(datetime(2026,11,29,23,59,tzinfo=k)))
+        self.assertFalse(original(datetime(2026,11,30,0,0,tzinfo=k)))
+
     def test_b2b_redirects_are_first_party_and_count_server_hits_not_human_clicks(self):
         links=link_tracking.list_links(self.db)
         self.assertEqual(len(links),17)
