@@ -49,6 +49,21 @@
   const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let catalogModel=null;
   const body=document.body;
+  // Black Friday campaign is only visible during 23–29 Nov (Kyiv time).
+  const blackFridayDay=()=>{
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{
+      timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'
+    }).formatToParts(new Date()).filter(x=>x.type!=='literal').map(x=>[x.type,x.value]));
+    const day=Number(parts.year+parts.month+parts.day);
+    return day>=20261123 && day<=20261129;
+  };
+  if(blackFridayDay() && document.querySelector('.site-header')){
+    const ribbon=document.createElement('aside');
+    ribbon.className='magelle-bf-ribbon';
+    ribbon.setAttribute('aria-label','Black Friday MaGelle');
+    ribbon.innerHTML='<a href="/catalog.html"><span class="magelle-bf-label">BLACK FRIDAY <i>MaGelle</i></span><span class="magelle-bf-offer"><strong>−25%</strong> на одну композицію <b>·</b> <strong>−30%</strong> від двох</span><span class="magelle-bf-end">До 29 листопада</span><span class="magelle-bf-cta">Обрати →</span></a>';
+    document.querySelector('.site-header').after(ribbon);
+  }
 
   const familyCode=el=>el?.dataset?.familyCode||(el?.dataset?.family==='Architectural Step'?'AS':el?.dataset?.family==='Sculptural Fold'?'SF':'OF');
   const canonicalSku=(family,sizeCode,color)=>'MG-'+family+'-'+sizeCode+'-'+color;
@@ -199,6 +214,24 @@
     document.querySelectorAll('#cart-count').forEach(el=>el.textContent=String(n));
   };
   const money=v=>new Intl.NumberFormat('uk-UA').format(Number(v||0))+' грн';
+  // Never simulate an API price change. Apply only when the server flags promo pricing.
+  const promoEligible=p=>!!(p?.bf_promo && Number(p.old_price_uah)>Number(p.price_uah));
+  const eligibleQty=cart=>(cart||[]).reduce((sum,item)=>sum+(promoEligible(activeProducts.get(item.sku))?Number(item.qty||0):0),0);
+  const cartUnitPrice=(p,cart)=>promoEligible(p)&&eligibleQty(cart)>=2
+    ?Math.round(Number(p.old_price_uah)*0.70)
+    :Number(p?.price_uah||0);
+  const showPrice=(el,p)=>{
+    if(!el)return;
+    if(!p || !(Number(p.price_uah)>0)){
+      el.textContent='Ціну уточнюємо';el.classList.add('price-pending');el.classList.remove('magelle-promo-price');
+      return;
+    }
+    el.classList.remove('price-pending');
+    if(promoEligible(p)){
+      el.classList.add('magelle-promo-price');
+      el.innerHTML='<del class="magelle-price-before">'+money(p.old_price_uah)+'</del><span class="magelle-price-after">'+money(p.price_uah)+'</span><span class="magelle-price-rebate">−25%</span>';
+    }else{el.classList.remove('magelle-promo-price');el.textContent=money(p.price_uah)}
+  };
   let activeProducts=new Map();
   // Exact Admin 2.0 SKU analytics, never buyer names/phones or email.
   const GA_MEASUREMENT_ID='G-1RM1S55BZW';
@@ -219,7 +252,7 @@
   const trackBeginCheckout=cart=>{
     const lines=(cart||[]).map(x=>({p:activeProducts.get(x.sku),qty:Number(x.qty)}));
     if(!lines.length||lines.some(x=>!x.p||!(Number(x.p.price_uah)>0)||!Number.isInteger(x.qty)||x.qty<1))return false;
-    const items=lines.map(x=>analyticsItem(x.p,x.qty));
+    const items=lines.map(x=>({...analyticsItem(x.p,x.qty),price:cartUnitPrice(x.p,cart)}));
     gaEvent('begin_checkout',{currency:'UAH',value:items.reduce((sum,x)=>sum+x.price*x.quantity,0),items});
     return true;
   };
@@ -286,10 +319,12 @@
     const rows=cart.map(item=>{
       const p=productForItem(item);
       if(!p)return '<div class="cart-line"><div><b>'+escapeHtml(itemTitle(item,p))+'</b><small>'+escapeHtml(itemDetails(item))+' · Тимчасово недоступно</small></div><button type="button" data-cart-remove="'+escapeHtml(item.sku)+'">×</button></div>';
-      total+=Number(p.price_uah||0)*item.qty;
-      return '<div class="cart-line"><div class="cart-line-main"><b>'+escapeHtml(itemTitle(item,p))+'</b><small>'+escapeHtml((p.color?'Ваза: '+p.color+' · ':'')+item.sku)+' · '+money(p.price_uah)+'</small><div class="cart-qty"><button type="button" data-cart-dec="'+escapeHtml(item.sku)+'">−</button><span>'+escapeHtml(item.qty)+'</span><button type="button" data-cart-inc="'+escapeHtml(item.sku)+'">+</button></div></div><div class="cart-line-side"><b>'+money(Number(p.price_uah||0)*item.qty)+'</b><button type="button" data-cart-remove="'+escapeHtml(item.sku)+'">×</button></div></div>';
+      const unit=cartUnitPrice(p,cart);
+      total+=unit*item.qty;
+      return '<div class="cart-line"><div class="cart-line-main"><b>'+escapeHtml(itemTitle(item,p))+'</b><small>'+escapeHtml((p.color?'Ваза: '+p.color+' · ':'')+item.sku)+' · '+money(unit)+'</small><div class="cart-qty"><button type="button" data-cart-dec="'+escapeHtml(item.sku)+'">−</button><span>'+escapeHtml(item.qty)+'</span><button type="button" data-cart-inc="'+escapeHtml(item.sku)+'">+</button></div></div><div class="cart-line-side"><b>'+money(unit*item.qty)+'</b><button type="button" data-cart-remove="'+escapeHtml(item.sku)+'">×</button></div></div>';
     }).join('');
-    host.innerHTML=rows+'<div class="cart-total"><span>Разом</span><b>'+money(total)+'</b></div><a class="btn dark wide cart-checkout" href="/checkout.html">Оформити замовлення</a>';
+    const saleNote=eligibleQty(cart)>=2?'<p class="magelle-cart-sale-note">Black Friday · знижка 30% на готові композиції врахована</p>':'';
+    host.innerHTML=rows+saleNote+'<div class="cart-total"><span>Разом</span><b>'+money(total)+'</b></div><a class="btn dark wide cart-checkout" href="/checkout.html">Оформити замовлення</a>';
     host.querySelectorAll('[data-cart-remove]').forEach(btn=>btn.onclick=()=>setQty(btn.dataset.cartRemove,0));
     host.querySelectorAll('[data-cart-dec]').forEach(btn=>btn.onclick=()=>{const item=getCart().find(x=>x.sku===btn.dataset.cartDec);if(item)setQty(item.sku,item.qty-1)});
     host.querySelectorAll('[data-cart-inc]').forEach(btn=>btn.onclick=()=>{const item=getCart().find(x=>x.sku===btn.dataset.cartInc);if(item)setQty(item.sku,item.qty+1)});
@@ -383,8 +418,7 @@
       if(link){const url=new URL(card.dataset.pdpUrl||'#',location.origin);url.searchParams.set('color',code);link.href=url.href;}
       const p=activeProducts.get(itemSku)||(!catalogModel?.enabled?activeProducts.get(baseSku):null),price=card.querySelector('.product-meta>b');
       if(price){
-        if(p&&Number(p.price_uah)>0){price.textContent=money(p.price_uah);price.classList.remove('price-pending')}
-        else{price.textContent='Ціну уточнюємо';price.classList.add('price-pending')}
+        showPrice(price,p)
       }
     }
   }
@@ -420,8 +454,8 @@
       const anchor=info.querySelector('.sku-identity')||info.querySelector('.product-subtitle')||info.querySelector('h1');
       anchor?.after(price);
     }
-    if(p?.price_uah!=null&&Number(p.price_uah)>0){price.textContent=money(p.price_uah);price.classList.add('real-price')}
-    else{price.textContent='Ціну уточнюємо';price.classList.remove('real-price')}
+    showPrice(price,p);
+    price.classList.toggle('real-price',Number(p?.price_uah)>0);
     let badge=info.querySelector('.api-availability');
     if(!badge){badge=document.createElement('p');badge.className='api-availability';price.after(badge)}
     badge.textContent=p?.status==='stock'?'В наявності':(p?.status==='preorder'?'Під замовлення'+(p.lead_time_days?' · '+p.lead_time_days+' дн.':''):'Недоступно');
@@ -728,13 +762,16 @@
   function applyProductData(products){
     activeProducts=new Map(products.map(p=>[p.sku,p]));
     products.forEach(p=>(p.aliases||[]).forEach(alias=>activeProducts.set(alias,p)));
+    document.querySelectorAll('.product-card[data-sku]:not(.sku-card)').forEach(card=>{
+      showPrice(card.querySelector('.product-meta>b'),activeProducts.get(card.dataset.sku));
+    });
     document.querySelectorAll('.sku-card:not(.design-variant-card)').forEach(card=>{
       const sku=card.dataset.sku||card.dataset.name?.match(/MG-[A-Z0-9-]+/)?.[0];
       const p=activeProducts.get(sku);
       const meta=card.querySelector('.product-meta');if(!meta)return;
       let price=meta.querySelector(':scope > b');if(!price){price=document.createElement('b');price.className='api-price';meta.append(price)}
-      if(p&&Number(p.price_uah)>0){price.textContent=money(p.price_uah);price.classList.remove('price-pending');card.classList.add('api-active-product')}
-      else{price.textContent='Ціну уточнюємо';price.classList.add('price-pending');card.classList.remove('api-active-product')}
+      showPrice(price,p);
+      card.classList.toggle('api-active-product',!!(p&&Number(p.price_uah)>0));
     });
     document.querySelectorAll('.design-variant-card').forEach(card=>{
       if(catalogModel?.enabled && card.dataset.sourcePreview==='1'){
@@ -771,7 +808,7 @@
         if(p){
           let price=info.querySelector('.price-placeholder');
           if(!price){price=document.createElement('div');price.className='price-placeholder';(info.querySelector('.sku-identity')||info.querySelector('.product-subtitle')||info.querySelector('h1'))?.after(price)}
-          price.textContent=p.price_uah!=null?money(p.price_uah):'Ціну уточнюємо';
+          showPrice(price,p);
           trackViewItem(p);
         }
       }
@@ -855,7 +892,7 @@
     document.dispatchEvent(new CustomEvent('magelle:catalog-refresh'));
   }
 
-  window.MaGelleStore={getCart,saveCart,setQty,money,API_BASE,escapeHtml,productForItem,getProducts:()=>activeProducts,trackBeginCheckout,trackOrderRequest,getAnalyticsClientId};
+  window.MaGelleStore={getCart,saveCart,setQty,money,cartUnitPrice,eligibleQty,API_BASE,escapeHtml,productForItem,getProducts:()=>activeProducts,trackBeginCheckout,trackOrderRequest,getAnalyticsClientId};
   initDesignCards();
   initDesignPdp();
   updateCartCount();
