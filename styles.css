@@ -539,3 +539,26 @@
 }
 
 /* Gallery marker cache-bust v4.6 */
+
+
+/* MaGelle Black Friday 2026: live only 23–29 Nov, toggled by app.js. */
+.magelle-bf-ribbon{position:relative;z-index:30;background:linear-gradient(105deg,#21191c 0%,#4c2933 51%,#241a1e 100%);color:#fff7ed;box-shadow:0 12px 26px rgba(36,18,22,.12)}
+.magelle-bf-ribbon>a{width:min(1240px,calc(100% - 56px));margin:auto;display:flex;align-items:center;justify-content:center;gap:30px;min-height:74px;padding:12px 0;text-decoration:none}
+.magelle-bf-label{font-family:Georgia,serif;font-size:18px;letter-spacing:.13em;white-space:nowrap;color:#efd3b8}
+.magelle-bf-label i{font-family:Georgia,serif;font-weight:400;letter-spacing:0;font-size:14px;margin-left:6px;color:#f7e6dc}
+.magelle-bf-offer{font-size:15px;font-weight:500;letter-spacing:.006em;white-space:nowrap}
+.magelle-bf-offer strong{font-family:Georgia,serif;font-size:29px;font-weight:400;color:#fff2dd}
+.magelle-bf-offer b{color:#d6a986;margin:0 8px}
+.magelle-bf-end{font-size:11px;text-transform:uppercase;letter-spacing:.11em;color:#f5d5c5;white-space:nowrap}
+.magelle-bf-cta{font-size:11px;letter-spacing:.09em;text-transform:uppercase;border:1px solid rgba(251,236,220,.64);padding:9px 14px;white-space:nowrap}
+.magelle-bf-ribbon a:hover .magelle-bf-cta{background:#fff6ed;color:#392029}
+.magelle-promo-price{display:flex!important;align-items:baseline;justify-content:flex-start;flex-wrap:wrap;gap:5px 9px;white-space:normal!important}
+.magelle-price-before{font-size:12px!important;font-weight:400;color:#95877a;text-decoration:line-through;white-space:nowrap}
+.magelle-price-after{font-size:18px!important;font-weight:700;color:#692f38;white-space:nowrap}
+.magelle-price-rebate{font:700 9px/1.3 Inter,system-ui,sans-serif;letter-spacing:.04em;background:#67303c;color:#fff;padding:3px 6px;border-radius:2px}
+.price-placeholder.magelle-promo-price{gap:8px 15px}
+.price-placeholder .magelle-price-before{font-size:18px!important}
+.price-placeholder .magelle-price-after{font-family:Georgia,serif;font-size:33px!important}
+.magelle-cart-sale-note{margin:14px 0 0;padding:10px 12px;background:#ebd7cf;color:#5d2937;font-size:12px;font-weight:600}
+@media(max-width:1000px){.magelle-bf-ribbon>a{gap:16px}.magelle-bf-end{display:none}.magelle-bf-offer{font-size:13px}.magelle-bf-offer strong{font-size:24px}}
+@media(max-width:650px){.magelle-bf-ribbon>a{width:calc(100% - 28px);display:grid;grid-template-columns:1fr auto;gap:3px 12px;min-height:80px;padding:10px 0}.magelle-bf-label{font-size:13px;grid-column:1}.magelle-bf-label i{font-size:12px}.magelle-bf-offer{grid-column:1;grid-row:2;font-size:11px;white-space:normal}.magelle-bf-offer strong{font-size:21px}.magelle-bf-offer b{margin:0 4px}.magelle-bf-cta{grid-column:2;grid-row:1 / span 2;font-size:9px;padding:8px 9px}.magelle-price-after{font-size:16px!important}}
