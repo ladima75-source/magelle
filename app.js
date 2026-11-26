@@ -137,7 +137,12 @@
       });
       if(count) count.textContent=shown+(shown===1?' позиція':' позицій');
     };
-    [size,color,collection,search].forEach(el=>el&&el.addEventListener('input',apply));
+    [size,color,collection].forEach(el=>{
+      if(!el)return;
+      el.addEventListener('change',apply);
+      el.addEventListener('input',apply);
+    });
+    search?.addEventListener('input',apply);
     document.addEventListener('magelle:catalog-refresh',apply);
     document.getElementById('reset-filters')?.addEventListener('click',()=>{
       [size,color,collection].forEach(el=>{if(el)el.value=''});

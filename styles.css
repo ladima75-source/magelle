@@ -575,3 +575,9 @@ html:has(body.magelle-bf-fixed){scroll-padding-top:var(--magelle-bf-header-heigh
   body.magelle-bf-fixed .cart-drawer{z-index:1002}
   body.magelle-bf-fixed .skip:focus{z-index:1003}
 }
+
+/* Catalog filter state must override the grid layout. */
+.catalog-main .filter-item[hidden],.catalog-main .family-block[hidden]{display:none!important}
+@media(min-width:981px){
+  body.magelle-bf-fixed .filters{top:calc(var(--magelle-bf-header-height,75px) + 19px)}
+}
