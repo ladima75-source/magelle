@@ -123,6 +123,8 @@ def build_telegram_order_message(order, items):
     lines=[f"🌿 <b>MaGelle · Нове замовлення #{catalog.public_order_number(order['id'])}</b>"]
     lines += [f"👤 <b>Покупець:</b> {e(order.get('customer_name'))}",
               f"📞 <b>Телефон:</b> {e(order.get('phone'))}"]
+    channel={'viber':'Viber','telegram':'Telegram','whatsapp':'WhatsApp','sms':'SMS','phone':'Телефонний дзвінок'}.get(order.get('contact_channel'))
+    if channel: lines.append(f"💬 <b>Спосіб зв’язку:</b> {e(channel)}")
     if order.get('email'): lines.append(f"✉️ <b>Email:</b> {e(order['email'])}")
     if order.get('delivery'): lines.append(f"🚚 <b>Доставка:</b> {e(order['delivery'])}")
     if order.get('comment'): lines.append(f"📝 <b>Коментар:</b> {e(order['comment'])}")

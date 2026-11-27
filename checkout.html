@@ -6,6 +6,7 @@
 <section class="checkout-form-card"><form id="checkout-form">
 <label>Ім’я<input name="customer_name" required autocomplete="name"></label>
 <label>Телефон<input name="phone" type="tel" required autocomplete="tel" inputmode="tel" maxlength="40" placeholder="+380… або 0…"></label>
+<label>Зручний спосіб зв’язку<select name="contact_channel" required style="width:100%;border:1px solid #d8ccbc;background:#fff;padding:12px;color:#342f29" aria-describedby="contact-hint"><option value="" selected disabled>Оберіть спосіб зв’язку</option><option value="viber">Viber</option><option value="telegram">Telegram</option><option value="whatsapp">WhatsApp</option><option value="sms">SMS</option><option value="phone">Телефонний дзвінок</option></select><span id="contact-hint">Зв’яжемося з Вами за вказаним номером.</span></label>
 <label>Email<input name="email" type="email" autocomplete="email"></label>
 <label>Спосіб отримання та дані доставки<textarea name="delivery" rows="3" required placeholder="Нова пошта: місто, відділення або адреса доставки. Або: Самовивіз, Дніпро."></textarea></label>
 <label>Коментар<textarea name="comment" rows="3"></textarea></label>
@@ -68,11 +69,12 @@ window.addEventListener('DOMContentLoaded', async () => {
       store.trackOrderRequest(j,submittedCart);
       store.saveCart([]);
       itemsHost.innerHTML='<div class="order-success"><p class="eyebrow">Готово</p><h2>Замовлення №'+(j.order_number||Number(j.order_id)+200)+' прийнято</h2><p>Ми зв’яжемося з вами для підтвердження.</p></div>';
-      form.reset(); form.querySelectorAll('input,textarea,button').forEach(el=>el.disabled=true);
+      form.reset(); form.querySelectorAll('input,textarea,select,button').forEach(el=>el.disabled=true);
     }catch(e){
       const messages={
         customer_name_required:'Вкажіть ім’я.',
         phone_required:'Вкажіть номер телефону.', required_phone:'Вкажіть номер телефону.', invalid_phone:'Перевірте номер: +380XXXXXXXXX або 0XXXXXXXXX.',
+        invalid_contact_channel:'Оберіть спосіб зв’язку.',
         empty_order:'Кошик порожній.',
         unavailable_product:'Одна з позицій уже недоступна. Оновіть кошик.',
         invalid_quantity:'Некоректна кількість товару.'

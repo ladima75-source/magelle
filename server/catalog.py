@@ -59,7 +59,7 @@ def migrate(con):
             'admin_recovery': {'link_nonce_hash': "TEXT NOT NULL DEFAULT ''", 'verified_user_id': 'INTEGER'},
         'order_items': {'product_id': 'TEXT', 'snapshot_json': 'TEXT'},
             'orders': {'ga4_client_id': 'TEXT', 'ga4_purchase_sent_at': 'TEXT',
-                       'ga4_purchase_claimed_at': 'TEXT'},
+                       'ga4_purchase_claimed_at': 'TEXT', 'contact_channel': "TEXT NOT NULL DEFAULT ''"},
         }
         for table, fields in additions.items():
             present = {r['name'] for r in con.execute('PRAGMA table_info(' + table + ')')}
@@ -391,6 +391,9 @@ def route(environ, db, secret, admin_password, body_json, notify):
     if path == '/api/orders' and method == 'POST':
         data=body_json(environ)
         name=text(data,'customer_name',200,True); phone=normalize_ua_phone(text(data,'phone',40,True))
+        contact_channel=text(data,'contact_channel',20)
+        if contact_channel not in {'','viber','telegram','whatsapp','sms','phone'}:
+            raise ApiError('invalid_contact_channel')
         client_id=str(data.get('analytics_client_id') or '')[:120]
         if not re.fullmatch(r'[0-9]{1,30}\.[0-9]{1,30}',client_id): client_id=''
         items=data.get('items')
@@ -420,8 +423,8 @@ def route(environ, db, secret, admin_password, body_json, notify):
                           'photo_urls':json.loads(p['photo_urls'])}
                 clean.append((item_sku,qty,price,p['series'],snapshot['design'],p['size_name'],p['color'],p['sku'],p['product_id'],dumps(snapshot)))
                 total+=qty*price
-            cur=con.execute('INSERT INTO orders(customer_name,phone,email,delivery,comment,total_uah,ga4_client_id) VALUES(?,?,?,?,?,?,?)',
-                            (name,phone,text(data,'email',300),text(data,'delivery',3000),text(data,'comment',3000),total,client_id))
+            cur=con.execute('INSERT INTO orders(customer_name,phone,email,delivery,comment,total_uah,ga4_client_id,contact_channel) VALUES(?,?,?,?,?,?,?,?)',
+                            (name,phone,text(data,'email',300),text(data,'delivery',3000),text(data,'comment',3000),total,client_id,contact_channel))
             oid=cur.lastrowid
             con.executemany('INSERT INTO order_items(order_id,sku,qty,price_uah,family,design,size,vase_color,base_sku,product_id,snapshot_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)',[(oid,*x) for x in clean])
         notify(oid)

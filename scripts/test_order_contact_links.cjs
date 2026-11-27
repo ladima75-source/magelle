@@ -42,3 +42,8 @@ console.log('MaGelle order messenger links: PASS');
 // Bind every control, not the first matching DOM element.
 for(const selector of ['data-order-copy','data-edit-phone','data-phone-form','data-order-field'])assert(s.includes("$$('["+selector+"]')"),selector);
 assert(!s.includes('window.prompt('));
+
+const preferred=sandbox.orderContactActions({...order,contact_channel:'viber'});
+assert(preferred.includes('order-contact-preferred'));
+assert(preferred.indexOf('>Viber<')<preferred.indexOf('>WhatsApp<'));
+assert(sandbox.orderContactActions({...order,contact_channel:'phone'}).includes('tel:+380733335449'));

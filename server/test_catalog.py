@@ -59,6 +59,19 @@ class CatalogTests(unittest.TestCase):
             return report
     def first_product(self,variant=False):
         with self.db() as con:return catalog.decoded(con.execute('SELECT * FROM products WHERE design_id IS '+('NOT NULL' if variant else 'NULL')+' ORDER BY sku LIMIT 1').fetchone())
+    def test_order_contact_channel(self):
+        sku=self.first_product()['sku']
+        payload={'customer_name':'QA','phone':'0501234567','items':[{'sku':sku,'qty':1}]}
+        self.assertEqual(self.request('/api/orders','POST',{**payload,'contact_channel':'invalid'},cookie=False)[0],400)
+        for channel in ('viber','telegram','whatsapp','sms','phone',''):
+            data={**payload,'contact_channel':channel} if channel else payload
+            status,res,_=self.request('/api/orders','POST',data,cookie=False)
+            self.assertEqual(status,201)
+            row=next(o for o in self.request('/api/admin/orders')[1] if o['id']==res['order_id'])
+            self.assertEqual(row['contact_channel'],channel)
+            self.assertEqual(row['total_uah'],4200)
+        existing=next(o for o in self.request('/api/admin/orders')[1] if o['id']==1)
+        self.assertEqual(existing['contact_channel'],'')
     def test_phone_validation_and_protected_edit(self):
         for raw in ('0501234567','+380 50 123 45 67','380501234567','00380501234567'):
             self.assertEqual(catalog.normalize_ua_phone(raw),'+380501234567')
