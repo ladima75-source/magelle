@@ -9,7 +9,7 @@ let pointerDrag=null;
 document.addEventListener('pointermove',e=>{if(!pointerDrag)return;if(Math.hypot(e.clientX-pointerDrag.x,e.clientY-pointerDrag.y)<6&&!dragId)return;dragId=pointerDrag.id;const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.design-card');$$('.design-card').forEach(c=>c.classList.toggle('drop-target',c===target));pointerDrag.button.closest('.design-card')?.classList.add('dragging');});
 document.addEventListener('pointerup',e=>{if(!pointerDrag)return;const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.design-card'),id=dragId;pointerDrag.button.draggable=true;pointerDrag=null;dragId=null;$$('.design-card').forEach(c=>c.classList.remove('dragging','drop-target'));if(!id||!target)return;const ids=data.designs.map(d=>d.id),from=ids.indexOf(id),to=ids.indexOf(target.dataset.designId);if(from<0||to<0||from===to)return;ids.splice(to,0,ids.splice(from,1)[0]);reorder(ids);});
 document.addEventListener('pointercancel',()=>{pointerDrag=null;dragId=null;$$('.design-card').forEach(c=>c.classList.remove('dragging','drop-target'));});
-const messages={conflict_reload:'Дані вже змінились. Оновіть список і повторіть правку.',csrf_required:'Сесію потрібно оновити. Перезавантажте сторінку.',forbidden:'Ця дія недоступна для вашої ролі.',duplicate_sku_or_variant:'Такий SKU або варіант уже існує.',sku_reserved:'Цей SKU збережений в історії. Виберіть новий код.',archive_required_has_history_or_variants:'Є замовлення або варіанти. Скористайтесь архівуванням.',publish_price_required:'Для продажу вкажіть ціну більше нуля.',old_price_below_price:'Стара ціна не може бути нижчою за поточну.',media_https_required:'Для медіа використовуйте HTTPS-посилання.',invalid_credentials:'Невірний користувач або пароль.',try_later:'Забагато спроб. Спробуйте через 5 хвилин.',unavailable_product:'Товар недоступний.',design_identity_has_variants:'Серію та формат дизайну з варіантами змінювати не можна. Створіть окремий дизайн.'};
+const messages={invalid_phone:'Вкажіть український номер: +380XXXXXXXXX або 0XXXXXXXXX.',conflict_reload:'Дані вже змінились. Оновіть список і повторіть правку.',csrf_required:'Сесію потрібно оновити. Перезавантажте сторінку.',forbidden:'Ця дія недоступна для вашої ролі.',duplicate_sku_or_variant:'Такий SKU або варіант уже існує.',sku_reserved:'Цей SKU збережений в історії. Виберіть новий код.',archive_required_has_history_or_variants:'Є замовлення або варіанти. Скористайтесь архівуванням.',publish_price_required:'Для продажу вкажіть ціну більше нуля.',old_price_below_price:'Стара ціна не може бути нижчою за поточну.',media_https_required:'Для медіа використовуйте HTTPS-посилання.',invalid_credentials:'Невірний користувач або пароль.',try_later:'Забагато спроб. Спробуйте через 5 хвилин.',unavailable_product:'Товар недоступний.',design_identity_has_variants:'Серію та формат дизайну з варіантами змінювати не можна. Створіть окремий дизайн.'};
 const errorText=e=>e.message==='Failed to fetch'?'Сервер тимчасово недоступний. Оновіть сторінку та повторіть дію.':messages[e.message]||('Не вдалося зберегти: '+e.message);
 function notice(message,error=false){$('#notice').textContent=message;$('#notice').className=error?'error':'';}
 async function api(path,opt={}){
@@ -89,9 +89,11 @@ function orderItem(i){const s=i.snapshot||{},src=i.display_photo_urls?.[0]||s.ph
 // Customer-facing order numbers are deliberately offset; SQLite IDs are unchanged.
 function customerOrderNumber(o){return Number(o.order_number)||(Number(o.id)+200);}
 function ukrainianPhone(v){
-  let digits=String(v||'').replace(/\D/g,'');
-  if(/^0\d{9}$/.test(digits))digits='38'+digits;
-  return /^380\d{9}$/.test(digits)?digits:'';
+  let digits=String(v||'').replace(/[\s().-]/g,'');
+  if(/^00380[0-9]{9}$/.test(digits))digits=digits.slice(2);
+  if(/^0[0-9]{9}$/.test(digits))digits='38'+digits;
+  if(/^\+380[0-9]{9}$/.test(digits))digits=digits.slice(1);
+  return /^380[0-9]{9}$/.test(digits)?digits:'';
 }
 function paymentRequestText(o){
   const n=customerOrderNumber(o);
@@ -136,7 +138,7 @@ function orderContactActions(o){
       '<span class="order-outreach-note">Телефон потрібно перевірити для відкриття месенджера.</span>')+
     '</div><small>WhatsApp і Telegram можуть відкрити чат із чернеткою. Telegram працює лише якщо приватність номера покупця це дозволяє. Для Viber спочатку натисніть «Скопіювати повідомлення», потім «Viber» і вставте текст у чат. SMS може не підставити текст автоматично. Контакти зберігати не потрібно. Жоден канал не надсилає повідомлення автоматично.</small></div>';
 }
-async function loadOrders(){try{orders=await api('/api/admin/orders');$('#orders').innerHTML=orders.map(o=>`<article class="order"><div class="order-title"><div><span class="eyebrow">Замовлення</span><strong>#${customerOrderNumber(o)}</strong><small>${esc(o.created_at)} UTC</small></div><div class="order-total"><small>Загальна сума</small><strong>${money(o.total_uah)}</strong></div><div class="order-statuses">${orderSelect(o,'status',{new:'Нове',confirmed:'Підтверджено',production:'У виробництві',shipped:'Відправлено',done:'Завершено',cancelled:'Скасовано'})}${orderSelect(o,'payment_status',{unpaid:'Не оплачено',paid:'Оплачено',refunded:'Повернення'})}</div></div><div class="order-customer"><div><small>Покупець</small><strong>${orderValue(o.customer_name)}</strong></div><div><small>Телефон</small><strong>${orderValue(o.phone)}</strong></div><div><small>Email</small><strong>${orderValue(o.email)}</strong></div><div class="wide"><small>Доставка</small><strong>${orderValue(o.delivery)}</strong></div><div class="wide"><small>Коментар</small><strong>${orderValue(o.comment)}</strong></div></div><div class="order-items"><h3>Склад замовлення · ${o.items.reduce((n,i)=>n+Number(i.qty),0)} шт.</h3>${o.items.map(orderItem).join('')}</div>${orderContactActions(o)}</article>`).join('')||'<p class="empty">Замовлень ще немає.</p>';bind();$('[data-order-copy]').forEach(b=>b.onclick=async()=>{
+async function loadOrders(){try{orders=await api('/api/admin/orders');$('#orders').innerHTML=orders.map(o=>`<article class="order"><div class="order-title"><div><span class="eyebrow">Замовлення</span><strong>#${customerOrderNumber(o)}</strong><small>${esc(o.created_at)} UTC</small></div><div class="order-total"><small>Загальна сума</small><strong>${money(o.total_uah)}</strong></div><div class="order-statuses">${orderSelect(o,'status',{new:'Нове',confirmed:'Підтверджено',production:'У виробництві',shipped:'Відправлено',done:'Завершено',cancelled:'Скасовано'})}${orderSelect(o,'payment_status',{unpaid:'Не оплачено',paid:'Оплачено',refunded:'Повернення'})}</div></div><div class="order-customer"><div><small>Покупець</small><strong>${orderValue(o.customer_name)}</strong></div><div><small>Телефон</small><strong>${orderValue(o.phone)}</strong>${session.role==='viewer'?'':'<button type="button" class="secondary order-phone-edit" data-edit-phone="'+o.id+'">Змінити телефон</button>'}</div><div><small>Email</small><strong>${orderValue(o.email)}</strong></div><div class="wide"><small>Доставка</small><strong>${orderValue(o.delivery)}</strong></div><div class="wide"><small>Коментар</small><strong>${orderValue(o.comment)}</strong></div></div><div class="order-items"><h3>Склад замовлення · ${o.items.reduce((n,i)=>n+Number(i.qty),0)} шт.</h3>${o.items.map(orderItem).join('')}</div>${orderContactActions(o)}</article>`).join('')||'<p class="empty">Замовлень ще немає.</p>';bind();$('[data-order-copy]').forEach(b=>b.onclick=async()=>{
   const o=orders.find(x=>String(x.id)===b.dataset.orderCopy);
   if(!o)return;
   const message=paymentRequestText(o);
@@ -146,6 +148,16 @@ async function loadOrders(){try{orders=await api('/api/admin/orders');$('#orders
     const copied=document.execCommand('copy');ta.remove();
     notice(copied?'Повідомлення скопійовано. Не відправлено.':'Копіювання недоступне. Відкрийте WhatsApp або SMS.',!copied);
   }
+});$('[data-edit-phone]').forEach(b=>b.onclick=async()=>{
+  const o=orders.find(x=>String(x.id)===b.dataset.editPhone);
+  if(!o)return;
+  const value=window.prompt('Введіть підтверджений номер телефону (+380XXXXXXXXX або 0XXXXXXXXX)',o.phone||'');
+  if(value===null)return;
+  const digits=ukrainianPhone(value);
+  if(!digits){notice('Некоректний номер. Перевірте код +380 та кількість цифр.',true);return;}
+  b.disabled=true;
+  try{await api('/api/admin/orders/'+o.id+'/phone',{method:'PATCH',body:JSON.stringify({phone:'+'+digits,expected:o.phone})});await loadOrders();notice('Телефон збережено.');}
+  catch(e){notice(errorText(e),true);b.disabled=false;}
 });$('[data-order-field]').forEach(s=>s.onchange=async()=>{const o=orders.find(o=>String(o.id)===s.dataset.id),f=s.dataset.orderField;try{await api('/api/admin/orders/'+o.id,{method:'PUT',body:JSON.stringify({[f]:s.value,expected:{[f]:o[f]}})});await loadOrders();notice('Статус замовлення збережено.');}catch(e){notice(errorText(e),true);await loadOrders();}});}catch(e){notice(errorText(e),true);}}
 function orderSelect(o,k,options){return `<select aria-label="${k==='status'?'Статус замовлення':'Оплата'} #${customerOrderNumber(o)}" data-order-field="${k}" data-id="${o.id}" ${session.role==='viewer'?'disabled':''}>${Object.entries(options).map(([v,t])=>`<option value="${v}" ${o[k]===v?'selected':''}>${t}</option>`).join('')}</select>`;}
 async function loadAudit(){try{const rows=await api('/api/admin/audit');$('#audit').innerHTML=rows.map(r=>`<article class="audit-entry"><strong>${esc(r.action)} · ${esc(r.entity)}</strong><p class="row-meta">${esc(r.created_at)} UTC · ${esc(r.actor)}</p><details><summary>Порівняти значення</summary><b>До</b><pre>${esc(JSON.stringify(JSON.parse(r.before_json),null,2))}</pre><b>Після</b><pre>${esc(JSON.stringify(JSON.parse(r.after_json),null,2))}</pre></details></article>`).join('')||'<p class="empty">Змін поки немає.</p>';}catch(e){notice(errorText(e),true);}}

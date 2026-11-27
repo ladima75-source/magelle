@@ -21,3 +21,5 @@
 #orders .order-quantity,#orders .order-price{min-width:80px}
 @media(max-width:850px){#orders .order-title{grid-template-columns:minmax(0,1fr) auto}#orders .order-title .order-statuses{grid-column:1/-1}#orders .order-customer{grid-template-columns:1fr 1fr}#orders .order-customer .wide{grid-column:1/-1}}
 @media(max-width:520px){#orders .order{padding:10px 12px}#orders .order-title{gap:8px}#orders .order-statuses{grid-template-columns:1fr 1fr}#orders .order-customer{gap:6px 10px}#orders .order-item{flex-wrap:wrap}#orders .order-item-main{min-width:calc(100% - 55px)}#orders .order-quantity,#orders .order-price{margin-left:53px;text-align:left}.order-price b{text-align:left}}
+
+#orders .order-phone-edit{font-size:12px;min-height:34px;padding:5px 9px;margin-top:5px;justify-self:start}

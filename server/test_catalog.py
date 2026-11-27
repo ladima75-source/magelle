@@ -59,6 +59,30 @@ class CatalogTests(unittest.TestCase):
             return report
     def first_product(self,variant=False):
         with self.db() as con:return catalog.decoded(con.execute('SELECT * FROM products WHERE design_id IS '+('NOT NULL' if variant else 'NULL')+' ORDER BY sku LIMIT 1').fetchone())
+    def test_phone_validation_and_protected_edit(self):
+        for raw in ('0501234567','+380 50 123 45 67','380501234567','00380501234567'):
+            self.assertEqual(catalog.normalize_ua_phone(raw),'+380501234567')
+        for raw in ('+30501234567','bad','050123456','+380501234567extra'):
+            with self.assertRaises(catalog.ApiError):
+                catalog.normalize_ua_phone(raw)
+        sku=self.first_product()['sku']
+        data={'customer_name':'QA','phone':'+30501234567','items':[{'sku':sku,'qty':1}]}
+        self.assertEqual(self.request('/api/orders','POST',data,cookie=False)[0],400)
+        data['phone']='0501234567'
+        status,res,_=self.request('/api/orders','POST',data,cookie=False)
+        self.assertEqual(status,201)
+        oid=res['order_id']; path='/api/admin/orders/'+str(oid)+'/phone'
+        change={'phone':'0671234567','expected':'+380501234567'}
+        self.assertEqual(self.request(path,'PATCH',change,cookie=False)[0],401)
+        self.assertEqual(self.request(path,'PATCH',change,csrf=False)[0],403)
+        self.assertEqual(self.request(path,'PATCH',{**change,'phone':'bad'})[0],400)
+        self.assertEqual(self.request(path,'PATCH',{**change,'expected':'wrong'})[0],409)
+        self.assertEqual(self.request(path,'PATCH',change)[0],200)
+        with self.db() as con:
+            row=con.execute('SELECT * FROM orders WHERE id=?',(oid,)).fetchone()
+            self.assertEqual(row['phone'],'+380671234567')
+            self.assertEqual(row['total_uah'],res['total_uah'])
+            self.assertEqual(row['payment_status'],'unpaid')
     def test_black_friday_discounted_catalog_and_server_orders(self):
         sku=self.first_product()['sku']
         with patch.object(catalog,'black_friday_active',return_value=True):
@@ -71,7 +95,7 @@ class CatalogTests(unittest.TestCase):
             self.assertTrue(model['promotion']['active'])
             def order(qty):
                 return self.request('/api/orders','POST',{
-                    'customer_name':'QA', 'phone':'TEST',
+                    'customer_name':'QA', 'phone':'0501234567',
                     'items':[{'sku':sku,'qty':qty}]
                 },cookie=False)
             single=order(1)
@@ -158,7 +182,7 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(catalog.public_order_number(7), 207)
         p=self.first_product()
         result=self.request('/api/orders','POST',{
-            'customer_name':'QA', 'phone':'TEST',
+            'customer_name':'QA', 'phone':'0501234567',
             'items':[{'sku':p['sku'],'qty':1}]
         },cookie=False)
         self.assertEqual(result[0],201)
@@ -170,7 +194,7 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(latest['items'][0]['qty'],1)
         text=app.build_telegram_order_message({
             'id':order_id,'total_uah':latest['total_uah'],
-            'customer_name':'QA','phone':'TEST'
+            'customer_name':'QA','phone':'0501234567'
         },[])
         self.assertIn('замовлення #'+str(200+order_id),text)
 
@@ -255,7 +279,7 @@ class CatalogTests(unittest.TestCase):
         with self.db() as con:
             self.assertEqual(catalog.resolve(con,p['sku'])['product_id'],p['product_id'])
             self.assertEqual(con.execute('SELECT sku FROM order_items WHERE id=1').fetchone()[0],'MG-OF-VYR-GRA')
-        r=self.request('/api/orders','POST',{'customer_name':'QA','phone':'TEST','items':[{'sku':p['sku'],'qty':2}]},cookie=False)
+        r=self.request('/api/orders','POST',{'customer_name':'QA','phone':'0501234567','items':[{'sku':p['sku'],'qty':2}]},cookie=False)
         self.assertEqual(r[1]['total_uah'],8400)
     def test_ordered_product_cannot_be_deleted(self):
         with self.db() as con:p=dict(con.execute("SELECT * FROM products WHERE sku='MG-OF-VYR-GRA'").fetchone())
@@ -269,7 +293,7 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(self.request(path,'PUT',{'version':2,'lifecycle':'active','status':'stock'})[0],200)
     def test_order_snapshot_is_server_authoritative(self):
         self.import_data();p=self.first_product(True)
-        r=self.request('/api/orders','POST',{'customer_name':'QA','phone':'TEST','items':[{'sku':p['sku'],'qty':2,'price_uah':1,'vase_color':'FAKE','design':'FAKE'}]},cookie=False)
+        r=self.request('/api/orders','POST',{'customer_name':'QA','phone':'0501234567','items':[{'sku':p['sku'],'qty':2,'price_uah':1,'vase_color':'FAKE','design':'FAKE'}]},cookie=False)
         self.assertEqual(r[0],201);self.assertEqual(r[1]['total_uah'],8400)
         with self.db() as con:
             item=dict(con.execute('SELECT * FROM order_items WHERE order_id=?',(r[1]['order_id'],)).fetchone())
@@ -282,7 +306,7 @@ class CatalogTests(unittest.TestCase):
         self.import_data()
         p=self.first_product(True)
         status,response,_=self.request('/api/orders','POST',{
-            'customer_name':'QA','phone':'TEST','analytics_client_id':'123456.789012',
+            'customer_name':'QA','phone':'0501234567','analytics_client_id':'123456.789012',
             'items':[{'sku':p['sku'],'qty':2}]
         },cookie=False)
         self.assertEqual(status,201)
@@ -323,7 +347,7 @@ class CatalogTests(unittest.TestCase):
         self.import_data()
         p=self.first_product(True)
         _,result,_=self.request('/api/orders','POST',{
-            'customer_name':'QA','phone':'TEST','analytics_client_id':'221.443',
+            'customer_name':'QA','phone':'0501234567','analytics_client_id':'221.443',
             'items':[{'sku':p['sku'],'qty':1}]
         },cookie=False)
         oid=result['order_id']
@@ -342,7 +366,7 @@ class CatalogTests(unittest.TestCase):
         self.import_data()
         p=self.first_product(True)
         _,r,_=self.request('/api/orders','POST',{
-            'customer_name':'QA','phone':'TEST','analytics_client_id':'221.443',
+            'customer_name':'QA','phone':'0501234567','analytics_client_id':'221.443',
             'items':[{'sku':p['sku'],'qty':1}]
         },cookie=False)
         oid=r['order_id']
@@ -357,7 +381,7 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(len(delivered),1)
 
     def test_arbitrary_virtual_sku_cannot_use_cheaper_base(self):
-        self.assertEqual(self.request('/api/orders','POST',{'customer_name':'QA','phone':'TEST','items':[{'sku':'MG-OF-FAKE-VYR-GRA','base_sku':'MG-OF-VYR-GRA','qty':1}]},cookie=False)[0],400)
+        self.assertEqual(self.request('/api/orders','POST',{'customer_name':'QA','phone':'0501234567','items':[{'sku':'MG-OF-FAKE-VYR-GRA','base_sku':'MG-OF-VYR-GRA','qty':1}]},cookie=False)[0],400)
     def test_hidden_design_blocks_api_and_order(self):
         self.import_data();p=self.first_product(True)
         with self.db() as con: d=dict(con.execute('SELECT * FROM designs WHERE id=?',(p['design_id'],)).fetchone())
@@ -365,7 +389,7 @@ class CatalogTests(unittest.TestCase):
         public=self.request('/api/catalog',cookie=False)[1]
         self.assertFalse(any(x['id']==d['id'] for x in public['designs']))
         self.assertFalse(any(x['sku']==p['sku'] for x in public['products']))
-        self.assertEqual(self.request('/api/orders','POST',{'customer_name':'QA','phone':'TEST','items':[{'sku':p['sku'],'qty':1}]},cookie=False)[0],400)
+        self.assertEqual(self.request('/api/orders','POST',{'customer_name':'QA','phone':'0501234567','items':[{'sku':p['sku'],'qty':1}]},cookie=False)[0],400)
     def test_reorder_atomic_and_rejects_partial_list(self):
         self.import_data();model=self.request('/api/admin/catalog')[1];ids=[d['id'] for d in model['designs']]
         self.assertEqual(self.request('/api/admin/reorder','PUT',{'version':model['version'],'ids':ids[:-1]})[0],400)

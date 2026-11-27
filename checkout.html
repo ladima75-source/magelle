@@ -5,7 +5,7 @@
 <section><p class="eyebrow">Замовлення</p><h1>Оформлення замовлення</h1><div id="checkout-items" class="checkout-items"><p>Завантаження кошика…</p></div></section>
 <section class="checkout-form-card"><form id="checkout-form">
 <label>Ім’я<input name="customer_name" required autocomplete="name"></label>
-<label>Телефон<input name="phone" required autocomplete="tel" placeholder="+380…"></label>
+<label>Телефон<input name="phone" type="tel" required autocomplete="tel" inputmode="tel" maxlength="40" placeholder="+380… або 0…"></label>
 <label>Email<input name="email" type="email" autocomplete="email"></label>
 <label>Спосіб отримання та дані доставки<textarea name="delivery" rows="3" required placeholder="Нова пошта: місто, відділення або адреса доставки. Або: Самовивіз, Дніпро."></textarea></label>
 <label>Коментар<textarea name="comment" rows="3"></textarea></label>
@@ -23,6 +23,21 @@ window.addEventListener('DOMContentLoaded', async () => {
   const store = await waitStore();
   if(!store) return;
   const itemsHost=document.getElementById('checkout-items'), form=document.getElementById('checkout-form'), msg=document.getElementById('checkout-message'), submit=document.getElementById('submit-order');
+  const phoneInput=form.elements.phone;
+  const normalizePhone=v=>{
+  let digits=String(v||'').replace(/[\s().-]/g,'');
+  if(/^00380[0-9]{9}$/.test(digits))digits=digits.slice(2);
+  if(/^0[0-9]{9}$/.test(digits))digits='38'+digits;
+  if(/^\+380[0-9]{9}$/.test(digits))digits=digits.slice(1);
+  return /^380[0-9]{9}$/.test(digits)?digits:'';
+  };
+  const validatePhone=()=>{
+    const digits=normalizePhone(phoneInput.value);
+    phoneInput.setCustomValidity(phoneInput.value&&!digits?'Введіть український номер: +380XXXXXXXXX або 0XXXXXXXXX.':'');
+    return digits;
+  };
+  phoneInput.addEventListener('input',validatePhone);
+  phoneInput.addEventListener('change',validatePhone);
   let checkoutTracked=false;
   const render=()=>{ const cart=store.getCart();
     const products=store.getProducts();
@@ -41,10 +56,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('magelle:cart-change',render);
   document.addEventListener('magelle:catalog-refresh',render);
   form.addEventListener('submit',async e=>{
-    e.preventDefault(); msg.textContent=''; submit.disabled=true; submit.textContent='Оформлюємо…';
+    e.preventDefault(); const phone=validatePhone(); if(!phone){phoneInput.reportValidity();return;} msg.textContent=''; submit.disabled=true; submit.textContent='Оформлюємо…';
     const submittedCart=store.getCart();
     const fd=new FormData(form);
-    const payload=Object.fromEntries(fd.entries()); payload.analytics_client_id=store.getAnalyticsClientId(); payload.items=store.getCart().map(x=>({sku:x.sku,base_sku:x.base_sku||x.sku,qty:x.qty,family:x.family||'',design:x.design||'',size:x.size||'',vase_color:x.vase_color||''}));
+    const payload=Object.fromEntries(fd.entries()); payload.phone='+'+phone; payload.analytics_client_id=store.getAnalyticsClientId(); payload.items=store.getCart().map(x=>({sku:x.sku,base_sku:x.base_sku||x.sku,qty:x.qty,family:x.family||'',design:x.design||'',size:x.size||'',vase_color:x.vase_color||''}));
     try{
       const r=await fetch(store.API_BASE+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const j=await r.json();
@@ -57,7 +72,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }catch(e){
       const messages={
         customer_name_required:'Вкажіть ім’я.',
-        phone_required:'Вкажіть номер телефону.',
+        phone_required:'Вкажіть номер телефону.', required_phone:'Вкажіть номер телефону.', invalid_phone:'Перевірте номер: +380XXXXXXXXX або 0XXXXXXXXX.',
         empty_order:'Кошик порожній.',
         unavailable_product:'Одна з позицій уже недоступна. Оновіть кошик.',
         invalid_quantity:'Некоректна кількість товару.'

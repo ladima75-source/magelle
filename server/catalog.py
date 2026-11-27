@@ -156,6 +156,21 @@ def text(data, key, limit=300, required=False):
         raise ApiError('required_' + key)
     return value
 
+def normalize_ua_phone(value):
+    # Accept national and international forms; never infer missing digits.
+    if not isinstance(value,str) or len(value)>40:
+        raise ApiError('invalid_phone')
+    clean=re.sub(r'[\s().-]','',value)
+    if clean.startswith('00380'):
+        clean='+'+clean[2:]
+    if re.fullmatch(r'0[0-9]{9}',clean):
+        clean='+38'+clean
+    elif re.fullmatch(r'380[0-9]{9}',clean):
+        clean='+'+clean
+    if not re.fullmatch(r'\+380[0-9]{9}',clean):
+        raise ApiError('invalid_phone')
+    return clean
+
 def integer(value, name, maximum=10000000, nullable=False):
     if value is None and nullable:
         return None
@@ -375,7 +390,7 @@ def route(environ, db, secret, admin_password, body_json, notify):
         return 200,{'ok':True,'service':'magelle-admin','version':'2.0.0'},[]
     if path == '/api/orders' and method == 'POST':
         data=body_json(environ)
-        name=text(data,'customer_name',200,True); phone=text(data,'phone',40,True)
+        name=text(data,'customer_name',200,True); phone=normalize_ua_phone(text(data,'phone',40,True))
         client_id=str(data.get('analytics_client_id') or '')[:120]
         if not re.fullmatch(r'[0-9]{1,30}\.[0-9]{1,30}',client_id): client_id=''
         items=data.get('items')
@@ -554,6 +569,18 @@ def route(environ, db, secret, admin_password, body_json, notify):
                     item.pop('snapshot_json',None)
                     o['items'].append(item)
             return 200,orders,[]
+        if re.fullmatch(r'/api/admin/orders/[0-9]+/phone',path) and method=='PATCH':
+            oid=path.split('/')[-2]
+            row=con.execute('SELECT phone FROM orders WHERE id=?',(oid,)).fetchone()
+            if not row: raise ApiError('not_found',404)
+            data=body_json(environ)
+            if set(data)!={'phone','expected'}: raise ApiError('invalid_request')
+            if data['expected']!=row['phone']: raise ApiError('conflict_reload',409)
+            phone=normalize_ua_phone(data['phone'])
+            if phone!=row['phone']:
+                con.execute('UPDATE orders SET phone=? WHERE id=?',(phone,oid))
+                audit(con,actor['user'],'order_phone','order:'+oid,{'phone':row['phone']},{'phone':phone})
+            return 200,{'ok':True,'phone':phone},[]
         if path.startswith('/api/admin/orders/') and method=='PUT':
             oid=path.rsplit('/',1)[-1]; row=con.execute('SELECT * FROM orders WHERE id=?',(oid,)).fetchone()
             if not row: raise ApiError('not_found',404)
