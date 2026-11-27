@@ -23,3 +23,5 @@
 @media(max-width:520px){#orders .order{padding:10px 12px}#orders .order-title{gap:8px}#orders .order-statuses{grid-template-columns:1fr 1fr}#orders .order-customer{gap:6px 10px}#orders .order-item{flex-wrap:wrap}#orders .order-item-main{min-width:calc(100% - 55px)}#orders .order-quantity,#orders .order-price{margin-left:53px;text-align:left}.order-price b{text-align:left}}
 
 #orders .order-phone-edit{font-size:12px;min-height:34px;padding:5px 9px;margin-top:5px;justify-self:start}
+
+#orders .order-phone-form{display:grid;gap:7px;margin:8px 0;min-width:0}#orders .order-phone-form input{min-width:0;padding:8px;font-size:14px}#orders .order-phone-buttons{display:flex;flex-wrap:wrap;gap:5px}#orders .order-phone-buttons button{padding:6px 9px;min-height:36px;font-size:12px}#orders .order-phone-error{color:#803d36;text-transform:none;letter-spacing:0;font-size:12px}

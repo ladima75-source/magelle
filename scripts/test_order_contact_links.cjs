@@ -38,3 +38,7 @@ assert(!html.includes('sendMessage') && !html.includes('Автоматично �
 assert(!sandbox.orderContactActions({...order,payment_status:'paid'}).includes('https://t.me/'));
 assert(!sandbox.orderContactActions({...order,status:'cancelled'}).includes('viber://'));
 console.log('MaGelle order messenger links: PASS');
+
+// Bind every control, not the first matching DOM element.
+for(const selector of ['data-order-copy','data-edit-phone','data-phone-form','data-order-field'])assert(s.includes("$$('["+selector+"]')"),selector);
+assert(!s.includes('window.prompt('));
